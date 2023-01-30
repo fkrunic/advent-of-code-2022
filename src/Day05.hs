@@ -4,6 +4,9 @@ module Day05 where
 
 import Data.Either (fromRight)
 import Data.Functor (($>))
+import Data.List (sortOn)
+import Data.Map (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -16,11 +19,25 @@ type Parser = Parsec Void Text
 
 data Slot = Empty | Crate Char deriving (Show, Eq)
 
-type Line = [(Int, Slot)]
+data GridSlice
+  = GridSlice
+  { gridSliceSlot :: Slot
+  , gridSliceXCoord :: Int
+  } deriving (Show, Eq)
+
+data GridPoint
+  = GridPoint
+  { gpSlot :: Slot
+  , gpCoord :: (Int, Int)
+  } deriving (Show, Eq)
+
+type Line = [GridSlice]
 
 type Move = (Int, Int, Int)
 
-type Input = ([Line], [Move])
+type Input = ([GridPoint], [Move])
+
+------------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -40,11 +57,19 @@ pSlot = try pEmpty <|> pCrate
     pEmpty = spaceChar *> spaceChar *> spaceChar $> Empty
     pCrate = Crate <$> (char '[' *> letterChar <* char ']')
 
-pLine :: Parser Line
-pLine = zip [1 ..] <$> some (pSlot <* optional (char ' '))
+pLine :: Parser [GridSlice]
+pLine = map buildSlice . zip [1 ..] <$> some (pSlot <* optional (char ' '))
+  where
+    buildSlice (xCoord, slot) = GridSlice slot xCoord
 
-pStack :: Parser [Line]
-pStack = some (pLine <* optional (char '\n'))
+slicesToPoints :: Int -> [GridSlice] -> [GridPoint]
+slicesToPoints yCoord = map $ \slice -> 
+  GridPoint (gridSliceSlot slice) (gridSliceXCoord slice, yCoord) 
+
+pStack :: Parser [GridPoint]
+pStack = generatePoints . zip [1..] <$> some (pLine <* optional (char '\n'))
+  where
+    generatePoints = concatMap (uncurry slicesToPoints)
 
 pLabels :: Parser [Int]
 pLabels = spaceChar *> some integer
@@ -62,6 +87,20 @@ pMove =
     <*> (symbol "from" *> integer)
     <*> (symbol "to" *> integer)
 
+------------------------------------------------------------------------------------
+
+addToStack :: Int -> Slot -> Map Int [Char] -> Map Int [Char]
+addToStack _ Empty = id
+addToStack ident (Crate c) = M.insertWith (++) ident [c]
+
+buildStack :: [GridPoint] -> Map Int [Char]
+buildStack = foldr builder M.empty . sortOn (snd . gpCoord)
+  where
+    builder gp = addToStack (getX gp) (gpSlot gp)
+    getX = fst . gpCoord    
+
+------------------------------------------------------------------------------------    
+
 puzzleInput :: Text
 puzzleInput =
   T.intercalate
@@ -76,3 +115,6 @@ puzzleInput =
       "move 2 from 2 to 1",
       "move 1 from 1 to 2"
     ]
+
+example :: Text -> [GridPoint]
+example = fst . fromRight ([], []) . runParser pInput ""
