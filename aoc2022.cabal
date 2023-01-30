@@ -25,14 +25,19 @@ source-repository head
 
 library
   exposed-modules:
+      Day1
       Lib
   other-modules:
       Paths_aoc2022
   hs-source-dirs:
       src
+  default-extensions:
+      OverloadedStrings
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , megaparsec
+    , text
   default-language: Haskell2010
 
 executable aoc2022-exe
@@ -41,10 +46,14 @@ executable aoc2022-exe
       Paths_aoc2022
   hs-source-dirs:
       app
+  default-extensions:
+      OverloadedStrings
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aoc2022
     , base >=4.7 && <5
+    , megaparsec
+    , text
   default-language: Haskell2010
 
 test-suite aoc2022-test
@@ -54,8 +63,13 @@ test-suite aoc2022-test
       Paths_aoc2022
   hs-source-dirs:
       test
+  default-extensions:
+      OverloadedStrings
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aoc2022
     , base >=4.7 && <5
+    , hspec
+    , megaparsec
+    , text
   default-language: Haskell2010
