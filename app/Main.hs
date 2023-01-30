@@ -6,6 +6,7 @@ import qualified Day01 as D01
 import qualified Day02 as D02
 import qualified Day03 as D03
 import qualified Day04 as D04
+import qualified Day05 as D05
 
 day01Main :: IO ()
 day01Main = do 
@@ -31,5 +32,10 @@ day04Main = do
   print (D04.part1Solution input)
   print (D04.part2Solution input)
 
+day05Main :: IO ()
+day05Main = do 
+  input <- T.pack <$> readFile "inputs/day5.txt"
+  print (D05.part1Solution input)
+
 main :: IO ()
-main = day04Main
+main = day05Main

@@ -4,8 +4,9 @@ module Day05 where
 
 import Data.Either (fromRight)
 import Data.Functor (($>))
-import Data.List (sortOn)
+import Data.List (sortOn, uncons)
 import Data.Map (Map)
+import Data.Maybe (fromJust)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -36,6 +37,8 @@ type Line = [GridSlice]
 type Move = (Int, Int, Int)
 
 type Input = ([GridPoint], [Move])
+
+type Depot = Map Int [Char]
 
 ------------------------------------------------------------------------------------
 
@@ -89,17 +92,48 @@ pMove =
 
 ------------------------------------------------------------------------------------
 
-addToStack :: Int -> Slot -> Map Int [Char] -> Map Int [Char]
+addToStack :: Int -> Slot -> Depot -> Depot
 addToStack _ Empty = id
 addToStack ident (Crate c) = M.insertWith (++) ident [c]
 
-buildStack :: [GridPoint] -> Map Int [Char]
-buildStack = foldr builder M.empty . sortOn (snd . gpCoord)
+buildDepot :: [GridPoint] -> Depot
+buildDepot = foldr builder M.empty . sortOn (snd . gpCoord)
   where
     builder gp = addToStack (getX gp) (gpSlot gp)
     getX = fst . gpCoord    
 
-------------------------------------------------------------------------------------    
+moveCrates :: Move -> Depot -> Depot
+moveCrates (quantity, from, to) m
+  | quantity < 1 = m
+  | otherwise = moveCrates (quantity - 1, from, to) (moveSingleCrate from to m)
+
+moveSingleCrate :: Int -> Int -> Depot -> Depot
+moveSingleCrate from to = uncurry (placeOnStack to) . removeFromStack from
+
+removeFromStack :: Int -> Depot -> (Char, Depot)
+removeFromStack ident m = fromJust payload
+  where
+    payload = do 
+      crates <- M.lookup ident m
+      (top, rest) <- uncons crates
+      return (top, M.update (Just . const rest) ident m)
+
+placeOnStack :: Int -> Char -> Depot -> Depot
+placeOnStack ident c = M.update (Just . (:) c) ident
+
+topOfEachStack :: Depot -> Text
+topOfEachStack = T.pack . map (head . snd) . M.toList
+
+------------------------------------------------------------------------------------
+
+part1Solution :: Text -> Text
+part1Solution input = topOfEachStack $ foldr moveCrates depot $ reverse moves
+  where
+    structureInput = fromRight ([], []) . runParser pInput ""
+    (points, moves) = structureInput input
+    depot = buildDepot points
+
+------------------------------------------------------------------------------------
 
 puzzleInput :: Text
 puzzleInput =
