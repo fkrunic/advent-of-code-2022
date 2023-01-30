@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Day2 where
+module Day02 where
 
 import Data.Either (fromRight)
 import Data.Text (Text)

@@ -1,8 +1,9 @@
 import Test.Hspec
 
-import qualified Day1 as D01
-import qualified Day2 as D02
-import qualified Day3 as D03
+import qualified Day01 as D01
+import qualified Day02 as D02
+import qualified Day03 as D03
+import qualified Day04 as D04
 
 main :: IO ()
 main = hspec $ do
@@ -19,4 +20,8 @@ main = hspec $ do
       D03.part1Solution D03.puzzleInput `shouldBe` 157
     it "Day 3 Solution - Part 2" $ do 
       D03.part2Solution D03.puzzleInput `shouldBe` 70      
+    it "Day 4 Solution - Part 1" $ do
+      D04.part1Solution D04.puzzleInput `shouldBe` 2
+    it "Day 4 Solution - Part 2" $ do
+      D04.part2Solution D04.puzzleInput `shouldBe` 4
 

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Day3 where
+module Day03 where
 
 import Data.Char (isLetter, ord)
 import Data.Either (fromRight)

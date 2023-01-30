@@ -25,10 +25,10 @@ source-repository head
 
 library
   exposed-modules:
-      Day1
-      Day2
-      Day3
-      Lib
+      Day01
+      Day02
+      Day03
+      Day04
   other-modules:
       Paths_aoc2022
   hs-source-dirs:

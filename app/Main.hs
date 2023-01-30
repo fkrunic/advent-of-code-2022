@@ -2,27 +2,34 @@ module Main (main) where
 
 import qualified Data.Text as T
 
-import qualified Day1 as D01
-import qualified Day2 as D02
-import qualified Day3 as D03
+import qualified Day01 as D01
+import qualified Day02 as D02
+import qualified Day03 as D03
+import qualified Day04 as D04
 
-day1Main :: IO ()
-day1Main = do 
+day01Main :: IO ()
+day01Main = do 
   input <- readFile "inputs/day1.txt" 
   print (D01.part1Solution input)
   print (D01.part2Solution input)
 
-day2Main :: IO () 
-day2Main = do
+day02Main :: IO () 
+day02Main = do
   input <- T.pack <$> readFile "inputs/day2.txt"
   print (D02.part1Solution input)
   print (D02.part2Solution input)
 
-day3Main :: IO () 
-day3Main = do
+day03Main :: IO () 
+day03Main = do
   input <- T.pack <$> readFile "inputs/day3.txt"
   print (D03.part1Solution input)
   print (D03.part2Solution input)  
 
+day04Main :: IO ()
+day04Main = do 
+  input <- T.pack <$> readFile "inputs/day4.txt"
+  print (D04.part1Solution input)
+  print (D04.part2Solution input)
+
 main :: IO ()
-main = day3Main
+main = day04Main
