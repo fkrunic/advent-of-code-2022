@@ -3,7 +3,7 @@ module Day06 where
 import qualified Data.Set as S
 
 buildMarker :: Int -> String -> Int
-buildMarker _ [] = -1
+buildMarker _ [] = undefined
 buildMarker k input =
   if uniqueCount == k
     then k
