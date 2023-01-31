@@ -9,7 +9,7 @@ buildMarker k input =
     then k
     else 1 + buildMarker k (tail input)
   where
-    (chunk, rest) = splitAt k input
+    (chunk, _) = splitAt k input
     chunkSet = S.fromList chunk
     uniqueCount = length chunkSet
 
