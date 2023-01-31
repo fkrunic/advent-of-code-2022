@@ -9,7 +9,6 @@ type GridPoint a = (Coordinate, a)
 
 data TreeView = TreeView
   { treeHeight :: Height,
-    treeCoord :: (XCoordinate, YCoordinate),
     treeNorthView :: [Height],
     treeSouthView :: [Height],
     treeWestView :: [Height],
@@ -99,7 +98,6 @@ generateTreeView :: Grid Height -> Coordinate -> Height -> TreeView
 generateTreeView grid coord height =
   TreeView
     { treeHeight = height,
-      treeCoord = coord,
       treeNorthView = generateDirectionalView grid moveNorth coord,
       treeSouthView = generateDirectionalView grid moveSouth coord,
       treeWestView = generateDirectionalView grid moveWest coord,
