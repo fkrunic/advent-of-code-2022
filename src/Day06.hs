@@ -4,7 +4,7 @@ import qualified Data.Set as S
 
 buildMarker :: Int -> String -> Int
 buildMarker _ [] = -1
-buildMarker k input = 
+buildMarker k input =
   if uniqueCount == k
     then k
     else 1 + buildMarker k (tail input)
@@ -20,9 +20,9 @@ part2Solution :: String -> Int
 part2Solution = buildMarker 14
 
 puzzleInputs :: [String]
-puzzleInputs = 
-  [ "bvwbjplbgvbhsrlpgdmjqwftvncz"
-  , "nppdvjthqldpwncqszvftbrmjlhg"
-  , "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"
-  , "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"
+puzzleInputs =
+  [ "bvwbjplbgvbhsrlpgdmjqwftvncz",
+    "nppdvjthqldpwncqszvftbrmjlhg",
+    "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg",
+    "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"
   ]
