@@ -5,7 +5,7 @@ module Day07 where
 import Data.Char (isAlphaNum)
 import Data.Either (fromRight)
 import Data.Functor (($>))
-import Data.List (init)
+import Data.List (init, sort)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -33,7 +33,8 @@ data FileSystem
 data SystemState = SystemState
   { ssFileSystem :: FileSystem,
     ssCurrentPath :: [Text]
-  } deriving (Show, Eq)
+  }
+  deriving (Show, Eq)
 
 ------------------------------------------------------------------------
 
@@ -111,7 +112,45 @@ addFile size child (p : deeper) d@(Directory path children)
   | path == p = Directory path (map (addFile size child deeper) children)
   | otherwise = d
 
+totalSize :: FileSystem -> Integer
+totalSize (File _ size) = size
+totalSize (Directory _ children) = sum (map totalSize children)
+
+tally :: FileSystem -> Integer
+tally (File _ _) = 0
+tally d@(Directory _ children) =
+  if t1 <= 100000
+    then t1 + sum (map tally children)
+    else sum (map tally children)
+  where
+    t1 = totalSize d
+
+findSizes :: FileSystem -> [Integer]
+findSizes (File _ _) = []
+findSizes d@(Directory _ children) =
+  totalSize d : concatMap findSizes children
+
+targetSize :: FileSystem -> Integer
+targetSize fs = finder fs
+  where
+    currentSize = totalSize fs
+    unusedSpace = 70000000 - currentSize
+    needToDelete = 30000000 - unusedSpace
+    finder = head . dropWhile (< needToDelete) . sort . findSizes
+
 ------------------------------------------------------------------------
+
+part1Solution :: Text -> Integer
+part1Solution = tally . ssFileSystem . foldr update initial . reverse . parse
+  where
+    initial = SystemState (Directory "/" []) ["/"]
+    parse = fromRight [] . runParser (some pLine) ""
+
+part2Solution :: Text -> Integer
+part2Solution = targetSize . ssFileSystem . foldr update initial . reverse . parse
+  where
+    initial = SystemState (Directory "/" []) ["/"]
+    parse = fromRight [] . runParser (some pLine) ""
 
 puzzleInput :: Text
 puzzleInput =
