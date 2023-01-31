@@ -107,6 +107,20 @@ moveCrates (quantity, from, to) m
   | quantity < 1 = m
   | otherwise = moveCrates (quantity - 1, from, to) (moveSingleCrate from to m)
 
+batchMoveCrates :: Move -> Depot -> Depot
+batchMoveCrates (quantity, from, to)
+  = uncurry (placeBatchOnStack to) . removeBatchFromStack quantity from 
+
+removeBatchFromStack :: Int -> Int -> Depot -> ([Char], Depot)
+removeBatchFromStack quantity ident m = 
+  (batch, M.update (Just . const remaining) ident m)
+  where
+    (batch, remaining) = splitCrates m
+    splitCrates = splitAt quantity . fromJust . M.lookup ident
+
+placeBatchOnStack :: Int -> [Char] -> Depot -> Depot
+placeBatchOnStack ident crates = M.update (Just . (++) crates) ident
+
 moveSingleCrate :: Int -> Int -> Depot -> Depot
 moveSingleCrate from to = uncurry (placeOnStack to) . removeFromStack from
 
@@ -128,6 +142,13 @@ topOfEachStack = T.pack . map (head . snd) . M.toList
 
 part1Solution :: Text -> Text
 part1Solution input = topOfEachStack $ foldr moveCrates depot $ reverse moves
+  where
+    structureInput = fromRight ([], []) . runParser pInput ""
+    (points, moves) = structureInput input
+    depot = buildDepot points
+
+part2Solution :: Text -> Text
+part2Solution input = topOfEachStack $ foldr batchMoveCrates depot $ reverse moves
   where
     structureInput = fromRight ([], []) . runParser pInput ""
     (points, moves) = structureInput input
