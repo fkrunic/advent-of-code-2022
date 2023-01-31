@@ -33,7 +33,7 @@ data FileSystem
 data SystemState = SystemState
   { ssFileSystem :: FileSystem,
     ssCurrentPath :: [Text]
-  }
+  } deriving (Show, Eq)
 
 ------------------------------------------------------------------------
 
@@ -141,3 +141,8 @@ puzzleInput =
       "5626152 d.ext",
       "7214296 k"
     ]
+
+example :: Text -> SystemState
+example = foldr update initial . reverse . fromRight [] . runParser (some pLine) ""
+  where
+    initial = SystemState (Directory "/" []) ["/"]
