@@ -9,6 +9,7 @@ import qualified Day04 as D04
 import qualified Day05 as D05
 import qualified Day06 as D06
 import qualified Day07 as D07
+import qualified Day08 as D08
 
 day01Main :: IO ()
 day01Main = do 
@@ -52,5 +53,11 @@ day07Main = do
   print (D07.part1Solution input)
   print (D07.part2Solution input)
 
+day08Main :: IO ()
+day08Main = do 
+  input <- readFile "inputs/day08.txt"
+  print (D08.part1Solution input)
+  print (D08.part2Solution input)  
+
 main :: IO ()
-main = day07Main
+main = day08Main
