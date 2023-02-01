@@ -10,7 +10,7 @@ data HeadRelativeToTail
   | NorthEast
   | SouthWest
   | SouthEast
-  deriving (Show, Eq, Enum)
+  deriving (Show, Eq)
 
 data Move = UpMove | DownMove | LeftMove | RightMove deriving (Show, Eq)
 
