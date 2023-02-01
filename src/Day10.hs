@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Day09 where
+module Day10 where
 
+import Data.Bifunctor (first)
 import           Data.Either                (fromRight)
 import           Data.Functor               (($>))
-import           Data.List                  (sortOn, uncons, scanr)
+import           Data.List                  (sortOn, uncons, scanr, find)
 import           Data.Map                   (Map)
 import qualified Data.Map.Strict            as M
 import           Data.Maybe                 (fromJust)
@@ -38,23 +39,26 @@ data Instruction
   | Noop
   deriving (Show, Eq)
 
-data Action
-  = NoAction
-  | IncrementRegistry Int
-  deriving (Show, Eq)
+data CycleStart = CycleStart deriving (Show, Eq)
+data CycleDuring = CycleDuring deriving (Show, Eq)
+data CycleEnd = CycleEnd deriving (Show, Eq)
+data Delayed = Delayed Instruction deriving (Show, Eq)
 
-newtype Registry = Registry Int deriving (Show, Eq)
+{-
 
-newtype CycleCount = CycleCount Int deriving (Show, Eq)
+Noop
+cycle start -> cycle during -> cycle end
 
-newtype SignalStrength = SignalStrength Int deriving (Show, Eq)
+Addx
 
-data Snapshot
-  = Snapshot
-  { spEndRegistry :: Registry
-  , spCycleCount :: CycleCount
-  , spSignalStrength :: SignalStrength
-  } deriving (Show, Eq)
+cycle start -> cycle during -> cycle end -> cycle start -> cycle during -> cycle end + update
+
+-}
+
+start :: CycleStart -> Instruction -> (CycleDuring, Maybe Delayed)
+start = undefined
+
+finish :: CycleDuring -> 
 
 ------------------------------------------------------------------------------------
 
@@ -67,55 +71,42 @@ pInstruction =
 
 ------------------------------------------------------------------------------------
 
-inc :: CycleCount -> CycleCount
-inc (CycleCount c) = CycleCount (c + 1)
-
-convertToAction :: Instruction -> [Action]
-convertToAction Noop     = [NoAction]
-convertToAction (AddX v) = [NoAction, IncrementRegistry v]
-
-getActions :: [Instruction] -> [Action]
-getActions = concatMap convertToAction
-
-updateRegistry :: Action -> Registry -> Registry
-updateRegistry NoAction r                         = r
-updateRegistry (IncrementRegistry v) (Registry r) = Registry (r + v)
-
-signalStrength :: Registry -> CycleCount -> SignalStrength
-signalStrength (Registry r) (CycleCount c) = SignalStrength (r * c)
-
-updateSnapshot :: Action -> Snapshot -> Snapshot
-updateSnapshot action sp 
-  = Snapshot
-  { spEndRegistry = updateRegistry action (spEndRegistry sp)
-  , spCycleCount = nextCycle
-  , spSignalStrength = signalStrength (spEndRegistry sp) nextCycle
-  }
+run :: [Instruction] -> [(Int, Int)]
+run = reverse . foldr builder [(1, 1)] . reverse 
   where
-    nextCycle = inc (spCycleCount sp)
+    builder Noop [] = undefined
+    builder Noop acc@((cc, r):_) = (cc + 1, r):acc
+    builder (AddX _) [] = undefined
+    builder (AddX v) acc@((cc, r):_) = (cc + 2, r + v):(cc + 1, r):acc    
 
-initialSp :: Snapshot
-initialSp = Snapshot (Registry 1) (CycleCount 1) (SignalStrength 1)
-
-runCPU :: Snapshot -> [Action] -> [Snapshot]
-runCPU initial = reverse . scanr updateSnapshot initial . reverse
-
-targetCycles :: [CycleCount]
-targetCycles = map CycleCount [20, 60, 100, 140, 180, 220]
-
-isTarget :: Snapshot -> Bool
-isTarget sp = spCycleCount sp `elem` targetCycles
-
-sumTargetSignals :: [Instruction] -> Int
-sumTargetSignals = 
-  sum . map (unpack . spSignalStrength) . filter isTarget . runCPU initialSp . getActions
+findNearestCycle :: Int -> [(Int, Int)] -> Maybe (Int, Int)
+findNearestCycle cc = fmap (first (const cc)) . find (marker cc) . reverse
   where
-    unpack (SignalStrength s) = s
+    marker k (n, _) = n <= k
+
+targetCycles :: [Int]
+targetCycles = [20, 60, 100, 140, 180, 220]
 
 ------------------------------------------------------------------------------------
 
-part1Solution :: Text -> Int 
-part1Solution = sumTargetSignals . fromRight [] . runParser (some pInstruction) ""
+drawPixel :: Int -> Int -> Bool
+drawPixel cc reg = reg - 1 <= k && k <= reg + 1
+  where
+    k = ((cc - 1) `mod` 40) + 1
+
+------------------------------------------------------------------------------------
+
+part1Solution :: Text -> Int
+part1Solution = sum . map signal . filter (flip elem targetCycles . fst) . run . parse
+  where
+    parse = fromRight [] . runParser (some pInstruction) ""
+    signal (a, b) = a * b
+
+part2Solution :: Text -> [(Int, Int, Char)]
+part2Solution = map draw . run . parse
+  where
+    parse = fromRight [] . runParser (some pInstruction) ""
+    draw (cc, r) = if drawPixel cc r then (cc, r, '#') else (cc, r, '.')
 
 smallInput :: Text
 smallInput =
