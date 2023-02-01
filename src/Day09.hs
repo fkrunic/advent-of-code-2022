@@ -19,7 +19,7 @@ newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord)
 type Coordinate = (XCoordinate, YCoordinate)
 newtype HeadPosition = HeadPosition Coordinate deriving (Show, Eq)
 newtype TailPosition = TailPosition Coordinate deriving (Show, Eq)
-type RopePosition = (HeadPosition, TailPosition)
+type Rope = (HeadPosition, HeadRP)
 
 dragTail :: HeadRP -> Move -> HeadRP
 dragTail Covering UpMove     = North
@@ -65,29 +65,17 @@ moveHead (HeadPosition (xCoord, YCoordinate y)) DownMove = HeadPosition (xCoord,
 moveHead (HeadPosition (XCoordinate x, yCoord)) LeftMove = HeadPosition (XCoordinate (x - 1), yCoord)
 moveHead (HeadPosition (XCoordinate x, yCoord)) RightMove = HeadPosition (XCoordinate (x + 1), yCoord)
 
-tailPosition :: HeadPosition -> HeadRP -> TailPosition
-tailPosition (HeadPosition c) Covering = TailPosition c
-tailPosition (HeadPosition (xCoord, YCoordinate y)) North = TailPosition (xCoord, YCoordinate (y + 1))
-tailPosition (HeadPosition (xCoord, YCoordinate y)) South = TailPosition (xCoord, YCoordinate (y - 1))
-tailPosition (HeadPosition (XCoordinate x, yCoord)) East = TailPosition (XCoordinate (x - 1), yCoord)
-tailPosition (HeadPosition (XCoordinate x, yCoord)) West = TailPosition (XCoordinate (x + 1), yCoord)
-tailPosition (HeadPosition (XCoordinate x, YCoordinate y)) NorthWest = TailPosition (XCoordinate (x + 1), YCoordinate (y + 1))
-tailPosition (HeadPosition (XCoordinate x, YCoordinate y)) NorthEast = TailPosition (XCoordinate (x - 1), YCoordinate (y + 1))
-tailPosition (HeadPosition (XCoordinate x, YCoordinate y)) SouthWest = TailPosition (XCoordinate (x + 1), YCoordinate (y - 1))
-tailPosition (HeadPosition (XCoordinate x, YCoordinate y)) SouthEast = TailPosition (XCoordinate (x - 1), YCoordinate (y - 1))
+deduceTailPosition :: HeadPosition -> HeadRP -> TailPosition
+deduceTailPosition (HeadPosition c) Covering = TailPosition c
+deduceTailPosition (HeadPosition (xCoord, YCoordinate y)) North = TailPosition (xCoord, YCoordinate (y + 1))
+deduceTailPosition (HeadPosition (xCoord, YCoordinate y)) South = TailPosition (xCoord, YCoordinate (y - 1))
+deduceTailPosition (HeadPosition (XCoordinate x, yCoord)) East = TailPosition (XCoordinate (x - 1), yCoord)
+deduceTailPosition (HeadPosition (XCoordinate x, yCoord)) West = TailPosition (XCoordinate (x + 1), yCoord)
+deduceTailPosition (HeadPosition (XCoordinate x, YCoordinate y)) NorthWest = TailPosition (XCoordinate (x + 1), YCoordinate (y + 1))
+deduceTailPosition (HeadPosition (XCoordinate x, YCoordinate y)) NorthEast = TailPosition (XCoordinate (x - 1), YCoordinate (y + 1))
+deduceTailPosition (HeadPosition (XCoordinate x, YCoordinate y)) SouthWest = TailPosition (XCoordinate (x + 1), YCoordinate (y - 1))
+deduceTailPosition (HeadPosition (XCoordinate x, YCoordinate y)) SouthEast = TailPosition (XCoordinate (x - 1), YCoordinate (y - 1))
 
-findHeadRP :: RopePosition -> HeadRP
-findHeadRP (hp, TailPosition t) = head scanner
-  where
-    scanner = do
-      rp <- [Covering .. SouthEast]
-      let (TailPosition t') = tailPosition hp rp
-      [ rp | t == t' ]
+moveRope :: Rope -> Move -> Rope
+moveRope (hp, hrp) m = (moveHead hp m, dragTail hrp m)
 
-updateRopePosition :: RopePosition -> Move -> RopePosition
-updateRopePosition rp@(hp, _) m = (newHP, newTP)
-  where
-    originalOrientation = findHeadRP rp
-    newHP = moveHead hp m
-    newOrientation = dragTail originalOrientation m
-    newTP = tailPosition newHP newOrientation
