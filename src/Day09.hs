@@ -1,6 +1,6 @@
 module Day09 where
 
-data HeadRP
+data HeadRelativeToTail
   = Covering
   | North
   | South
@@ -19,9 +19,9 @@ newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord)
 type Coordinate = (XCoordinate, YCoordinate)
 newtype HeadPosition = HeadPosition Coordinate deriving (Show, Eq)
 newtype TailPosition = TailPosition Coordinate deriving (Show, Eq)
-type Rope = (HeadPosition, HeadRP)
+type Rope = (HeadPosition, HeadRelativeToTail)
 
-dragTail :: HeadRP -> Move -> HeadRP
+dragTail :: HeadRelativeToTail -> Move -> HeadRelativeToTail
 dragTail Covering UpMove     = North
 dragTail North UpMove        = North
 dragTail South UpMove        = Covering
@@ -65,7 +65,7 @@ moveHead (HeadPosition (xCoord, YCoordinate y)) DownMove = HeadPosition (xCoord,
 moveHead (HeadPosition (XCoordinate x, yCoord)) LeftMove = HeadPosition (XCoordinate (x - 1), yCoord)
 moveHead (HeadPosition (XCoordinate x, yCoord)) RightMove = HeadPosition (XCoordinate (x + 1), yCoord)
 
-deduceTailPosition :: HeadPosition -> HeadRP -> TailPosition
+deduceTailPosition :: HeadPosition -> HeadRelativeToTail -> TailPosition
 deduceTailPosition (HeadPosition c) Covering = TailPosition c
 deduceTailPosition (HeadPosition (xCoord, YCoordinate y)) North = TailPosition (xCoord, YCoordinate (y + 1))
 deduceTailPosition (HeadPosition (xCoord, YCoordinate y)) South = TailPosition (xCoord, YCoordinate (y - 1))
