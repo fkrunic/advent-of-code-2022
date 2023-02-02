@@ -82,10 +82,13 @@ findAdjDelta d@(DeltaX dx, DeltaY dy)
   | mhDistance d == 2 && (abs dx == 1 || abs dy == 1) = zero 
 
   -- deltas like (2,0)
-  | otherwise =
+  | mhDistance d <= 3 && (abs dx == 2 || abs dy == 2) =
     if abs dx == 2
       then (DeltaX (reduce dx), DeltaY dy)
       else (DeltaX dx, DeltaY (reduce dy))
+
+  -- deltas like (2,2) that result from diagonal stretches
+  | otherwise = (DeltaX (reduce dx), DeltaY (reduce dy))
   where
     zero = (DeltaX 0, DeltaY 0) 
 
@@ -117,23 +120,20 @@ instrToMoves (Instruction m n) = replicate n m
 
 ------------------------------------------------------------------------------------
 
-part1Solution :: Text -> Int
-part1Solution = length . nub . getTailCs . movement . concatMap instrToMoves . parse
+solution :: Int -> Text -> Int 
+solution nKnots = length . nub . getTailCs . movement . concatMap instrToMoves . parse
   where
     parse = fromRight [] . runParser (some pInstruction) ""
-    rope = replicate 2 (Knot (XCoordinate 1, YCoordinate 1))
+    rope = replicate nKnots (Knot (XCoordinate 1, YCoordinate 1))
     movement = reverse . scanr (flip moveRope) rope . reverse
     getCoordinate (Knot c) = c
     getTailCs = map (getCoordinate . last)
 
+part1Solution :: Text -> Int
+part1Solution = solution 2
+
 part2Solution :: Text -> Int 
-part2Solution = length . nub . getTailCs . movement . concatMap instrToMoves . parse
-  where
-    parse = fromRight [] . runParser (some pInstruction) ""
-    rope = replicate 10 (Knot (XCoordinate 1, YCoordinate 1))
-    movement = reverse . scanr (flip moveRope) rope . reverse
-    getCoordinate (Knot c) = c
-    getTailCs = map (getCoordinate . last)
+part2Solution = solution 10
 
 puzzleInput :: Text
 puzzleInput =
