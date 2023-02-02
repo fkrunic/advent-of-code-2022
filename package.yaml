@@ -25,6 +25,7 @@ dependencies:
 - ghc
 - megaparsec
 - text
+- transformers
 
 default-extensions:
 - OverloadedStrings
