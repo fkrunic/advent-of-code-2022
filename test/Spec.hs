@@ -10,7 +10,7 @@ import qualified Day05      as D05
 import qualified Day06      as D06
 import qualified Day07      as D07
 import qualified Day08      as D08
-import qualified D09Round2 as D09
+import qualified Day09 as D09
 
 main :: IO ()
 main = hspec $ do
