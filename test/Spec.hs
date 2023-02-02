@@ -48,6 +48,6 @@ main = hspec $ do
     it "Day 8 Solution - Part 2" $ do
       D08.part2Solution D08.puzzleInput `shouldBe` 8
     it "Day 9 Solution - Part 1" $ do
-      D09.part1Solution D09.puzzleInput `shouldBe` 13140
+      D09.part1Solution D09.puzzleInput `shouldBe` 13
 
 

@@ -58,7 +58,7 @@ cycle start -> cycle during -> cycle end -> cycle start -> cycle during -> cycle
 start :: CycleStart -> Instruction -> (CycleDuring, Maybe Delayed)
 start = undefined
 
-finish :: CycleDuring -> 
+-- finish :: CycleDuring -> 
 
 ------------------------------------------------------------------------------------
 

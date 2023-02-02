@@ -1,4 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Day09 where
+
+import           Data.Either                (fromRight)
+import           Data.List                  (nub)
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import           Data.Void
+import           Text.Megaparsec
+import           Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 
 data HeadRelativeToTail
   = Covering
@@ -13,6 +24,7 @@ data HeadRelativeToTail
   deriving (Show, Eq)
 
 data Move = UpMove | DownMove | LeftMove | RightMove deriving (Show, Eq)
+data Instruction = Instruction Move Int deriving (Show, Eq)
 
 newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord)
 newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord)
@@ -20,6 +32,11 @@ type Coordinate = (XCoordinate, YCoordinate)
 newtype HeadPosition = HeadPosition Coordinate deriving (Show, Eq)
 newtype TailPosition = TailPosition Coordinate deriving (Show, Eq)
 type Rope = (HeadPosition, HeadRelativeToTail)
+type MultiRope = [Rope]
+
+type Parser = Parsec Void Text
+
+--------------------------------------------------------------------------------------------
 
 dragTail :: HeadRelativeToTail -> Move -> HeadRelativeToTail
 dragTail Covering UpMove     = North
@@ -42,7 +59,7 @@ dragTail SouthWest DownMove  = South
 dragTail SouthEast DownMove  = South
 dragTail Covering LeftMove   = West
 dragTail North LeftMove      = NorthWest
-dragTail South LeftMove      = NorthWest
+dragTail South LeftMove      = SouthWest
 dragTail East LeftMove       = Covering
 dragTail West LeftMove       = West
 dragTail NorthWest LeftMove  = West
@@ -79,3 +96,60 @@ deduceTailPosition (HeadPosition (XCoordinate x, YCoordinate y)) SouthEast = Tai
 moveRope :: Rope -> Move -> Rope
 moveRope (hp, hrp) m = (moveHead hp m, dragTail hrp m)
 
+moveMultiRope :: MultiRope -> Move -> MultiRope
+moveMultiRope [] _ = undefined
+moveMultiRope (h:rest) m = (hp', hrp'):[]
+  where
+    (hp', hrp') = moveRope h m
+    nextKnotPosition@(TailPosition t) = deduceTailPosition hp' hrp'
+    kp = HeadPosition t
+
+
+--------------------------------------------------------------------------------------------
+
+sc :: Parser ()
+sc = L.space space1 empty empty
+
+lexer :: Parser a -> Parser a
+lexer = L.lexeme sc
+
+symbol :: Text -> Parser Text
+symbol = L.symbol sc
+
+integer :: Parser Int
+integer = lexer L.decimal
+
+pInstruction :: Parser Instruction
+pInstruction =
+  choice
+  [ Instruction UpMove <$> (symbol "U" *> integer)
+  , Instruction DownMove <$> (symbol "D" *> integer)
+  , Instruction RightMove <$> (symbol "R" *> integer)
+  , Instruction LeftMove <$> (symbol "L" *> integer)
+  ]
+
+instrToMoves :: Instruction -> [Move]
+instrToMoves (Instruction m n) = replicate n m
+
+--------------------------------------------------------------------------------------------
+
+part1Solution :: Text -> Int
+part1Solution = length . nub . getTPs . dragRope . concatMap instrToMoves . parse
+  where
+    parse = fromRight [] . runParser (some pInstruction) ""
+    initial = (HeadPosition (XCoordinate 1, YCoordinate 1), Covering)
+    dragRope = reverse . scanr (flip moveRope) initial . reverse
+    getTPs = map (uncurry deduceTailPosition)
+
+puzzleInput :: Text
+puzzleInput =
+  T.intercalate "\n"
+  [ "R 4"
+  , "U 4"
+  , "L 3"
+  , "D 1"
+  , "R 4"
+  , "D 1"
+  , "L 5"
+  , "R 2"
+  ]
