@@ -11,7 +11,7 @@ import qualified Day06 as D06
 import qualified Day07 as D07
 import qualified Day08 as D08
 import qualified Day09 as D09
-import qualified D10Round3 as D10
+import qualified Day10 as D10
 
 day01Main :: IO ()
 day01Main = do 

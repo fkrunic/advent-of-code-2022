@@ -1,23 +1,75 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Day10 where
 
-import Data.Bifunctor (first)
-import           Data.Either                (fromRight)
-import           Data.Functor               (($>))
-import           Data.List                  (sortOn, uncons, scanr, find)
-import           Data.Map                   (Map)
-import qualified Data.Map.Strict            as M
-import           Data.Maybe                 (fromJust)
-import qualified Data.Set                   as S
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
+import           Data.List                   (lookup, intercalate)
+import           Data.Either                 (fromRight)
+import           Data.Functor                (($>))
+import           Data.Maybe                  (fromMaybe)
+import           Data.Text                   (Text)
+import qualified Data.Text                   as T
+
 import           Data.Void
-import           Text.Megaparsec
+import           Text.Megaparsec             hiding (State)
 import           Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import qualified Text.Megaparsec.Char.Lexer  as L  
+
+newtype Register = Register Int deriving (Show, Eq, Ord)
+newtype Cycle = Cycle Int deriving (Show, Eq, Ord)
+newtype SignalStrength = SignalStrength Int deriving (Show, Eq)
+newtype CRTRow = CRTRow String deriving (Show, Eq)
+newtype SpriteLine = SpriteLine String deriving (Show, Eq)
+
+type Simulation = (Action, Register, Cycle, Maybe SignalStrength, SpriteLine, CRTRow)
+
+data Instruction
+  = AddX Int -- 2 cycles
+  | Noop     -- 1 cycle
+  deriving (Show, Eq)
+
+data Action
+  = BeginCycle
+  | DuringCycle
+  | EndCycle
+  | EndCycleIncrementRegister Int
+  deriving (Show, Eq)
 
 type Parser = Parsec Void Text
+
+-------------------------------------------------------------------------------------
+
+inc :: Cycle -> Cycle
+inc (Cycle c) = Cycle (c + 1)
+
+add :: Int -> Register -> Register
+add v (Register r) = Register (v + r)
+
+signal :: Register -> Cycle -> SignalStrength
+signal (Register r) (Cycle c) = SignalStrength (r * c)
+
+insToActions :: Instruction -> [Action]
+insToActions Noop = [BeginCycle, DuringCycle, EndCycle]
+insToActions (AddX v) = 
+  [ BeginCycle
+  , DuringCycle
+  , EndCycle
+  , BeginCycle
+  , DuringCycle
+  , EndCycleIncrementRegister v
+  ]
+
+update :: Action -> Simulation -> Simulation
+update BeginCycle (_, register, cyc, _, sl, crt) = 
+  (BeginCycle, register, inc cyc, Nothing, spritePosition register, crt)
+  
+update DuringCycle (_, register, cyc, _, sl, crt) = 
+  (DuringCycle, register, cyc, Just (signal register cyc), sl, updateCRTRow cyc crt sl)
+  
+update EndCycle (_, register, cyc, _, sl, crt) = 
+  (EndCycle, register, cyc, Nothing, sl, crt)
+  
+update (EndCycleIncrementRegister v) (_, register, cyc, _, sl, crt) = 
+  (EndCycleIncrementRegister v, add v register, cyc, Nothing, sl, crt)
+
+-------------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -34,34 +86,6 @@ integer = lexer L.decimal
 signedInteger :: Parser Int
 signedInteger = L.signed sc integer
 
-data Instruction
-  = AddX Int
-  | Noop
-  deriving (Show, Eq)
-
-data CycleStart = CycleStart deriving (Show, Eq)
-data CycleDuring = CycleDuring deriving (Show, Eq)
-data CycleEnd = CycleEnd deriving (Show, Eq)
-data Delayed = Delayed Instruction deriving (Show, Eq)
-
-{-
-
-Noop
-cycle start -> cycle during -> cycle end
-
-Addx
-
-cycle start -> cycle during -> cycle end -> cycle start -> cycle during -> cycle end + update
-
--}
-
-start :: CycleStart -> Instruction -> (CycleDuring, Maybe Delayed)
-start = undefined
-
--- finish :: CycleDuring -> 
-
-------------------------------------------------------------------------------------
-
 pInstruction :: Parser Instruction
 pInstruction =
   choice
@@ -69,53 +93,82 @@ pInstruction =
       AddX <$> (symbol "addx" *> signedInteger)
     ]
 
-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
 
-run :: [Instruction] -> [(Int, Int)]
-run = reverse . foldr builder [(1, 1)] . reverse 
+determineCRTLength :: Int -> Int
+determineCRTLength i = 
+  if 1 <= i && i <= 40
+    then i 
+    else determineCRTLength (i - 40)
+
+spritePosition :: Register -> SpriteLine
+spritePosition (Register r) = 
+  SpriteLine $ take 40 $ front ++ middle ++ back
   where
-    builder Noop [] = undefined
-    builder Noop acc@((cc, r):_) = (cc + 1, r):acc
-    builder (AddX _) [] = undefined
-    builder (AddX v) acc@((cc, r):_) = (cc + 2, r + v):(cc + 1, r):acc    
-
-findNearestCycle :: Int -> [(Int, Int)] -> Maybe (Int, Int)
-findNearestCycle cc = fmap (first (const cc)) . find (marker cc) . reverse
+    startIndex = r - 1
+    front = replicate startIndex '.'
+    middle = "###"
+    back = repeat '.'
+    
+findNextPixel :: CRTRow -> SpriteLine -> Char
+findNextPixel (CRTRow row) (SpriteLine sl) = 
+  fromMaybe '.' $ lookup (length row) assoc
   where
-    marker k (n, _) = n <= k
-
-targetCycles :: [Int]
-targetCycles = [20, 60, 100, 140, 180, 220]
-
-------------------------------------------------------------------------------------
-
-drawPixel :: Int -> Int -> Bool
-drawPixel cc reg = reg - 1 <= k && k <= reg + 1
+    assoc = zip [0..] sl 
+    
+updateCRTRow :: Cycle -> CRTRow -> SpriteLine -> CRTRow
+updateCRTRow (Cycle c) crt@(CRTRow row) sl = updatedCRT
   where
-    k = ((cc - 1) `mod` 40) + 1
+    crtLength = determineCRTLength c
+    updatedCRT = CRTRow $ take crtLength $ row ++ [findNextPixel crt sl]
+    
+renderingCycles :: [Cycle]
+renderingCycles = map Cycle [40, 80, 120, 160, 200, 240]
 
-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+
+targetCycles :: [Cycle]
+targetCycles = map Cycle [20, 60, 100, 140, 180, 220]
 
 part1Solution :: Text -> Int
-part1Solution = sum . map signal . filter (flip elem targetCycles . fst) . run . parse
+part1Solution = sum . map extractSS . filter isTargetCycle . runner . concatMap insToActions . parse
   where
     parse = fromRight [] . runParser (some pInstruction) ""
-    signal (a, b) = a * b
-
-part2Solution :: Text -> [(Int, Int, Char)]
-part2Solution = map draw . run . parse
+    runner = reverse . scanr update initial . reverse
+    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
+    isTargetCycle (_, _, cyc, _, _, _) = cyc `elem` targetCycles
+    extractSS (_, _, _, Just (SignalStrength ss), _, _) = ss 
+    extractSS (_, _, _, Nothing, _, _) = 0 
+    
+part2Solution :: Text -> IO ()
+part2Solution = imageExample    
+    
+testExample :: Text -> IO ()
+testExample = dump . runner . concatMap insToActions . parse
   where
     parse = fromRight [] . runParser (some pInstruction) ""
-    draw (cc, r) = if drawPixel cc r then (cc, r, '#') else (cc, r, '.')
+    runner = reverse . scanr update initial . reverse
+    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
+    dump = writeFile "outputs/test.txt" . intercalate "\n" . map show
+    
+imageExample :: Text -> IO ()
+imageExample = dump . runner . concatMap insToActions . parse
+  where
+    parse = fromRight [] . runParser (some pInstruction) ""
+    runner = reverse . scanr update initial . reverse
+    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
+    isRenderingCycle (action, _, cyc, _, _, _) = cyc `elem` renderingCycles && action == DuringCycle
+    extractCRTRow (_, _, _, _, _, CRTRow row) = row
+    dump = writeFile "outputs/image.txt" . intercalate "\n" . map extractCRTRow . filter isRenderingCycle
 
 smallInput :: Text
-smallInput =
-  T.intercalate
-    "\n"
-    [ "noop",
-      "addx 3",
-      "addx -5"
-    ]
+smallInput = 
+  T.intercalate 
+  "\n"
+  [ "noop"
+  , "addx 3"
+  , "addx -5"
+  ]
 
 puzzleInput :: Text
 puzzleInput =
