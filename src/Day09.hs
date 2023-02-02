@@ -3,7 +3,7 @@
 module Day09 where
 
 import           Data.Either                (fromRight)
-import Data.List (nub)
+import           Data.List                  (nub)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Void
@@ -64,11 +64,11 @@ findDelta :: Coordinate -> Coordinate -> Delta
 findDelta (XCoordinate x1, YCoordinate y1) (XCoordinate x2, YCoordinate y2) =
   (DeltaX (x1 - x2), DeltaY (y1 - y2))
 
-mhDistance :: Delta -> Int 
+mhDistance :: Delta -> Int
 mhDistance (DeltaX dx, DeltaY dy) = abs dx + abs dy
 
-reduce :: Int -> Int 
-reduce n 
+reduce :: Int -> Int
+reduce n
   | n > 0 = n - 1
   | otherwise = n + 1
 
@@ -79,7 +79,7 @@ findAdjDelta d@(DeltaX dx, DeltaY dy)
   | mhDistance d <= 1 = zero
 
   -- deltas like (1,1)
-  | mhDistance d == 2 && (abs dx == 1 || abs dy == 1) = zero 
+  | mhDistance d == 2 && (abs dx == 1 || abs dy == 1) = zero
 
   -- deltas like (2,0)
   | mhDistance d <= 3 && (abs dx == 2 || abs dy == 2) =
@@ -90,7 +90,7 @@ findAdjDelta d@(DeltaX dx, DeltaY dy)
   -- deltas like (2,2) that result from diagonal stretches
   | otherwise = (DeltaX (reduce dx), DeltaY (reduce dy))
   where
-    zero = (DeltaX 0, DeltaY 0) 
+    zero = (DeltaX 0, DeltaY 0)
 
 ------------------------------------------------------------------------------------
 
@@ -120,7 +120,7 @@ instrToMoves (Instruction m n) = replicate n m
 
 ------------------------------------------------------------------------------------
 
-solution :: Int -> Text -> Int 
+solution :: Int -> Text -> Int
 solution nKnots = length . nub . getTailCs . movement . concatMap instrToMoves . parse
   where
     parse = fromRight [] . runParser (some pInstruction) ""
@@ -132,7 +132,7 @@ solution nKnots = length . nub . getTailCs . movement . concatMap instrToMoves .
 part1Solution :: Text -> Int
 part1Solution = solution 2
 
-part2Solution :: Text -> Int 
+part2Solution :: Text -> Int
 part2Solution = solution 10
 
 puzzleInput :: Text
@@ -148,7 +148,7 @@ puzzleInput =
   , "R 2"
   ]
 
-largerPuzzleInput :: Text 
+largerPuzzleInput :: Text
 largerPuzzleInput =
   T.intercalate "\n"
   [ "R 5"
