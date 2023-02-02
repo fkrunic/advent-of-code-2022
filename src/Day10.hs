@@ -131,7 +131,12 @@ targetCycles :: [Cycle]
 targetCycles = map Cycle [20, 60, 100, 140, 180, 220]
 
 part1Solution :: Text -> Int
-part1Solution = sum . map extractSS . filter isTargetCycle . runner . concatMap insToActions . parse
+part1Solution = sum . 
+  map extractSS . 
+  filter isTargetCycle . 
+  runner . 
+  concatMap insToActions . 
+  parse
   where
     parse = fromRight [] . runParser (some pInstruction) ""
     runner = reverse . scanr update initial . reverse
@@ -141,25 +146,20 @@ part1Solution = sum . map extractSS . filter isTargetCycle . runner . concatMap 
     extractSS (_, _, _, Nothing, _, _) = 0 
     
 part2Solution :: Text -> IO ()
-part2Solution = imageExample    
-    
-testExample :: Text -> IO ()
-testExample = dump . runner . concatMap insToActions . parse
+part2Solution = dump . runner . concatMap insToActions . parse
   where
     parse = fromRight [] . runParser (some pInstruction) ""
     runner = reverse . scanr update initial . reverse
     initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
-    dump = writeFile "outputs/test.txt" . intercalate "\n" . map show
     
-imageExample :: Text -> IO ()
-imageExample = dump . runner . concatMap insToActions . parse
-  where
-    parse = fromRight [] . runParser (some pInstruction) ""
-    runner = reverse . scanr update initial . reverse
-    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
-    isRenderingCycle (action, _, cyc, _, _, _) = cyc `elem` renderingCycles && action == DuringCycle
+    isRenderingCycle (action, _, cyc, _, _, _) = 
+      cyc `elem` renderingCycles && action == DuringCycle
+      
     extractCRTRow (_, _, _, _, _, CRTRow row) = row
-    dump = writeFile "outputs/image.txt" . intercalate "\n" . map extractCRTRow . filter isRenderingCycle
+    dump = writeFile "outputs/image.txt" . 
+      intercalate "\n" . 
+      map extractCRTRow . 
+      filter isRenderingCycle    
 
 smallInput :: Text
 smallInput = 
