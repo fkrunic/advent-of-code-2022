@@ -11,6 +11,7 @@ import qualified Day06      as D06
 import qualified Day07      as D07
 import qualified Day08      as D08
 import qualified Day09 as D09
+import qualified D10Round3 as D10
 
 main :: IO ()
 main = hspec $ do
@@ -51,5 +52,7 @@ main = hspec $ do
       D09.part1Solution D09.puzzleInput `shouldBe` 13
     it "Day 9 Solution - Part 2" $ do 
       D09.part2Solution D09.largerPuzzleInput `shouldBe` 36
+    it "Day 10 Solution - Part 1" $ do
+      D10.part1Solution D10.puzzleInput `shouldBe` 13140
 
 

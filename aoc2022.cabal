@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       D10Round2
+      D10Round3
       Day01
       Day02
       Day03
