@@ -1,7 +1,9 @@
 module D10Round3 where
 
-import Data.Either (fromRight)
+import           Data.List                   (lookup, intercalate)
+import           Data.Either                 (fromRight)
 import           Data.Functor                (($>))
+import           Data.Maybe                  (fromMaybe)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
@@ -13,7 +15,10 @@ import qualified Text.Megaparsec.Char.Lexer  as L
 newtype Register = Register Int deriving (Show, Eq, Ord)
 newtype Cycle = Cycle Int deriving (Show, Eq, Ord)
 newtype SignalStrength = SignalStrength Int deriving (Show, Eq)
-type Simulation = (Register, Cycle, Maybe SignalStrength)
+newtype CRTRow = CRTRow String deriving (Show, Eq)
+newtype SpriteLine = SpriteLine String deriving (Show, Eq)
+
+type Simulation = (Action, Register, Cycle, Maybe SignalStrength, SpriteLine, CRTRow)
 
 data Instruction
   = AddX Int -- 2 cycles
@@ -52,10 +57,17 @@ insToActions (AddX v) =
   ]
 
 update :: Action -> Simulation -> Simulation
-update BeginCycle (register, cyc, _) = (register, inc cyc, Nothing)
-update DuringCycle (register, cyc, _) = (register, cyc, Just (signal register cyc))
-update EndCycle (register, cyc, _) = (register, cyc, Nothing)
-update (EndCycleIncrementRegister v) (register, cyc, _) = (add v register, cyc, Nothing)
+update BeginCycle (_, register, cyc, _, sl, crt) = 
+  (BeginCycle, register, inc cyc, Nothing, spritePosition register, crt)
+  
+update DuringCycle (_, register, cyc, _, sl, crt) = 
+  (DuringCycle, register, cyc, Just (signal register cyc), sl, updateCRTRow cyc crt sl)
+  
+update EndCycle (_, register, cyc, _, sl, crt) = 
+  (EndCycle, register, cyc, Nothing, sl, crt)
+  
+update (EndCycleIncrementRegister v) (_, register, cyc, _, sl, crt) = 
+  (EndCycleIncrementRegister v, add v register, cyc, Nothing, sl, crt)
 
 -------------------------------------------------------------------------------------
 
@@ -83,7 +95,35 @@ pInstruction =
 
 -------------------------------------------------------------------------------------
 
--- Drawing functions go here. 
+determineCRTLength :: Int -> Int
+determineCRTLength i = 
+  if 1 <= i && i <= 40
+    then i 
+    else determineCRTLength (i - 40)
+
+spritePosition :: Register -> SpriteLine
+spritePosition (Register r) = 
+  SpriteLine $ take 40 $ front ++ middle ++ back
+  where
+    startIndex = r - 1
+    front = replicate startIndex '.'
+    middle = "###"
+    back = repeat '.'
+    
+findNextPixel :: CRTRow -> SpriteLine -> Char
+findNextPixel (CRTRow row) (SpriteLine sl) = 
+  fromMaybe '.' $ lookup (length row) assoc
+  where
+    assoc = zip [0..] sl 
+    
+updateCRTRow :: Cycle -> CRTRow -> SpriteLine -> CRTRow
+updateCRTRow (Cycle c) crt@(CRTRow row) sl = updatedCRT
+  where
+    crtLength = determineCRTLength c
+    updatedCRT = CRTRow $ take crtLength $ row ++ [findNextPixel crt sl]
+    
+renderingCycles :: [Cycle]
+renderingCycles = map Cycle [40, 80, 120, 160, 200, 240]
 
 -------------------------------------------------------------------------------------
 
@@ -95,10 +135,19 @@ part1Solution = sum . map extractSS . filter isTargetCycle . runner . concatMap 
   where
     parse = fromRight [] . runParser (some pInstruction) ""
     runner = reverse . scanr update initial . reverse
-    initial = (Register 1, Cycle 0, Nothing)
-    isTargetCycle (_, cyc, _) = cyc `elem` targetCycles
-    extractSS (_, _, Just (SignalStrength ss)) = ss 
-    extractSS (_, _, Nothing) = 0 
+    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
+    isTargetCycle (_, _, cyc, _, _, _) = cyc `elem` targetCycles
+    extractSS (_, _, _, Just (SignalStrength ss), _, _) = ss 
+    extractSS (_, _, _, Nothing, _, _) = 0 
+    
+testExample :: Text -> IO ()
+testExample = dump . runner . concatMap insToActions . parse
+  where
+    parse = fromRight [] . runParser (some pInstruction) ""
+    runner = reverse . scanr update initial . reverse
+    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
+    -- isRenderingCycle (action, _, cyc, _, _, _) = cyc `elem` renderingCycles && action == DuringCycle
+    dump = writeFile "outputs/test.txt" . intercalate "\n" . map show
 
 smallInput :: Text
 smallInput = 
