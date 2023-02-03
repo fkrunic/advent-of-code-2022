@@ -10,4 +10,4 @@ spec =
       part1Solution puzzleInput `shouldBe` 13
 
     it "Part 2" $ do
-      part2Solution puzzleInput `shouldBe` 36
+      part2Solution largerPuzzleInput `shouldBe` 36
