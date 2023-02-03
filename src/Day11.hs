@@ -127,11 +127,6 @@ turn bnz = foldr executeTurn bnz $ reverse $ M.elems bnz
   where
     executeTurn m = singleMonkeyTurn (label m) (scatter m)
 
--- throwAt :: (Item, Label) -> Bananza -> Bananza
--- throwAt (item, label) = M.update attach label
---   where
---     attach m = Just $ m { startingItems = startingItems m ++ [item]}
-
 -------------------------------------------------------------------------------------
 
 puzzleInput :: Text
