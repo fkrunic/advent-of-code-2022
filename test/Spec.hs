@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Test.Hspec
+import Test.Hspec
 
-import qualified Day01      as D01
-import qualified Day02      as D02
-import qualified Day03      as D03
-import qualified Day04      as D04
-import qualified Day05      as D05
-import qualified Day06      as D06
-import qualified Day07      as D07
-import qualified Day08      as D08
+import qualified Day01 as D01
+import qualified Day02 as D02
+import qualified Day03 as D03
+import qualified Day04 as D04
+import qualified Day05 as D05
+import qualified Day06 as D06
+import qualified Day07 as D07
+import qualified Day08 as D08
 import qualified Day09 as D09
-import qualified D10Round3 as D10
+import qualified Day10 as D10
 
 main :: IO ()
 main = hspec $ do
@@ -50,9 +50,7 @@ main = hspec $ do
       D08.part2Solution D08.puzzleInput `shouldBe` 8
     it "Day 9 Solution - Part 1" $ do
       D09.part1Solution D09.puzzleInput `shouldBe` 13
-    it "Day 9 Solution - Part 2" $ do 
+    it "Day 9 Solution - Part 2" $ do
       D09.part2Solution D09.largerPuzzleInput `shouldBe` 36
     it "Day 10 Solution - Part 1" $ do
       D10.part1Solution D10.puzzleInput `shouldBe` 13140
-
-
