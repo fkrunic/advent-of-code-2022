@@ -1,7 +1,7 @@
 module Day09 (
   part1Solution,
-  puzzleInput,
   part2Solution,
+  puzzleInput,
   largerPuzzleInput,
 ) where
 
