@@ -79,6 +79,7 @@ test-suite aoc2022-test
       Test.Day02Spec
       Test.Day03Spec
       Test.Day04Spec
+      Test.Day05Spec
       Test.Day11Spec
       Paths_aoc2022
   hs-source-dirs:
