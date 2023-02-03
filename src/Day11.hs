@@ -2,27 +2,32 @@ module Day11 where
 
 import           Data.Either                (fromRight)
 import           Data.Functor               (($>))
+import           Data.List                  (uncons)
 import           Data.Maybe                 (fromMaybe)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 
 import           Data.Void
-import           Text.Megaparsec            hiding (State)
+import           Text.Megaparsec            hiding (State, Label, label)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
 type Parser = Parsec Void Text
 data MonkeyOp = Add (Maybe Int) | Multiply (Maybe Int) deriving (Show, Eq)
 type ThrowChoice = (Int, Int)
+
 data Monkey
-  = Monkey 
-  { label :: Int
-  , startingItems :: [Int]
-  , operation :: MonkeyOp
-  , divisibility :: Int
-  , throwChoice :: (Int, Int)
+  = Monkey
+  { label         :: Label
+  , startingItems :: [Item]
+  , operation     :: MonkeyOp
+  , divisibility  :: Int
+  , throwChoice   :: (Label, Label)
   }
   deriving (Show, Eq)
+
+newtype Item = Item Int deriving (Show, Eq)
+newtype Label = Label Int deriving (Show, Eq)
 
 -------------------------------------------------------------------------------------
 
@@ -41,17 +46,18 @@ integer = lexer L.decimal
 signedInteger :: Parser Int
 signedInteger = L.signed sc integer
 
-pMonkeyHeader :: Parser Int
-pMonkeyHeader = symbol "Monkey" *> integer <* symbol ":"
+pMonkeyHeader :: Parser Label
+pMonkeyHeader = 
+  Label <$> (symbol "Monkey" *> integer <* symbol ":")
 
-pStartingItems :: Parser [Int]
-pStartingItems = 
+pStartingItems :: Parser [Item]
+pStartingItems =
   symbol "Starting items:" *>
-  some (integer <* optional (symbol ","))
+  some (Item <$> integer <* optional (symbol ","))
 
 pOpReference :: Parser (Maybe Int)
-pOpReference = 
-  choice 
+pOpReference =
+  choice
   [ symbol "old" $> Nothing
   , Just <$> integer
   ]
@@ -68,20 +74,42 @@ pOperation = symbol "Operation: new = old" *> pMonkeyOp
 pDivisibility :: Parser Int
 pDivisibility = symbol "Test: divisible by" *> integer
 
-pThrowChoice :: Parser (Int, Int)
+pThrowChoice :: Parser (Label, Label)
 pThrowChoice =
   (,) <$>
-  (symbol "If true: throw to monkey" *> integer) <*>
-  (symbol "If false: throw to monkey" *> integer)
+  (Label <$> (symbol "If true: throw to monkey" *> integer)) <*>
+  (Label <$> (symbol "If false: throw to monkey" *> integer))
 
 pMonkey :: Parser Monkey
-pMonkey = 
-  Monkey <$> 
+pMonkey =
+  Monkey <$>
     pMonkeyHeader <*>
     (space *> pStartingItems) <*>
     (space *> pOperation) <*>
     (space *> pDivisibility) <*>
     (space *> pThrowChoice)
+
+-------------------------------------------------------------------------------------
+
+modifyWorry :: Int -> MonkeyOp -> Int
+modifyWorry n (Add Nothing)       = 2 * n
+modifyWorry n (Add (Just k))      = n + k
+modifyWorry n (Multiply Nothing)  = n * n
+modifyWorry n (Multiply (Just k)) = n * k
+
+relief :: Int -> Int
+relief n = n `div` 3
+
+turn' :: Monkey -> [(Item, Label)]
+turn' m = thrower m
+  where
+    thrower = foldr throw [] . startingItems
+    throw (Item worry) labels = 
+      let worried = modifyWorry worry (operation m)
+      in let relieved = relief worried
+      in if relieved `mod` divisibility m == 0
+        then (Item relieved, fst (throwChoice m)) : labels
+        else (Item relieved, snd (throwChoice m)) : labels
 
 -------------------------------------------------------------------------------------
 
