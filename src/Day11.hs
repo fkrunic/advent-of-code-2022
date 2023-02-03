@@ -2,19 +2,20 @@ module Day11 where
 
 import           Data.Either                (fromRight)
 import           Data.Functor               (($>))
-import           Data.List                  (uncons)
-import           Data.Maybe                 (fromMaybe)
+import           Data.Map                   (Map)
+import qualified Data.Map.Strict            as M
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 
 import           Data.Void
-import           Text.Megaparsec            hiding (State, Label, label)
+import           Text.Megaparsec            hiding (Label, State, label)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
 type Parser = Parsec Void Text
 data MonkeyOp = Add (Maybe Int) | Multiply (Maybe Int) deriving (Show, Eq)
 type ThrowChoice = (Int, Int)
+type Bananza = Map Label Monkey
 
 data Monkey
   = Monkey
@@ -27,7 +28,7 @@ data Monkey
   deriving (Show, Eq)
 
 newtype Item = Item Int deriving (Show, Eq)
-newtype Label = Label Int deriving (Show, Eq)
+newtype Label = Label Int deriving (Show, Eq, Ord)
 
 -------------------------------------------------------------------------------------
 
@@ -47,7 +48,7 @@ signedInteger :: Parser Int
 signedInteger = L.signed sc integer
 
 pMonkeyHeader :: Parser Label
-pMonkeyHeader = 
+pMonkeyHeader =
   Label <$> (symbol "Monkey" *> integer <* symbol ":")
 
 pStartingItems :: Parser [Item]
@@ -100,16 +101,36 @@ modifyWorry n (Multiply (Just k)) = n * k
 relief :: Int -> Int
 relief n = n `div` 3
 
-turn' :: Monkey -> [(Item, Label)]
-turn' m = thrower m
+scatter :: Monkey -> [(Item, Label)]
+scatter m = thrower m
   where
     thrower = foldr throw [] . startingItems
-    throw (Item worry) labels = 
+    throw (Item worry) labels =
       let worried = modifyWorry worry (operation m)
       in let relieved = relief worried
       in if relieved `mod` divisibility m == 0
         then (Item relieved, fst (throwChoice m)) : labels
         else (Item relieved, snd (throwChoice m)) : labels
+
+singleMonkeyTurn :: Label -> [(Item, Label)] -> Bananza -> Bananza
+singleMonkeyTurn thrower flyers bnz = sendFlyers
+  where
+    liquidateThrower = M.update (\mk -> Just mk { startingItems = [] }) thrower bnz
+    sendFlyers = foldr send liquidateThrower flyers
+    send (item, label) = M.update (Just . throwAt item) label
+
+throwAt :: Item -> Monkey -> Monkey
+throwAt item m = m { startingItems = startingItems m ++ [item] }
+
+turn :: Bananza -> Bananza
+turn bnz = foldr executeTurn bnz $ reverse $ M.elems bnz
+  where
+    executeTurn m = singleMonkeyTurn (label m) (scatter m)
+
+-- throwAt :: (Item, Label) -> Bananza -> Bananza
+-- throwAt (item, label) = M.update attach label
+--   where
+--     attach m = Just $ m { startingItems = startingItems m ++ [item]}
 
 -------------------------------------------------------------------------------------
 
