@@ -1,3 +1,5 @@
+module Test.Day11Spec where
+
 import Test.Hspec
 
 import Data.Text (Text)
