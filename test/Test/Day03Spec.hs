@@ -1,10 +1,10 @@
 module Test.Day03Spec (spec) where
 
-import Test.Hspec
 import Day03
+import Test.Hspec
 
 spec :: SpecWith ()
-spec = 
+spec =
   describe "Day 3 Solution" $ do
     it "Part 1" $ do
       part1Solution puzzleInput `shouldBe` 157
