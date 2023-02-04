@@ -1,7 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Day03 where
+module Day03 (
+  part1Solution,
+  part2Solution,
+  puzzleInput,
+) where
 
 import Data.Char (isLetter, ord)
 import Data.Either (fromRight)
@@ -35,14 +38,14 @@ pSack = do
 pGroup :: Parser (Text, Text, Text)
 pGroup =
   (,,) <$> pLine <*> pLine <*> pLine
-  where
-    pLine = lexer (takeWhile1P Nothing isLetter)
+ where
+  pLine = lexer (takeWhile1P Nothing isLetter)
 
 itemInGroup :: Text -> Text -> Text -> Char
 itemInGroup t1 t2 t3 =
   head $ S.toList $ toSet t1 ^ toSet t2 ^ toSet t3
-  where
-    (^) = S.intersection
+ where
+  (^) = S.intersection
 
 itemInBoth :: S.Set Char -> S.Set Char -> Char
 itemInBoth first second = head $ S.toList $ S.intersection first second
@@ -55,22 +58,22 @@ priority c
 
 part1Solution :: Text -> Int
 part1Solution = sum . map (priority . uncurry itemInBoth) . fromRight [] . parse
-  where
-    parse = runParser (some (lexer pSack)) ""
+ where
+  parse = runParser (some (lexer pSack)) ""
 
 part2Solution :: Text -> Int
 part2Solution = sum . map (priority . uncurry3 itemInGroup) . fromRight [] . parse
-  where
-    parse = runParser (some pGroup) ""
+ where
+  parse = runParser (some pGroup) ""
 
 puzzleInput :: Text
 puzzleInput =
   T.intercalate
     "\n"
-    [ "vJrwpWtwJgWrhcsFMMfFFhFp",
-      "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL",
-      "PmmdzqPrVvPwwTWBwg",
-      "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn",
-      "ttgJtRGJQctTZtZT",
-      "CrZsJsPPZsGzwwsLwLmpwMDw"
+    [ "vJrwpWtwJgWrhcsFMMfFFhFp"
+    , "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
+    , "PmmdzqPrVvPwwTWBwg"
+    , "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn"
+    , "ttgJtRGJQctTZtZT"
+    , "CrZsJsPPZsGzwwsLwLmpwMDw"
     ]
