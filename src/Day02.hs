@@ -1,11 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
-
-module Day02 where
+module Day02 (
+  part1Solution,
+  part2Solution,
+  puzzleInput,
+) where
 
 import Data.Either (fromRight)
 import Data.Text (Text)
 import Data.Void (Void)
-import Text.Megaparsec 
+import Text.Megaparsec
 import Text.Megaparsec.Char (space1)
 import qualified Text.Megaparsec.Char.Lexer as L
 
@@ -35,12 +37,12 @@ determineOutcome Scissors Paper = Lose
 determineOutcome _ _ = Draw
 
 moveForOutcome :: Move -> Outcome -> Move
-moveForOutcome Rock Win = Paper 
+moveForOutcome Rock Win = Paper
 moveForOutcome Rock Lose = Scissors
 moveForOutcome Paper Win = Scissors
 moveForOutcome Paper Lose = Rock
 moveForOutcome Scissors Win = Rock
-moveForOutcome Scissors Lose = Paper 
+moveForOutcome Scissors Lose = Paper
 moveForOutcome move Draw = move
 
 sc :: Parser ()
@@ -52,25 +54,25 @@ symbol = L.symbol sc
 pOpponentMove :: Parser Move
 pOpponentMove =
   choice
-    [ Rock <$ symbol "A",
-      Paper <$ symbol "B",
-      Scissors <$ symbol "C"
+    [ Rock <$ symbol "A"
+    , Paper <$ symbol "B"
+    , Scissors <$ symbol "C"
     ]
 
 pPlayerMove :: Parser Move
 pPlayerMove =
   choice
-    [ Rock <$ symbol "X",
-      Paper <$ symbol "Y",
-      Scissors <$ symbol "Z"
+    [ Rock <$ symbol "X"
+    , Paper <$ symbol "Y"
+    , Scissors <$ symbol "Z"
     ]
 
 pOutcome :: Parser Outcome
-pOutcome = 
+pOutcome =
   choice
-    [ Lose <$ symbol "X",
-      Draw <$ symbol "Y",
-      Win <$ symbol "Z"
+    [ Lose <$ symbol "X"
+    , Draw <$ symbol "Y"
+    , Win <$ symbol "Z"
     ]
 
 pRound :: Parser (Move, Move)
@@ -80,23 +82,27 @@ pStrategyRound :: Parser (Move, Outcome)
 pStrategyRound = (,) <$> pOpponentMove <*> pOutcome
 
 scoreRound :: (Move, Move) -> Int
-scoreRound (opponentMove, playerMove) = 
+scoreRound (opponentMove, playerMove) =
   scoreMove playerMove + scoreOutcome outcome
-  where
-    outcome = determineOutcome opponentMove playerMove
+ where
+  outcome = determineOutcome opponentMove playerMove
 
-totalScore :: [(Move, Move)] -> Int 
+totalScore :: [(Move, Move)] -> Int
 totalScore = sum . map scoreRound
 
 part1Solution :: Text -> Int
 part1Solution = totalScore . fromRight [] . runParser (some pRound) ""
 
 getMovePair :: (Move, Outcome) -> (Move, Move)
-getMovePair (opponentMove, outcome) = 
+getMovePair (opponentMove, outcome) =
   (opponentMove, moveForOutcome opponentMove outcome)
 
-part2Solution :: Text -> Int 
-part2Solution = totalScore . map getMovePair . fromRight [] . runParser (some pStrategyRound) ""
+part2Solution :: Text -> Int
+part2Solution =
+  totalScore
+    . map getMovePair
+    . fromRight []
+    . runParser (some pStrategyRound) ""
 
 puzzleInput :: Text
 puzzleInput = "A Y\nB X\nC Z"
