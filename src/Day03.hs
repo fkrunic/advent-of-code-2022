@@ -13,9 +13,10 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
 import GHC.Utils.Misc (uncurry3)
-import Text.Megaparsec
+import Text.Megaparsec hiding (parse)
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer as L
+import Prelude hiding ((^))
 
 type Parser = Parsec Void Text
 
@@ -57,12 +58,20 @@ priority c
   | otherwise = -1
 
 part1Solution :: Text -> Int
-part1Solution = sum . map (priority . uncurry itemInBoth) . fromRight [] . parse
+part1Solution = 
+  sum 
+    . map (priority . uncurry itemInBoth) 
+    . fromRight [] 
+    . parse
  where
   parse = runParser (some (lexer pSack)) ""
 
 part2Solution :: Text -> Int
-part2Solution = sum . map (priority . uncurry3 itemInGroup) . fromRight [] . parse
+part2Solution = 
+  sum 
+    . map (priority . uncurry3 itemInGroup) 
+    . fromRight [] 
+    . parse
  where
   parse = runParser (some pGroup) ""
 
