@@ -30,7 +30,7 @@ data Instruction = Instruction Move Int deriving (Show, Eq)
 
 type Parser = Parsec Void Text
 
-------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 moveToShift :: Move -> Delta
 moveToShift UpMove = (DeltaX 0, DeltaY (-1))
@@ -91,7 +91,7 @@ findAdjDelta d@(DeltaX dx, DeltaY dy)
  where
   zero = (DeltaX 0, DeltaY 0)
 
-------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -117,10 +117,16 @@ pInstruction =
 instrToMoves :: Instruction -> [Move]
 instrToMoves (Instruction m n) = replicate n m
 
-------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 solution :: Int -> Text -> Int
-solution nKnots = length . nub . getTailCs . movement . concatMap instrToMoves . parse
+solution nKnots =
+  length
+    . nub
+    . getTailCs
+    . movement
+    . concatMap instrToMoves
+    . parse
  where
   parse = fromRight [] . runParser (some pInstruction) ""
   rope = replicate nKnots (Knot (XCoordinate 1, YCoordinate 1))
