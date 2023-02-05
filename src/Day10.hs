@@ -1,14 +1,17 @@
-module Day10 where
+module Day10 (
+  part1Solution,
+  part2Solution,
+  puzzleInput,
+) where
 
 import Data.Either (fromRight)
 import Data.Functor (($>))
-import Data.List (intercalate, lookup)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 
 import Data.Void
-import Text.Megaparsec hiding (State)
+import Text.Megaparsec hiding (State, parse)
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
@@ -64,10 +67,16 @@ insToActions (AddX v) =
   ]
 
 update :: Action -> Simulation -> Simulation
-update BeginCycle (_, register, cyc, _, sl, crt) =
+update BeginCycle (_, register, cyc, _, _, crt) =
   (BeginCycle, register, inc cyc, Nothing, spritePosition register, crt)
 update DuringCycle (_, register, cyc, _, sl, crt) =
-  (DuringCycle, register, cyc, Just (signal register cyc), sl, updateCRTRow cyc crt sl)
+  ( DuringCycle
+  , register
+  , cyc
+  , Just (signal register cyc)
+  , sl
+  , updateCRTRow cyc crt sl
+  )
 update EndCycle (_, register, cyc, _, sl, crt) =
   (EndCycle, register, cyc, Nothing, sl, crt)
 update (EndCycleIncrementRegister v) (_, register, cyc, _, sl, crt) =
@@ -174,15 +183,6 @@ part2Solution = dump . runner . concatMap insToActions . parse
     T.intercalate "\n"
       . map (T.pack . extractCRTRow)
       . filter isRenderingCycle
-
-smallInput :: Text
-smallInput =
-  T.intercalate
-    "\n"
-    [ "noop"
-    , "addx 3"
-    , "addx -5"
-    ]
 
 puzzleInput :: Text
 puzzleInput =

@@ -1,11 +1,9 @@
-module Day11 where
+module Day11 () where
 
-import Data.Either (fromRight)
 import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
-import qualified Data.Text as T
 
 import Data.Void
 import Text.Megaparsec hiding (Label, State, label)
@@ -29,7 +27,7 @@ data Monkey = Monkey
 newtype Item = Item Int deriving (Show, Eq)
 newtype Label = Label Int deriving (Show, Eq, Ord)
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -90,7 +88,7 @@ pMonkey =
     <*> (space *> pDivisibility)
     <*> (space *> pThrowChoice)
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 modifyWorry :: Int -> MonkeyOp -> Int
 modifyWorry n (Add Nothing) = 2 * n
@@ -101,23 +99,25 @@ modifyWorry n (Multiply (Just k)) = n * k
 relief :: Int -> Int
 relief n = n `div` 3
 
-scatter :: Monkey -> [(Item, Label)]
-scatter m = thrower m
+throw :: Monkey -> Item -> [(Item, Label)] -> [(Item, Label)]
+throw m (Item worry) labels =
+  if relieved `mod` divisibility m == 0
+    then (Item relieved, fst (throwChoice m)) : labels
+    else (Item relieved, snd (throwChoice m)) : labels
  where
-  thrower = foldr throw [] . startingItems
-  throw (Item worry) labels =
-    let worried = modifyWorry worry (operation m)
-     in let relieved = relief worried
-         in if relieved `mod` divisibility m == 0
-              then (Item relieved, fst (throwChoice m)) : labels
-              else (Item relieved, snd (throwChoice m)) : labels
+  worried = modifyWorry worry (operation m)
+  relieved = relief worried
+
+scatter :: Monkey -> [(Item, Label)]
+scatter m = foldr (throw m) [] . startingItems $ m
 
 singleMonkeyTurn :: Label -> [(Item, Label)] -> Bananza -> Bananza
 singleMonkeyTurn thrower flyers bnz = sendFlyers
  where
-  liquidateThrower = M.update (\mk -> Just mk{startingItems = []}) thrower bnz
+  liquidateThrower = M.update (Just . emptyStartingItems) thrower bnz
   sendFlyers = foldr send liquidateThrower flyers
-  send (item, label) = M.update (Just . throwAt item) label
+  send (item, toMonkey) = M.update (Just . throwAt item) toMonkey
+  emptyStartingItems mk = mk{startingItems = []}
 
 throwAt :: Item -> Monkey -> Monkey
 throwAt item m = m{startingItems = startingItems m ++ [item]}
@@ -127,4 +127,4 @@ turn bnz = foldr executeTurn bnz $ reverse $ M.elems bnz
  where
   executeTurn m = singleMonkeyTurn (label m) (scatter m)
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
