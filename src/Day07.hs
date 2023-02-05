@@ -1,22 +1,20 @@
-{-# LANGUAGE OverloadedStrings #-}
+module Day07 (
+  part1Solution,
+  part2Solution,
+  puzzleInput,
+) where
 
-module Day07 where
-
-import Data.Char (isAlphaNum)
 import Data.Either (fromRight)
 import Data.Functor (($>))
-import Data.List (init, sort)
-import qualified Data.Set as S
+import Data.List (sort)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
-import Text.Megaparsec
+import Text.Megaparsec hiding (parse)
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
 type Parser = Parsec Void Text
-
-type Assignment = (Int, Int)
 
 data Line
   = ChangeDirectoryCommand Text
@@ -31,12 +29,12 @@ data FileSystem
   deriving (Show, Eq)
 
 data SystemState = SystemState
-  { ssFileSystem :: FileSystem,
-    ssCurrentPath :: [Text]
+  { ssFileSystem :: FileSystem
+  , ssCurrentPath :: [Text]
   }
   deriving (Show, Eq)
 
-------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -75,22 +73,24 @@ pListedFile =
 pLine :: Parser Line
 pLine =
   choice
-    [ pCMD <* optional (char '\n'),
-      pListedDir <* optional (char '\n'),
-      pListedFile <* optional (char '\n')
+    [ pCMD <* optional (char '\n')
+    , pListedDir <* optional (char '\n')
+    , pListedFile <* optional (char '\n')
     ]
 
-------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 update :: Line -> SystemState -> SystemState
-update (ChangeDirectoryCommand "/") ss = ss {ssCurrentPath = ["/"]}
-update (ChangeDirectoryCommand "..") ss = ss {ssCurrentPath = init (ssCurrentPath ss)}
-update (ChangeDirectoryCommand child) ss = ss {ssCurrentPath = ssCurrentPath ss ++ [child]}
+update (ChangeDirectoryCommand "/") ss = ss{ssCurrentPath = ["/"]}
+update (ChangeDirectoryCommand "..") ss =
+  ss{ssCurrentPath = init (ssCurrentPath ss)}
+update (ChangeDirectoryCommand child) ss =
+  ss{ssCurrentPath = ssCurrentPath ss ++ [child]}
 update ListCommand ss = ss
 update (ListedDirectory child) ss =
-  ss {ssFileSystem = addDirectory child (ssCurrentPath ss) (ssFileSystem ss)}
+  ss{ssFileSystem = addDirectory child (ssCurrentPath ss) (ssFileSystem ss)}
 update (ListedFile size child) ss =
-  ss {ssFileSystem = addFile size child (ssCurrentPath ss) (ssFileSystem ss)}
+  ss{ssFileSystem = addFile size child (ssCurrentPath ss) (ssFileSystem ss)}
 
 addDirectory :: Text -> [Text] -> FileSystem -> FileSystem
 addDirectory _ _ f@(File _ _) = f
@@ -122,8 +122,8 @@ tally d@(Directory _ children) =
   if t1 <= 100000
     then t1 + sum (map tally children)
     else sum (map tally children)
-  where
-    t1 = totalSize d
+ where
+  t1 = totalSize d
 
 findSizes :: FileSystem -> [Integer]
 findSizes (File _ _) = []
@@ -132,56 +132,58 @@ findSizes d@(Directory _ children) =
 
 targetSize :: FileSystem -> Integer
 targetSize fs = finder fs
-  where
-    currentSize = totalSize fs
-    unusedSpace = 70000000 - currentSize
-    needToDelete = 30000000 - unusedSpace
-    finder = head . dropWhile (< needToDelete) . sort . findSizes
+ where
+  currentSize = totalSize fs
+  unusedSpace = 70000000 - currentSize
+  needToDelete = 30000000 - unusedSpace
+  finder = head . dropWhile (< needToDelete) . sort . findSizes
 
-------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+parse :: Text -> [Line]
+parse = fromRight [] . runParser (some pLine) ""
+
+initialSystemState :: SystemState
+initialSystemState = SystemState (Directory "/" []) ["/"]
+
+buildFileSystemFromCMDs :: Text -> FileSystem
+buildFileSystemFromCMDs =
+  ssFileSystem
+    . foldr update initialSystemState
+    . reverse
+    . parse
 
 part1Solution :: Text -> Integer
-part1Solution = tally . ssFileSystem . foldr update initial . reverse . parse
-  where
-    initial = SystemState (Directory "/" []) ["/"]
-    parse = fromRight [] . runParser (some pLine) ""
+part1Solution = tally . buildFileSystemFromCMDs
 
 part2Solution :: Text -> Integer
-part2Solution = targetSize . ssFileSystem . foldr update initial . reverse . parse
-  where
-    initial = SystemState (Directory "/" []) ["/"]
-    parse = fromRight [] . runParser (some pLine) ""
+part2Solution = targetSize . buildFileSystemFromCMDs
 
 puzzleInput :: Text
 puzzleInput =
   T.intercalate
     "\n"
-    [ "$ cd /",
-      "$ ls",
-      "dir a",
-      "14848514 b.txt",
-      "8504156 c.dat",
-      "dir d",
-      "$ cd a",
-      "$ ls",
-      "dir e",
-      "29116 f",
-      "2557 g",
-      "62596 h.lst",
-      "$ cd e",
-      "$ ls",
-      "584 i",
-      "$ cd ..",
-      "$ cd ..",
-      "$ cd d",
-      "$ ls",
-      "4060174 j",
-      "8033020 d.log",
-      "5626152 d.ext",
-      "7214296 k"
+    [ "$ cd /"
+    , "$ ls"
+    , "dir a"
+    , "14848514 b.txt"
+    , "8504156 c.dat"
+    , "dir d"
+    , "$ cd a"
+    , "$ ls"
+    , "dir e"
+    , "29116 f"
+    , "2557 g"
+    , "62596 h.lst"
+    , "$ cd e"
+    , "$ ls"
+    , "584 i"
+    , "$ cd .."
+    , "$ cd .."
+    , "$ cd d"
+    , "$ ls"
+    , "4060174 j"
+    , "8033020 d.log"
+    , "5626152 d.ext"
+    , "7214296 k"
     ]
-
-example :: Text -> SystemState
-example = foldr update initial . reverse . fromRight [] . runParser (some pLine) ""
-  where
-    initial = SystemState (Directory "/" []) ["/"]
