@@ -1,16 +1,16 @@
 module Day10 where
 
-import           Data.List                   (lookup, intercalate)
-import           Data.Either                 (fromRight)
-import           Data.Functor                (($>))
-import           Data.Maybe                  (fromMaybe)
-import           Data.Text                   (Text)
-import qualified Data.Text                   as T
+import Data.Either (fromRight)
+import Data.Functor (($>))
+import Data.List (intercalate, lookup)
+import Data.Maybe (fromMaybe)
+import Data.Text (Text)
+import qualified Data.Text as T
 
-import           Data.Void
-import           Text.Megaparsec             hiding (State)
-import           Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer  as L  
+import Data.Void
+import Text.Megaparsec hiding (State)
+import Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 
 newtype Register = Register Int deriving (Show, Eq, Ord)
 newtype Cycle = Cycle Int deriving (Show, Eq, Ord)
@@ -18,11 +18,18 @@ newtype SignalStrength = SignalStrength Int deriving (Show, Eq)
 newtype CRTRow = CRTRow String deriving (Show, Eq)
 newtype SpriteLine = SpriteLine String deriving (Show, Eq)
 
-type Simulation = (Action, Register, Cycle, Maybe SignalStrength, SpriteLine, CRTRow)
+type Simulation =
+  ( Action
+  , Register
+  , Cycle
+  , Maybe SignalStrength
+  , SpriteLine
+  , CRTRow
+  )
 
 data Instruction
   = AddX Int -- 2 cycles
-  | Noop     -- 1 cycle
+  | Noop -- 1 cycle
   deriving (Show, Eq)
 
 data Action
@@ -34,7 +41,7 @@ data Action
 
 type Parser = Parsec Void Text
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 inc :: Cycle -> Cycle
 inc (Cycle c) = Cycle (c + 1)
@@ -47,7 +54,7 @@ signal (Register r) (Cycle c) = SignalStrength (r * c)
 
 insToActions :: Instruction -> [Action]
 insToActions Noop = [BeginCycle, DuringCycle, EndCycle]
-insToActions (AddX v) = 
+insToActions (AddX v) =
   [ BeginCycle
   , DuringCycle
   , EndCycle
@@ -57,19 +64,16 @@ insToActions (AddX v) =
   ]
 
 update :: Action -> Simulation -> Simulation
-update BeginCycle (_, register, cyc, _, sl, crt) = 
+update BeginCycle (_, register, cyc, _, sl, crt) =
   (BeginCycle, register, inc cyc, Nothing, spritePosition register, crt)
-  
-update DuringCycle (_, register, cyc, _, sl, crt) = 
+update DuringCycle (_, register, cyc, _, sl, crt) =
   (DuringCycle, register, cyc, Just (signal register cyc), sl, updateCRTRow cyc crt sl)
-  
-update EndCycle (_, register, cyc, _, sl, crt) = 
+update EndCycle (_, register, cyc, _, sl, crt) =
   (EndCycle, register, cyc, Nothing, sl, crt)
-  
-update (EndCycleIncrementRegister v) (_, register, cyc, _, sl, crt) = 
+update (EndCycleIncrementRegister v) (_, register, cyc, _, sl, crt) =
   (EndCycleIncrementRegister v, add v register, cyc, Nothing, sl, crt)
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -89,235 +93,245 @@ signedInteger = L.signed sc integer
 pInstruction :: Parser Instruction
 pInstruction =
   choice
-    [ symbol "noop" $> Noop,
-      AddX <$> (symbol "addx" *> signedInteger)
+    [ symbol "noop" $> Noop
+    , AddX <$> (symbol "addx" *> signedInteger)
     ]
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 determineCRTLength :: Int -> Int
-determineCRTLength i = 
+determineCRTLength i =
   if 1 <= i && i <= 40
-    then i 
+    then i
     else determineCRTLength (i - 40)
 
 spritePosition :: Register -> SpriteLine
-spritePosition (Register r) = 
+spritePosition (Register r) =
   SpriteLine $ take 40 $ front ++ middle ++ back
-  where
-    startIndex = r - 1
-    front = replicate startIndex '.'
-    middle = "###"
-    back = repeat '.'
-    
+ where
+  startIndex = r - 1
+  front = replicate startIndex '.'
+  middle = "###"
+  back = repeat '.'
+
 findNextPixel :: CRTRow -> SpriteLine -> Char
-findNextPixel (CRTRow row) (SpriteLine sl) = 
+findNextPixel (CRTRow row) (SpriteLine sl) =
   fromMaybe '.' $ lookup (length row) assoc
-  where
-    assoc = zip [0..] sl 
-    
+ where
+  assoc = zip [0 ..] sl
+
 updateCRTRow :: Cycle -> CRTRow -> SpriteLine -> CRTRow
 updateCRTRow (Cycle c) crt@(CRTRow row) sl = updatedCRT
-  where
-    crtLength = determineCRTLength c
-    updatedCRT = CRTRow $ take crtLength $ row ++ [findNextPixel crt sl]
-    
+ where
+  crtLength = determineCRTLength c
+  updatedCRT = CRTRow $ take crtLength $ row ++ [findNextPixel crt sl]
+
 renderingCycles :: [Cycle]
 renderingCycles = map Cycle [40, 80, 120, 160, 200, 240]
 
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 targetCycles :: [Cycle]
 targetCycles = map Cycle [20, 60, 100, 140, 180, 220]
 
+initialSimState :: Simulation
+initialSimState =
+  ( BeginCycle
+  , Register 1
+  , Cycle 0
+  , Nothing
+  , spritePosition (Register 1)
+  , CRTRow ""
+  )
+
 part1Solution :: Text -> Int
-part1Solution = sum . 
-  map extractSS . 
-  filter isTargetCycle . 
-  runner . 
-  concatMap insToActions . 
-  parse
-  where
-    parse = fromRight [] . runParser (some pInstruction) ""
-    runner = reverse . scanr update initial . reverse
-    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
-    isTargetCycle (_, _, cyc, _, _, _) = cyc `elem` targetCycles
-    extractSS (_, _, _, Just (SignalStrength ss), _, _) = ss 
-    extractSS (_, _, _, Nothing, _, _) = 0 
-    
-part2Solution :: Text -> IO ()
+part1Solution =
+  sum
+    . map extractSS
+    . filter isTargetCycle
+    . runner
+    . concatMap insToActions
+    . parse
+ where
+  parse = fromRight [] . runParser (some pInstruction) ""
+  runner = reverse . scanr update initialSimState . reverse
+  isTargetCycle (_, _, cyc, _, _, _) = cyc `elem` targetCycles
+  extractSS (_, _, _, Just (SignalStrength ss), _, _) = ss
+  extractSS (_, _, _, Nothing, _, _) = 0
+
+part2Solution :: Text -> Text
 part2Solution = dump . runner . concatMap insToActions . parse
-  where
-    parse = fromRight [] . runParser (some pInstruction) ""
-    runner = reverse . scanr update initial . reverse
-    initial = (BeginCycle, Register 1, Cycle 0, Nothing, spritePosition (Register 1), CRTRow "")
-    
-    isRenderingCycle (action, _, cyc, _, _, _) = 
-      cyc `elem` renderingCycles && action == DuringCycle
-      
-    extractCRTRow (_, _, _, _, _, CRTRow row) = row
-    dump = writeFile "outputs/image.txt" . 
-      intercalate "\n" . 
-      map extractCRTRow . 
-      filter isRenderingCycle    
+ where
+  parse = fromRight [] . runParser (some pInstruction) ""
+  runner = reverse . scanr update initialSimState . reverse
+
+  isRenderingCycle (action, _, cyc, _, _, _) =
+    cyc `elem` renderingCycles && action == DuringCycle
+
+  extractCRTRow (_, _, _, _, _, CRTRow row) = row
+
+  dump =
+    T.intercalate "\n"
+      . map (T.pack . extractCRTRow)
+      . filter isRenderingCycle
 
 smallInput :: Text
-smallInput = 
-  T.intercalate 
-  "\n"
-  [ "noop"
-  , "addx 3"
-  , "addx -5"
-  ]
+smallInput =
+  T.intercalate
+    "\n"
+    [ "noop"
+    , "addx 3"
+    , "addx -5"
+    ]
 
 puzzleInput :: Text
 puzzleInput =
   T.intercalate
     "\n"
-    [ "addx 15",
-      "addx -11",
-      "addx 6",
-      "addx -3",
-      "addx 5",
-      "addx -1",
-      "addx -8",
-      "addx 13",
-      "addx 4",
-      "noop",
-      "addx -1",
-      "addx 5",
-      "addx -1",
-      "addx 5",
-      "addx -1",
-      "addx 5",
-      "addx -1",
-      "addx 5",
-      "addx -1",
-      "addx -35",
-      "addx 1",
-      "addx 24",
-      "addx -19",
-      "addx 1",
-      "addx 16",
-      "addx -11",
-      "noop",
-      "noop",
-      "addx 21",
-      "addx -15",
-      "noop",
-      "noop",
-      "addx -3",
-      "addx 9",
-      "addx 1",
-      "addx -3",
-      "addx 8",
-      "addx 1",
-      "addx 5",
-      "noop",
-      "noop",
-      "noop",
-      "noop",
-      "noop",
-      "addx -36",
-      "noop",
-      "addx 1",
-      "addx 7",
-      "noop",
-      "noop",
-      "noop",
-      "addx 2",
-      "addx 6",
-      "noop",
-      "noop",
-      "noop",
-      "noop",
-      "noop",
-      "addx 1",
-      "noop",
-      "noop",
-      "addx 7",
-      "addx 1",
-      "noop",
-      "addx -13",
-      "addx 13",
-      "addx 7",
-      "noop",
-      "addx 1",
-      "addx -33",
-      "noop",
-      "noop",
-      "noop",
-      "addx 2",
-      "noop",
-      "noop",
-      "noop",
-      "addx 8",
-      "noop",
-      "addx -1",
-      "addx 2",
-      "addx 1",
-      "noop",
-      "addx 17",
-      "addx -9",
-      "addx 1",
-      "addx 1",
-      "addx -3",
-      "addx 11",
-      "noop",
-      "noop",
-      "addx 1",
-      "noop",
-      "addx 1",
-      "noop",
-      "noop",
-      "addx -13",
-      "addx -19",
-      "addx 1",
-      "addx 3",
-      "addx 26",
-      "addx -30",
-      "addx 12",
-      "addx -1",
-      "addx 3",
-      "addx 1",
-      "noop",
-      "noop",
-      "noop",
-      "addx -9",
-      "addx 18",
-      "addx 1",
-      "addx 2",
-      "noop",
-      "noop",
-      "addx 9",
-      "noop",
-      "noop",
-      "noop",
-      "addx -1",
-      "addx 2",
-      "addx -37",
-      "addx 1",
-      "addx 3",
-      "noop",
-      "addx 15",
-      "addx -21",
-      "addx 22",
-      "addx -6",
-      "addx 1",
-      "noop",
-      "addx 2",
-      "addx 1",
-      "noop",
-      "addx -10",
-      "noop",
-      "noop",
-      "addx 20",
-      "addx 1",
-      "addx 2",
-      "addx 2",
-      "addx -6",
-      "addx -11",
-      "noop",
-      "noop",
-      "noop"
+    [ "addx 15"
+    , "addx -11"
+    , "addx 6"
+    , "addx -3"
+    , "addx 5"
+    , "addx -1"
+    , "addx -8"
+    , "addx 13"
+    , "addx 4"
+    , "noop"
+    , "addx -1"
+    , "addx 5"
+    , "addx -1"
+    , "addx 5"
+    , "addx -1"
+    , "addx 5"
+    , "addx -1"
+    , "addx 5"
+    , "addx -1"
+    , "addx -35"
+    , "addx 1"
+    , "addx 24"
+    , "addx -19"
+    , "addx 1"
+    , "addx 16"
+    , "addx -11"
+    , "noop"
+    , "noop"
+    , "addx 21"
+    , "addx -15"
+    , "noop"
+    , "noop"
+    , "addx -3"
+    , "addx 9"
+    , "addx 1"
+    , "addx -3"
+    , "addx 8"
+    , "addx 1"
+    , "addx 5"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx -36"
+    , "noop"
+    , "addx 1"
+    , "addx 7"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx 2"
+    , "addx 6"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx 1"
+    , "noop"
+    , "noop"
+    , "addx 7"
+    , "addx 1"
+    , "noop"
+    , "addx -13"
+    , "addx 13"
+    , "addx 7"
+    , "noop"
+    , "addx 1"
+    , "addx -33"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx 2"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx 8"
+    , "noop"
+    , "addx -1"
+    , "addx 2"
+    , "addx 1"
+    , "noop"
+    , "addx 17"
+    , "addx -9"
+    , "addx 1"
+    , "addx 1"
+    , "addx -3"
+    , "addx 11"
+    , "noop"
+    , "noop"
+    , "addx 1"
+    , "noop"
+    , "addx 1"
+    , "noop"
+    , "noop"
+    , "addx -13"
+    , "addx -19"
+    , "addx 1"
+    , "addx 3"
+    , "addx 26"
+    , "addx -30"
+    , "addx 12"
+    , "addx -1"
+    , "addx 3"
+    , "addx 1"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx -9"
+    , "addx 18"
+    , "addx 1"
+    , "addx 2"
+    , "noop"
+    , "noop"
+    , "addx 9"
+    , "noop"
+    , "noop"
+    , "noop"
+    , "addx -1"
+    , "addx 2"
+    , "addx -37"
+    , "addx 1"
+    , "addx 3"
+    , "noop"
+    , "addx 15"
+    , "addx -21"
+    , "addx 22"
+    , "addx -6"
+    , "addx 1"
+    , "noop"
+    , "addx 2"
+    , "addx 1"
+    , "noop"
+    , "addx -10"
+    , "noop"
+    , "noop"
+    , "addx 20"
+    , "addx 1"
+    , "addx 2"
+    , "addx 2"
+    , "addx -6"
+    , "addx -11"
+    , "noop"
+    , "noop"
+    , "noop"
     ]

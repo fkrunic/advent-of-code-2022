@@ -71,7 +71,7 @@ day10Main :: IO ()
 day10Main = do 
   input <- T.pack <$> readFile "inputs/day10.txt"
   print (D10.part1Solution input)
-  D10.part2Solution input
+  writeFile "outputs/day10p2.txt" $ T.unpack $ D10.part2Solution input
 
 main :: IO ()
 main = day10Main
