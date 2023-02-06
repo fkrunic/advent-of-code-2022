@@ -1,7 +1,6 @@
 module Day02 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Either (fromRight)
@@ -9,7 +8,7 @@ import Data.Text (Text)
 import Data.Void (Void)
 import Text.Megaparsec
 import Text.Megaparsec.Char (space1)
-import qualified Text.Megaparsec.Char.Lexer as L
+import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
@@ -103,6 +102,3 @@ part2Solution =
     . map getMovePair
     . fromRight []
     . runParser (some pStrategyRound) ""
-
-puzzleInput :: Text
-puzzleInput = "A Y\nB X\nC Z"

@@ -1,5 +1,6 @@
 module Test.Day02Spec (spec) where
 
+import Data.Text (Text)
 import Day02
 import Test.Hspec
 
@@ -11,3 +12,6 @@ spec =
 
     it "Part 2" $ do
       part2Solution puzzleInput `shouldBe` 12
+
+puzzleInput :: Text
+puzzleInput = "A Y\nB X\nC Z"
