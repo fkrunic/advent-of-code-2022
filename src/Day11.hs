@@ -2,17 +2,15 @@ module Day11 () where
 
 import Data.Functor (($>))
 import Data.Map (Map)
-import qualified Data.Map.Strict as M
+import Data.Map.Strict qualified as M
 import Data.Text (Text)
-
-import Data.Void
-import Text.Megaparsec hiding (Label, State, label)
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import Data.Void (Void)
+import Text.Megaparsec (Parsec, choice, empty, optional, some)
+import Text.Megaparsec.Char (space, space1)
+import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 data MonkeyOp = Add (Maybe Int) | Multiply (Maybe Int) deriving (Show, Eq)
-type ThrowChoice = (Int, Int)
 type Bananza = Map Label Monkey
 
 data Monkey = Monkey
