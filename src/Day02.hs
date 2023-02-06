@@ -6,7 +6,7 @@ module Day02 (
 import Data.Either (fromRight)
 import Data.Text (Text)
 import Data.Void (Void)
-import Text.Megaparsec
+import Text.Megaparsec (Parsec, choice, empty, runParser, some)
 import Text.Megaparsec.Char (space1)
 import Text.Megaparsec.Char.Lexer qualified as L
 
