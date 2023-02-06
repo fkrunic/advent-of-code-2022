@@ -1,18 +1,25 @@
 module Day07 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Either (fromRight)
 import Data.Functor (($>))
 import Data.List (sort)
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Text.Megaparsec hiding (parse)
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import Data.Void (Void)
+import Text.Megaparsec (
+  MonadParsec (takeWhile1P, try),
+  Parsec,
+  choice,
+  empty,
+  optional,
+  runParser,
+  some,
+  (<|>),
+ )
+import Text.Megaparsec.Char (char, space1)
+import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
@@ -95,7 +102,7 @@ update (ListedFile size child) ss =
 addDirectory :: Text -> [Text] -> FileSystem -> FileSystem
 addDirectory _ _ f@(File _ _) = f
 addDirectory _ [] fs = fs
-addDirectory child (p : []) d@(Directory path children)
+addDirectory child [p] d@(Directory path children)
   | path == p = Directory path (Directory child [] : children)
   | otherwise = d
 addDirectory child (p : deeper) d@(Directory path children)
@@ -105,7 +112,7 @@ addDirectory child (p : deeper) d@(Directory path children)
 addFile :: Integer -> Text -> [Text] -> FileSystem -> FileSystem
 addFile _ _ _ f@(File _ _) = f
 addFile _ _ [] fs = fs
-addFile size child (p : []) d@(Directory path children)
+addFile size child [p] d@(Directory path children)
   | path == p = Directory path (File child size : children)
   | otherwise = d
 addFile size child (p : deeper) d@(Directory path children)
@@ -158,32 +165,3 @@ part1Solution = tally . buildFileSystemFromCMDs
 
 part2Solution :: Text -> Integer
 part2Solution = targetSize . buildFileSystemFromCMDs
-
-puzzleInput :: Text
-puzzleInput =
-  T.intercalate
-    "\n"
-    [ "$ cd /"
-    , "$ ls"
-    , "dir a"
-    , "14848514 b.txt"
-    , "8504156 c.dat"
-    , "dir d"
-    , "$ cd a"
-    , "$ ls"
-    , "dir e"
-    , "29116 f"
-    , "2557 g"
-    , "62596 h.lst"
-    , "$ cd e"
-    , "$ ls"
-    , "584 i"
-    , "$ cd .."
-    , "$ cd .."
-    , "$ cd d"
-    , "$ ls"
-    , "4060174 j"
-    , "8033020 d.log"
-    , "5626152 d.ext"
-    , "7214296 k"
-    ]
