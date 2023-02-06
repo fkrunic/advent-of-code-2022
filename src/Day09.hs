@@ -1,18 +1,15 @@
 module Day09 (
   part1Solution,
   part2Solution,
-  puzzleInput,
-  largerPuzzleInput,
 ) where
 
 import Data.Either (fromRight)
 import Data.List (nub)
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Text.Megaparsec hiding (parse)
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import Data.Void (Void)
+import Text.Megaparsec (Parsec, choice, empty, runParser, some)
+import Text.Megaparsec.Char (space1)
+import Text.Megaparsec.Char.Lexer qualified as L
 
 newtype XCoordinate = XCoordinate Int deriving (Show, Eq)
 newtype YCoordinate = YCoordinate Int deriving (Show, Eq)
@@ -139,31 +136,3 @@ part1Solution = solution 2
 
 part2Solution :: Text -> Int
 part2Solution = solution 10
-
-puzzleInput :: Text
-puzzleInput =
-  T.intercalate
-    "\n"
-    [ "R 4"
-    , "U 4"
-    , "L 3"
-    , "D 1"
-    , "R 4"
-    , "D 1"
-    , "L 5"
-    , "R 2"
-    ]
-
-largerPuzzleInput :: Text
-largerPuzzleInput =
-  T.intercalate
-    "\n"
-    [ "R 5"
-    , "U 8"
-    , "L 8"
-    , "D 3"
-    , "R 17"
-    , "D 10"
-    , "L 25"
-    , "U 20"
-    ]
