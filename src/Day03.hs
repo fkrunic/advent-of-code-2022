@@ -10,11 +10,17 @@ import Data.Either (fromRight)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Void
+import Data.Void (Void)
 import GHC.Utils.Misc (uncurry3)
-import Text.Megaparsec hiding (parse)
-import Text.Megaparsec.Char
-import Text.Megaparsec.Char.Lexer as L
+import Text.Megaparsec (
+  MonadParsec (takeWhile1P),
+  Parsec,
+  empty,
+  runParser,
+  some,
+ )
+import Text.Megaparsec.Char (space1)
+import Text.Megaparsec.Char.Lexer as L (lexeme, space)
 import Prelude hiding ((^))
 
 type Parser = Parsec Void Text
