@@ -1,17 +1,15 @@
 module Day04 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Either (fromRight)
-import qualified Data.Set as S
+import Data.Set qualified as S
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Text.Megaparsec
-import Text.Megaparsec.Char
-import Text.Megaparsec.Char.Lexer as L
+import Data.Void (Void)
+import Text.Megaparsec (Parsec, empty, runParser, some)
+import Text.Megaparsec.Char (char, space1)
+import Text.Megaparsec.Char.Lexer as L (decimal, lexeme, space)
 import Prelude hiding ((<=), (^))
 
 type Parser = Parsec Void Text
@@ -60,15 +58,3 @@ part2Solution :: Text -> Int
 part2Solution = length . filter (uncurry anyOverlap) . fromRight [] . parser
  where
   parser = runParser (some pLine) ""
-
-puzzleInput :: Text
-puzzleInput =
-  T.intercalate
-    "\n"
-    [ "2-4,6-8"
-    , "2-3,4-5"
-    , "5-7,7-9"
-    , "2-8,3-7"
-    , "6-6,4-6"
-    , "2-6,4-8"
-    ]
