@@ -1,5 +1,6 @@
 module Test.Day01Spec (spec) where
 
+import Data.List (intercalate)
 import Day01
 import Test.Hspec
 
@@ -11,3 +12,23 @@ spec =
 
     it "Part 2" $ do
       part2Solution puzzleInput `shouldBe` 45000
+
+puzzleInput :: String
+puzzleInput =
+  intercalate
+    "\n"
+    [ "1000"
+    , "2000"
+    , "3000"
+    , ""
+    , "4000"
+    , ""
+    , "5000"
+    , "6000"
+    , ""
+    , "7000"
+    , "8000"
+    , "9000"
+    , ""
+    , "10000"
+    ]

@@ -1,10 +1,9 @@
 module Day01 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
-import Data.List (intercalate, sortOn)
+import Data.List (sortOn)
 
 calorieChunker :: [String] -> [Int]
 calorieChunker [] = []
@@ -34,23 +33,3 @@ part2Solution =
     . zip [1 :: Int ..]
     . calorieChunker
     . lines
-
-puzzleInput :: String
-puzzleInput =
-  intercalate
-    "\n"
-    [ "1000"
-    , "2000"
-    , "3000"
-    , ""
-    , "4000"
-    , ""
-    , "5000"
-    , "6000"
-    , ""
-    , "7000"
-    , "8000"
-    , "9000"
-    , ""
-    , "10000"
-    ]
