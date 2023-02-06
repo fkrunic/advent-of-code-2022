@@ -1,4 +1,4 @@
-module Day11 () where
+module Day11 where
 
 import Data.Functor (($>))
 import Data.Map (Map)

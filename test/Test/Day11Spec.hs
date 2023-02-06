@@ -1,15 +1,53 @@
-module Test.Day11Spec where
+module Test.Day11Spec (spec) where
 
-import Test.Hspec
+import Test.Hspec (SpecWith, describe, it, shouldBe)
 
+import Data.Either (fromRight)
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
+import Day11
+import Text.Megaparsec (runParser, some)
 
-main :: IO ()
-main = hspec $ do
-  describe "Secondary test suite" $
-    it "can run a simple test" $
-      1 `shouldBe` 1
+parser :: Text -> [Monkey]
+parser = fromRight [] . runParser (some pMonkey) ""
+
+spec :: SpecWith ()
+spec =
+  describe "Day 11" $ do
+    it "Parsing Puzzle Input" $ do
+      parser puzzleInput `shouldBe` parsedInput
+
+parsedInput :: [Monkey]
+parsedInput =
+  [ Monkey
+      { label = Label 0
+      , startingItems = [Item 79, Item 98]
+      , operation = Multiply (Just 19)
+      , divisibility = 23
+      , throwChoice = (Label 2, Label 3)
+      }
+  , Monkey
+      { label = Label 1
+      , startingItems = [Item 54, Item 65, Item 75, Item 74]
+      , operation = Add (Just 6)
+      , divisibility = 19
+      , throwChoice = (Label 2, Label 0)
+      }
+  , Monkey
+      { label = Label 2
+      , startingItems = [Item 79, Item 60, Item 97]
+      , operation = Multiply Nothing
+      , divisibility = 13
+      , throwChoice = (Label 1, Label 3)
+      }
+  , Monkey
+      { label = Label 3
+      , startingItems = [Item 74]
+      , operation = Add (Just 3)
+      , divisibility = 17
+      , throwChoice = (Label 0, Label 1)
+      }
+  ]
 
 puzzleInput :: Text
 puzzleInput =
