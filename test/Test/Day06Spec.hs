@@ -1,7 +1,7 @@
 module Test.Day06Spec (spec) where
 
-import Day06
-import Test.Hspec
+import Day06 (part1Solution, part2Solution)
+import Test.Hspec (SpecWith, describe, it, shouldBe)
 
 spec :: SpecWith ()
 spec =
@@ -11,3 +11,11 @@ spec =
 
     it "Part 2" $ do
       map part2Solution puzzleInput `shouldBe` [23, 23, 29, 26]
+
+puzzleInput :: [String]
+puzzleInput =
+  [ "bvwbjplbgvbhsrlpgdmjqwftvncz"
+  , "nppdvjthqldpwncqszvftbrmjlhg"
+  , "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"
+  , "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"
+  ]

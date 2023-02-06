@@ -1,7 +1,6 @@
 module Day06 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Set (fromList)
@@ -22,11 +21,3 @@ part1Solution = buildMarker 4
 
 part2Solution :: String -> Int
 part2Solution = buildMarker 14
-
-puzzleInput :: [String]
-puzzleInput =
-  [ "bvwbjplbgvbhsrlpgdmjqwftvncz"
-  , "nppdvjthqldpwncqszvftbrmjlhg"
-  , "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"
-  , "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"
-  ]
