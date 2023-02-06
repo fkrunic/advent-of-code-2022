@@ -1,21 +1,28 @@
 module Day05 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Either (fromRight)
 import Data.Functor (($>))
 import Data.List (sortOn, uncons)
 import Data.Map (Map)
-import qualified Data.Map.Strict as M
+import Data.Map.Strict qualified as M
 import Data.Maybe (fromJust)
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Text.Megaparsec
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import Data.Text qualified as T
+import Data.Void (Void)
+import Text.Megaparsec (
+  MonadParsec (try),
+  Parsec,
+  empty,
+  optional,
+  runParser,
+  some,
+  (<|>),
+ )
+import Text.Megaparsec.Char (char, letterChar, space1, spaceChar)
+import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
@@ -60,7 +67,9 @@ pSlot = try pEmpty <|> pCrate
   pCrate = Crate <$> (char '[' *> letterChar <* char ']')
 
 pLine :: Parser [GridSlice]
-pLine = map buildSlice . zip [1 ..] <$> some (pSlot <* optional (char ' '))
+pLine =
+  zipWith (curry buildSlice) [1 ..]
+    <$> some (pSlot <* optional (char ' '))
  where
   buildSlice (xCoord, slot) = GridSlice slot xCoord
 
@@ -80,7 +89,7 @@ pInput :: Parser Input
 pInput =
   (,)
     <$> (pStack <* pLabels)
-    <*> (some pMove)
+    <*> some pMove
 
 pMove :: Parser (Int, Int, Int)
 pMove =
@@ -150,34 +159,5 @@ solution mover input =
 part1Solution :: Text -> Text
 part1Solution = solution moveCrates
 
--- part1Solution input = topOfEachStack $ foldr moveCrates depot $ reverse moves
---  where
---   structureInput = fromRight ([], []) . runParser pInput ""
---   (points, moves) = structureInput input
---   depot = buildDepot points
-
 part2Solution :: Text -> Text
 part2Solution = solution batchMoveCrates
-
--- part2Solution input = topOfEachStack $ foldr batchMoveCrates depot $ reverse moves
---  where
---   structureInput = fromRight ([], []) . runParser pInput ""
---   (points, moves) = structureInput input
---   depot = buildDepot points
-
---------------------------------------------------------------------------------
-
-puzzleInput :: Text
-puzzleInput =
-  T.intercalate
-    "\n"
-    [ "    [D]    "
-    , "[N] [C]    "
-    , "[Z] [M] [P]"
-    , " 1   2   3 "
-    , ""
-    , "move 1 from 2 to 1"
-    , "move 3 from 1 to 3"
-    , "move 2 from 2 to 1"
-    , "move 1 from 1 to 2"
-    ]

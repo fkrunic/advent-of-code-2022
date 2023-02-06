@@ -1,7 +1,8 @@
 module Test.Day05Spec (spec) where
 
-import Day05
-import Test.Hspec
+import Data.Text (Text, intercalate)
+import Day05 (part1Solution, part2Solution)
+import Test.Hspec (SpecWith, describe, it, shouldBe)
 
 spec :: SpecWith ()
 spec =
@@ -11,3 +12,18 @@ spec =
 
     it "Part 2" $ do
       part2Solution puzzleInput `shouldBe` "MCD"
+
+puzzleInput :: Text
+puzzleInput =
+  intercalate
+    "\n"
+    [ "    [D]    "
+    , "[N] [C]    "
+    , "[Z] [M] [P]"
+    , " 1   2   3 "
+    , ""
+    , "move 1 from 2 to 1"
+    , "move 3 from 1 to 3"
+    , "move 2 from 2 to 1"
+    , "move 1 from 1 to 2"
+    ]
