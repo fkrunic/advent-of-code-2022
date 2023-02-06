@@ -159,3 +159,31 @@ inspect label ms =
 --   executeTurn m = singleMonkeyTurn (label m) (scatter m)
 
 --------------------------------------------------------------------------------
+
+data TransferMap a b = TransferMap (Map a [b]) deriving (Show, Eq)
+
+data TransferError a
+  = FromKeyDoesNotExist a
+  | ToKeyDoesNotExist a
+  | EmptyTransferList a
+  deriving (Show, Eq)
+
+transfer ::
+  Ord a =>
+  a ->
+  a ->
+  TransferMap a b ->
+  Either (TransferError a) (TransferMap a b)
+transfer fromKey toKey (TransferMap m) =
+  case M.lookup fromKey m of
+    Nothing -> Left (FromKeyDoesNotExist fromKey)
+    Just [] -> Left (EmptyTransferList fromKey)
+    Just (item : rest) ->
+      case M.member toKey m of
+        False -> Left (ToKeyDoesNotExist toKey)
+        True ->
+          let added = M.adjust (\d -> d ++ [item]) toKey m
+           in Right $ TransferMap $ M.adjust (const rest) fromKey added
+
+get :: Ord a => a -> TransferMap a b -> Maybe [b]
+get key (TransferMap m) = M.lookup key m
