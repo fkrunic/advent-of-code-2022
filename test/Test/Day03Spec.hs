@@ -1,5 +1,6 @@
 module Test.Day03Spec (spec) where
 
+import Data.Text (Text, intercalate)
 import Day03
 import Test.Hspec
 
@@ -11,3 +12,15 @@ spec =
 
     it "Part 2" $ do
       part2Solution puzzleInput `shouldBe` 70
+
+puzzleInput :: Text
+puzzleInput =
+  intercalate
+    "\n"
+    [ "vJrwpWtwJgWrhcsFMMfFFhFp"
+    , "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
+    , "PmmdzqPrVvPwwTWBwg"
+    , "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn"
+    , "ttgJtRGJQctTZtZT"
+    , "CrZsJsPPZsGzwwsLwLmpwMDw"
+    ]

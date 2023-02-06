@@ -3,14 +3,13 @@
 module Day03 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Char (isLetter, ord)
 import Data.Either (fromRight)
-import qualified Data.Set as S
+import Data.Set qualified as S
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Void
 import GHC.Utils.Misc (uncurry3)
 import Text.Megaparsec hiding (parse)
@@ -58,31 +57,19 @@ priority c
   | otherwise = -1
 
 part1Solution :: Text -> Int
-part1Solution = 
-  sum 
-    . map (priority . uncurry itemInBoth) 
-    . fromRight [] 
+part1Solution =
+  sum
+    . map (priority . uncurry itemInBoth)
+    . fromRight []
     . parse
  where
   parse = runParser (some (lexer pSack)) ""
 
 part2Solution :: Text -> Int
-part2Solution = 
-  sum 
-    . map (priority . uncurry3 itemInGroup) 
-    . fromRight [] 
+part2Solution =
+  sum
+    . map (priority . uncurry3 itemInGroup)
+    . fromRight []
     . parse
  where
   parse = runParser (some pGroup) ""
-
-puzzleInput :: Text
-puzzleInput =
-  T.intercalate
-    "\n"
-    [ "vJrwpWtwJgWrhcsFMMfFFhFp"
-    , "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
-    , "PmmdzqPrVvPwwTWBwg"
-    , "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn"
-    , "ttgJtRGJQctTZtZT"
-    , "CrZsJsPPZsGzwwsLwLmpwMDw"
-    ]

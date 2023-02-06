@@ -1,4 +1,4 @@
-import Test.Day02Spec
+import Test.Day03Spec
 import Test.Hspec
 
 main :: IO ()
