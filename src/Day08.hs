@@ -1,13 +1,12 @@
 module Day08 (
   part1Solution,
   part2Solution,
-  puzzleInput,
 ) where
 
 import Data.Char (digitToInt)
-import Data.List (intercalate, unfoldr)
+import Data.List (unfoldr)
 import Data.Map (Map)
-import qualified Data.Map.Strict as M
+import Data.Map.Strict qualified as M
 
 data TreeView = TreeView
   { treeHeight :: Height
@@ -135,14 +134,3 @@ part1Solution = totalVisible . toGrid . toHeights
 
 part2Solution :: String -> Int
 part2Solution = getBestScenicScore . toGrid . toHeights
-
-puzzleInput :: String
-puzzleInput =
-  intercalate
-    "\n"
-    [ "30373"
-    , "25512"
-    , "65332"
-    , "33549"
-    , "35390"
-    ]
