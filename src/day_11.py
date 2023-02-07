@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 MK_LABELS = [0, 1, 2, 3]
 
 MK_PROPERTIES = [
@@ -24,17 +26,18 @@ MK_PROPERTIES = [
 ]
 
 
-def round(monkey_items):
+def round(reducer, monkey_items, monkey_counters):
   for label in MK_LABELS:
     items = monkey_items[label]
 
     for item in items:  # foldM
       props = MK_PROPERTIES[label]
-      modified = props["op"](item) // 3
+      modified = props["op"](item) // reducer
 
       throw_choice_index = 0 if modified % props["divisibility"] == 0 else 1
       throw_target = props["throw_choice"][throw_choice_index]
       monkey_items[throw_target].append(modified) # State.modify in inner scope
+      monkey_counters[label] += 1
 
     monkey_items[label] = [] # State.modify in outer scope
 
@@ -48,7 +51,10 @@ if __name__ == "__main__":
     [74]
   ]
 
+  mk_counters = defaultdict(int)
+
   for _ in range(20):
-    round(mk_items)
+    round(1, mk_items, mk_counters)
 
   print(mk_items)
+  print(mk_counters)

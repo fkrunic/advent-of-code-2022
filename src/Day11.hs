@@ -112,7 +112,10 @@ reset :: MonkeyState -> MonkeyState
 reset ms = ms{holding = []}
 
 inc :: MonkeyState -> MonkeyState
-inc ms = ms{counter = counter ms + 1}
+inc ms = ms{counter = strictAdd (counter ms) 1}
+
+strictAdd :: Int -> Int -> Int
+strictAdd = ($!) (+)
 
 round ::
   Int -> 
