@@ -25,7 +25,7 @@ spec =
             , []
             ]
           actual = runRound labels props (getItems monkeys)
-      elems actual `shouldBe` expectedItems
+      map holding (elems actual) `shouldBe` expectedItems
     it "Twenty Rounds" $ do
       let expectedItems =
             [ [Item 10, Item 12, Item 14, Item 26, Item 34]
@@ -34,7 +34,7 @@ spec =
             , []
             ]
           actual = execState (replicateM_ 20 (round labels props)) (getItems monkeys)
-      elems actual `shouldBe` expectedItems
+      map holding (elems actual) `shouldBe` expectedItems
 
 monkeys :: [Monkey]
 monkeys = [m0, m1, m2, m3]

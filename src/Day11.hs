@@ -1,10 +1,8 @@
 module Day11 where
 
 import Control.Monad (forM_)
-import Control.Monad.Trans.State.Strict (State, get, modify, execState)
-import Data.Bifunctor (second)
+import Control.Monad.Trans.State.Strict (State, execState, get, modify)
 import Data.Functor (($>))
-import Data.List (uncons)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Text (Text)
@@ -30,7 +28,13 @@ data Monkey = Monkey
   }
   deriving (Show, Eq)
 
-type MonkeyItems = State (Map Label [Item])
+data MonkeyState = MonkeyState
+  { counter :: Int
+  , holding :: [Item]
+  }
+  deriving (Show, Eq)
+
+type MonkeyItems = State (Map Label MonkeyState)
 
 --------------------------------------------------------------------------------
 
@@ -101,29 +105,38 @@ applyOp (Add (Just k)) n = n + k
 applyOp (Multiply Nothing) n = n * n
 applyOp (Multiply (Just k)) n = n * k
 
+addItem :: Item -> MonkeyState -> MonkeyState
+addItem item ms = ms{holding = holding ms ++ [item]}
+
+reset :: MonkeyState -> MonkeyState
+reset ms = ms{holding = []}
+
+inc :: MonkeyState -> MonkeyState
+inc ms = ms{counter = counter ms + 1}
+
 round ::
   [Label] ->
   Map Label Monkey ->
   MonkeyItems ()
 round mkLabels mkProperties =
   forM_ mkLabels $ \label -> do
-    items <- (! label) <$> get
+    items <- holding . (! label) <$> get
     forM_ items $ \(Item worry) -> do
       let props = mkProperties ! label
           modified = applyOp (operation props) worry `div` 3
           chooser = if modified `mod` divisor props == 0 then fst else snd
           throwTarget = chooser (throwChoices props)
-      modify $ M.adjust (++ [Item modified]) throwTarget
-    modify $ M.adjust (const []) label
+      modify $ M.adjust (addItem (Item modified)) throwTarget
+    modify $ M.adjust reset label
 
-getItems :: [Monkey] -> Map Label [Item]
-getItems = M.fromList . map (\m -> (label m, items m))
+getItems :: [Monkey] -> Map Label MonkeyState
+getItems = M.fromList . map (\m -> (label m, MonkeyState 0 (items m)))
 
 runRound ::
   [Label] ->
   Map Label Monkey ->
-  Map Label [Item] ->
-  Map Label [Item]
+  Map Label MonkeyState ->
+  Map Label MonkeyState
 runRound mkLabels mkProperties = execState (round mkLabels mkProperties)
 
 -- determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
