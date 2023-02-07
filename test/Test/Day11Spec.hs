@@ -33,8 +33,10 @@ spec =
             , []
             , []
             ]
+          expectedCounters = [101, 95, 7, 105]
           actual = execState (replicateM_ 20 (round labels props)) (getItems monkeys)
       map holding (elems actual) `shouldBe` expectedItems
+      map counter (elems actual) `shouldBe` expectedCounters
 
 monkeys :: [Monkey]
 monkeys = [m0, m1, m2, m3]

@@ -127,6 +127,7 @@ round mkLabels mkProperties =
           chooser = if modified `mod` divisor props == 0 then fst else snd
           throwTarget = chooser (throwChoices props)
       modify $ M.adjust (addItem (Item modified)) throwTarget
+      modify $ M.adjust inc label
     modify $ M.adjust reset label
 
 getItems :: [Monkey] -> Map Label MonkeyState
