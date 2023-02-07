@@ -24,7 +24,13 @@ spec =
             , []
             , []
             ]
-          actual = runRounds 3 (labels exMonkeys) (props exMonkeys) 1 (getItems exMonkeys)
+          actual = runRounds 
+            (Reducer 3)
+            (Times 1)
+            (labels exMonkeys) 
+            (props exMonkeys) 
+            (getItems exMonkeys)
+
       map holding (elems actual) `shouldBe` expectedItems
 
     it "Twenty Rounds" $ do
@@ -35,7 +41,13 @@ spec =
             , []
             ]
           expectedCounters = [101, 95, 7, 105]
-          actual = runRounds 3 (labels exMonkeys) (props exMonkeys) 20 (getItems exMonkeys)
+          actual = runRounds 
+            (Reducer 3)
+            (Times 20)
+            (labels exMonkeys) 
+            (props exMonkeys) 
+            (getItems exMonkeys)
+
           actualHolding = map holding (elems actual)
           actualCounters = map counter (elems actual)
 
@@ -48,36 +60,48 @@ spec =
 
     it "1 Round - No Reducer" $ do
       let expectedCounters = [2, 4, 3, 6]
-          actual = runRounds 1 (labels exMonkeys) (props exMonkeys) 1 (getItems exMonkeys)
+          actual = runRounds 
+            (Reducer 1) 
+            (Times 1) 
+            (labels exMonkeys) 
+            (props exMonkeys) (
+              getItems exMonkeys)
           actualCounters = map counter (elems actual)
       actualCounters `shouldBe` expectedCounters
 
     it "20 Rounds - No Reducer" $ do
       let expectedCounters = [99, 97, 8, 103]
-          actual = runRounds 1 (labels exMonkeys) (props exMonkeys) 20 (getItems exMonkeys)
+          actual = runRounds 
+            (Reducer 1) 
+            (Times 20) 
+            (labels exMonkeys) 
+            (props exMonkeys) 
+            (getItems exMonkeys)
           actualCounters = map counter (elems actual)
       actualCounters `shouldBe` expectedCounters      
 
     it "1000 Rounds - No Reducer" $ do
       let expectedCounters = [5204, 4792, 199, 5192]
-          actual = runRounds 1 (labels exMonkeys) (props exMonkeys) 1000 (getItems exMonkeys)
+          actual = runRounds 
+            (Reducer 1) 
+            (Times 1000) 
+            (labels exMonkeys) 
+            (props exMonkeys) 
+            (getItems exMonkeys)
           actualCounters = map counter (elems actual)
-      actualCounters `shouldBe` expectedCounters         
-       
-
-    -- it "10,000 Rounds" $ do
-    --   let expectedCounters = [52166, 47830, 1938, 52013]
-    --       actual = runRounds 1 (labels exMonkeys) (props exMonkeys) 10000 (getItems exMonkeys)
-    --       actualCounters = map counter (elems actual)
-    --   actualCounters `shouldBe` expectedCounters
-    --   monkeyBusiness actualCounters `shouldBe` 2713310158
+      actualCounters `shouldBe` expectedCounters             
 
 
 part1Solution :: Text -> Int
 part1Solution =
   monkeyBusiness . map counter . elems . runner . parser
  where
-  runner mks = runRounds 3 (labels mks) (props mks) 20 (getItems mks)
+  runner mks = runRounds 
+    (Reducer 3) 
+    (Times 20) 
+    (labels mks)
+    (props mks) 
+    (getItems mks)
 
 monkeyBusiness :: [Int] -> Int
 monkeyBusiness counts = head ordered * ordered !! 1

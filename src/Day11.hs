@@ -18,6 +18,8 @@ data MonkeyOp = Add (Maybe Int) | Multiply (Maybe Int) deriving (Show, Eq)
 
 newtype Item = Item Int deriving (Show, Eq)
 newtype Label = Label Int deriving (Show, Eq, Ord)
+newtype Reducer = Reducer Int deriving (Show, Eq, Ord)
+newtype Times = Times Int deriving (Show, Eq, Ord)
 
 data Monkey = Monkey
   { label :: Label
@@ -138,14 +140,14 @@ getItems :: [Monkey] -> Map Label MonkeyState
 getItems = M.fromList . map (\m -> (label m, MonkeyState 0 (items m)))
 
 runRounds ::
-  Int ->
+  Reducer ->
+  Times -> 
   [Label] ->
   Map Label Monkey ->
-  Int ->
   Map Label MonkeyState ->
   Map Label MonkeyState
-runRounds reducer mkLabels mkProperties times =
-  execState $ replicateM_ times (round reducer mkLabels mkProperties)
+runRounds (Reducer r) (Times t) mkLabels mkProperties =
+  execState $ replicateM_ t (round r mkLabels mkProperties)
 
 --------------------------------------------------------------------------------
 
