@@ -1,6 +1,6 @@
 module Day11 where
 
-import Control.Monad (forM_)
+import Control.Monad (forM_, replicateM_)
 import Control.Monad.Trans.State.Strict (State, execState, get, modify)
 import Data.Functor (($>))
 import Data.Map (Map, (!))
@@ -133,12 +133,14 @@ round mkLabels mkProperties =
 getItems :: [Monkey] -> Map Label MonkeyState
 getItems = M.fromList . map (\m -> (label m, MonkeyState 0 (items m)))
 
-runRound ::
+runRounds ::
   [Label] ->
   Map Label Monkey ->
+  Int -> 
   Map Label MonkeyState ->
   Map Label MonkeyState
-runRound mkLabels mkProperties = execState (round mkLabels mkProperties)
+runRounds mkLabels mkProperties times = 
+  execState $ replicateM_ times (round mkLabels mkProperties)
 
 -- determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
 -- determineTargets (modifier, throwChoice) =
