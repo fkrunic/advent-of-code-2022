@@ -2,12 +2,15 @@ module Test.Day11Spec (spec) where
 
 import Test.Hspec (SpecWith, describe, it, shouldBe)
 
+import Control.Monad (replicateM_)
+import Control.Monad.Trans.State.Strict (execState)
 import Data.Either (fromRight)
-import Data.Map (elems, fromList)
+import Data.Map (Map, elems, fromList)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day11
 import Text.Megaparsec (runParser, some)
+import Prelude hiding (round)
 
 spec :: SpecWith ()
 spec =
@@ -15,10 +18,7 @@ spec =
     it "Parsing Puzzle Input" $ do
       parser puzzleInput `shouldBe` [m0, m1, m2, m3]
     it "First Round" $ do
-      let monkeys = [m0, m1, m2, m3]
-          props = fromList $ map (\m -> (label m, m)) monkeys
-          labels = map label monkeys
-          expectedItems =
+      let expectedItems =
             [ [Item 20, Item 23, Item 27, Item 26]
             , [Item 2080, Item 25, Item 167, Item 207, Item 401, Item 1046]
             , []
@@ -26,6 +26,24 @@ spec =
             ]
           actual = runRound labels props (getItems monkeys)
       elems actual `shouldBe` expectedItems
+    it "Twenty Rounds" $ do
+      let expectedItems =
+            [ [Item 10, Item 12, Item 14, Item 26, Item 34]
+            , [Item 245, Item 93, Item 53, Item 199, Item 115]
+            , []
+            , []
+            ]
+          actual = execState (replicateM_ 20 (round labels props)) (getItems monkeys)
+      elems actual `shouldBe` expectedItems
+
+monkeys :: [Monkey]
+monkeys = [m0, m1, m2, m3]
+
+labels :: [Label]
+labels = map label monkeys
+
+props :: Map Label Monkey
+props = fromList $ map (\m -> (label m, m)) monkeys
 
 parser :: Text -> [Monkey]
 parser = fromRight [] . runParser (some pMonkey) ""
