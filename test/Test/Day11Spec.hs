@@ -2,9 +2,8 @@ module Test.Day11Spec (spec) where
 
 import Test.Hspec (SpecWith, describe, it, shouldBe)
 
-import Control.Monad (replicateM_)
-import Control.Monad.Trans.State.Strict (execState)
 import Data.Either (fromRight)
+import Data.List (sort)
 import Data.Map (Map, elems, fromList)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -17,6 +16,7 @@ spec =
   describe "Day 11" $ do
     it "Parsing Puzzle Input" $ do
       parser puzzleInput `shouldBe` [m0, m1, m2, m3]
+
     it "First Round" $ do
       let expectedItems =
             [ [Item 20, Item 23, Item 27, Item 26]
@@ -26,6 +26,7 @@ spec =
             ]
           actual = runRounds labels props 1 (getItems monkeys)
       map holding (elems actual) `shouldBe` expectedItems
+
     it "Twenty Rounds" $ do
       let expectedItems =
             [ [Item 10, Item 12, Item 14, Item 26, Item 34]
@@ -35,8 +36,17 @@ spec =
             ]
           expectedCounters = [101, 95, 7, 105]
           actual = runRounds labels props 20 (getItems monkeys)
-      map holding (elems actual) `shouldBe` expectedItems
-      map counter (elems actual) `shouldBe` expectedCounters
+          actualHolding = map holding (elems actual)
+          actualCounters = map counter (elems actual)
+
+      actualHolding `shouldBe` expectedItems
+      actualCounters `shouldBe` expectedCounters
+      monkeyBusiness actualCounters `shouldBe` 10605
+
+monkeyBusiness :: [Int] -> Int
+monkeyBusiness counts = head ordered * ordered !! 1
+ where
+  ordered = reverse $ sort counts
 
 monkeys :: [Monkey]
 monkeys = [m0, m1, m2, m3]
