@@ -24,7 +24,7 @@ spec =
             , []
             , []
             ]
-          actual = runRounds labels props 1 (getItems monkeys)
+          actual = runRounds 3 (labels exMonkeys) (props exMonkeys) 1 (getItems exMonkeys)
       map holding (elems actual) `shouldBe` expectedItems
 
     it "Twenty Rounds" $ do
@@ -35,7 +35,7 @@ spec =
             , []
             ]
           expectedCounters = [101, 95, 7, 105]
-          actual = runRounds labels props 20 (getItems monkeys)
+          actual = runRounds 3 (labels exMonkeys) (props exMonkeys) 20 (getItems exMonkeys)
           actualHolding = map holding (elems actual)
           actualCounters = map counter (elems actual)
 
@@ -43,19 +43,28 @@ spec =
       actualCounters `shouldBe` expectedCounters
       monkeyBusiness actualCounters `shouldBe` 10605
 
+    it "Part 1 Solution" $
+      part1Solution part1Input `shouldBe` 58322
+
+part1Solution :: Text -> Int
+part1Solution =
+  monkeyBusiness . map counter . elems . runner . parser
+ where
+  runner mks = runRounds 3 (labels mks) (props mks) 20 (getItems mks)
+
 monkeyBusiness :: [Int] -> Int
 monkeyBusiness counts = head ordered * ordered !! 1
  where
   ordered = reverse $ sort counts
 
-monkeys :: [Monkey]
-monkeys = [m0, m1, m2, m3]
+exMonkeys :: [Monkey]
+exMonkeys = [m0, m1, m2, m3]
 
-labels :: [Label]
-labels = map label monkeys
+labels :: [Monkey] -> [Label]
+labels = map label
 
-props :: Map Label Monkey
-props = fromList $ map (\m -> (label m, m)) monkeys
+props :: [Monkey] -> Map Label Monkey
+props = fromList . map (\m -> (label m, m))
 
 parser :: Text -> [Monkey]
 parser = fromRight [] . runParser (some pMonkey) ""
@@ -125,4 +134,65 @@ puzzleInput =
     , "  Test: divisible by 17"
     , "    If true: throw to monkey 0"
     , "    If false: throw to monkey 1"
+    ]
+
+part1Input :: Text
+part1Input =
+  T.intercalate
+    "\n"
+    [ "Monkey 0:"
+    , "  Starting items: 59, 65, 86, 56, 74, 57, 56"
+    , "  Operation: new = old * 17"
+    , "  Test: divisible by 3"
+    , "    If true: throw to monkey 3"
+    , "    If false: throw to monkey 6"
+    , ""
+    , "Monkey 1:"
+    , "  Starting items: 63, 83, 50, 63, 56"
+    , "  Operation: new = old + 2"
+    , "  Test: divisible by 13"
+    , "    If true: throw to monkey 3"
+    , "    If false: throw to monkey 0"
+    , ""
+    , "Monkey 2:"
+    , "  Starting items: 93, 79, 74, 55"
+    , "  Operation: new = old + 1"
+    , "  Test: divisible by 2"
+    , "    If true: throw to monkey 0"
+    , "    If false: throw to monkey 1"
+    , ""
+    , "Monkey 3:"
+    , "  Starting items: 86, 61, 67, 88, 94, 69, 56, 91"
+    , "  Operation: new = old + 7"
+    , "  Test: divisible by 11"
+    , "    If true: throw to monkey 6"
+    , "    If false: throw to monkey 7"
+    , ""
+    , "Monkey 4:"
+    , "  Starting items: 76, 50, 51"
+    , "  Operation: new = old * old"
+    , "  Test: divisible by 19"
+    , "    If true: throw to monkey 2"
+    , "    If false: throw to monkey 5"
+    , ""
+    , "Monkey 5:"
+    , "  Starting items: 77, 76"
+    , "  Operation: new = old + 8"
+    , "  Test: divisible by 17"
+    , "    If true: throw to monkey 2"
+    , "    If false: throw to monkey 1"
+    , ""
+    , "Monkey 6:"
+    , "  Starting items: 74"
+    , "  Operation: new = old * 2"
+    , "  Test: divisible by 5"
+    , "    If true: throw to monkey 4"
+    , "    If false: throw to monkey 7"
+    , ""
+    , "Monkey 7:"
+    , "  Starting items: 86, 85, 52, 86, 91, 95"
+    , "  Operation: new = old + 6"
+    , "  Test: divisible by 7"
+    , "    If true: throw to monkey 4"
+    , "    If false: throw to monkey 5"
     ]

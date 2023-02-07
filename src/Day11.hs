@@ -115,15 +115,16 @@ inc :: MonkeyState -> MonkeyState
 inc ms = ms{counter = counter ms + 1}
 
 round ::
+  Int -> 
   [Label] ->
   Map Label Monkey ->
   MonkeyItems ()
-round mkLabels mkProperties =
+round reducer mkLabels mkProperties =
   forM_ mkLabels $ \label -> do
     items <- holding . (! label) <$> get
     forM_ items $ \(Item worry) -> do
       let props = mkProperties ! label
-          modified = applyOp (operation props) worry `div` 3
+          modified = applyOp (operation props) worry `div` reducer
           chooser = if modified `mod` divisor props == 0 then fst else snd
           throwTarget = chooser (throwChoices props)
       modify $ M.adjust (addItem (Item modified)) throwTarget
@@ -134,43 +135,11 @@ getItems :: [Monkey] -> Map Label MonkeyState
 getItems = M.fromList . map (\m -> (label m, MonkeyState 0 (items m)))
 
 runRounds ::
+  Int -> 
   [Label] ->
   Map Label Monkey ->
   Int -> 
   Map Label MonkeyState ->
   Map Label MonkeyState
-runRounds mkLabels mkProperties times = 
-  execState $ replicateM_ times (round mkLabels mkProperties)
-
--- determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
--- determineTargets (modifier, throwChoice) =
---   map $ \item -> (throwChoice item, modifier item)
-
--- sendItem :: Label -> Item -> Circle -> Circle
--- sendItem label item = M.adjust (second (++ [item])) label
-
--- sendAllItems :: Label -> [(Label, Item)] -> Circle -> Circle
--- sendAllItems thrower spread circle =
---   M.adjust (second (const [])) thrower $
---     foldr (uncurry sendItem) circle spread
-
--- turn :: (Label, (MonkeyProperties, [Item])) -> Circle -> Circle
--- turn (thrower, (mp, items)) circle =
---   case uncons items of
-
---     -- Removes all items from the thrower in the circle.
---     Nothing -> M.adjust (second (const [])) thrower circle
-
---     -- Throws an item to another monkey in the circle.
---     Just (item, rest) ->
---       let (modified, target) = (fst mp item, snd mp item)
---        in let circle' =
---                 M.adjust (second (++ [modified])) target circle
---            in turn (thrower, (mp, rest)) circle'
-
--- round :: Circle -> Circle
--- round circle = foldr sender circle $ reverse $ M.assocs circle
---  where
---   sender (label, (mp, items)) =
---     let targets = determineTargets mp items
---      in sendAllItems label targets
+runRounds reducer mkLabels mkProperties times = 
+  execState $ replicateM_ times (round reducer mkLabels mkProperties)
