@@ -13,44 +13,43 @@ spec :: SpecWith ()
 spec =
   describe "Day 11" $ do
     it "Parsing Puzzle Input" $ do
-      parser puzzleInput
-        `shouldBe` [ (Label 0, m0)
-                   , (Label 1, m1)
-                   , (Label 2, m2)
-                   , (Label 3, m3)
-                   ]
+      parser puzzleInput `shouldBe` [m0, m1, m2, m3]
 
-parser :: Text -> [(Label, Monkey)]
-parser = fromRight [] . runParser (some pEntry) ""
+parser :: Text -> [Monkey]
+parser = fromRight [] . runParser (some pMonkey) ""
 
 m0, m1, m2, m3 :: Monkey
 m0 =
   Monkey
-    { items = [Item 79, Item 98]
+    { label = Label 0
+    , items = [Item 79, Item 98]
     , operation = Multiply (Just 19)
-    , divisibility = 23
-    , throwChoice = (Label 2, Label 3)
+    , divisor = 23
+    , throwChoices = (Label 2, Label 3)
     }
 m1 =
   Monkey
-    { items = [Item 54, Item 65, Item 75, Item 74]
+    { label = Label 1
+    , items = [Item 54, Item 65, Item 75, Item 74]
     , operation = Add (Just 6)
-    , divisibility = 19
-    , throwChoice = (Label 2, Label 0)
+    , divisor = 19
+    , throwChoices = (Label 2, Label 0)
     }
 m2 =
   Monkey
-    { items = [Item 79, Item 60, Item 97]
+    { label = Label 2
+    , items = [Item 79, Item 60, Item 97]
     , operation = Multiply Nothing
-    , divisibility = 13
-    , throwChoice = (Label 1, Label 3)
+    , divisor = 13
+    , throwChoices = (Label 1, Label 3)
     }
 m3 =
   Monkey
-    { items = [Item 74]
+    { label = Label 3
+    , items = [Item 74]
     , operation = Add (Just 3)
-    , divisibility = 17
-    , throwChoice = (Label 0, Label 1)
+    , divisor = 17
+    , throwChoices = (Label 0, Label 1)
     }
 
 puzzleInput :: Text

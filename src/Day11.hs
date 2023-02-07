@@ -14,12 +14,17 @@ import Text.Megaparsec.Char.Lexer qualified as L
 type Parser = Parsec Void Text
 
 data MonkeyOp = Add (Maybe Int) | Multiply (Maybe Int) deriving (Show, Eq)
-type MonkeyProperties = (Item -> Item, Item -> Label)
 
 newtype Item = Item Int deriving (Show, Eq)
 newtype Label = Label Int deriving (Show, Eq, Ord)
 
-type Circle = Map Label (MonkeyProperties, [Item])
+data Monkey = Monkey
+  { label :: Label
+  , items :: [Item]
+  , operation :: MonkeyOp
+  , divisor :: Int
+  , throwChoices :: (Label, Label)
+  } deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 
@@ -79,54 +84,46 @@ applyOp (Add (Just k)) n = n + k
 applyOp (Multiply Nothing) n = n * n
 applyOp (Multiply (Just k)) n = n * k
 
-pMonkey :: Parser (MonkeyProperties, [Item])
-pMonkey = do
-  items <- space *> pItems
-  monkeyOp <- space *> pOperation
-  divisor <- space *> pDivisibility
-  throwLabels <- space *> pThrowChoice
-
-  let modifier (Item n) = Item $ applyOp monkeyOp n `div` 3
-      throwChoice item =
-        case modifier item of
-          Item n' ->
-            if n' `mod` divisor == 0
-              then fst throwLabels
-              else snd throwLabels
-
-  return ((modifier, throwChoice), items)
+pMonkey :: Parser Monkey
+pMonkey =
+  Monkey
+    <$> pLabel
+    <*> (space *> pItems)
+    <*> (space *> pOperation)
+    <*> (space *> pDivisibility)
+    <*> (space *> pThrowChoice)
 
 --------------------------------------------------------------------------------
 
-determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
-determineTargets (modifier, throwChoice) = 
-  map $ \item -> (throwChoice item, modifier item)
+-- determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
+-- determineTargets (modifier, throwChoice) =
+--   map $ \item -> (throwChoice item, modifier item)
 
-sendItem :: Label -> Item -> Circle -> Circle
-sendItem label item = M.adjust (second (++ [item])) label
+-- sendItem :: Label -> Item -> Circle -> Circle
+-- sendItem label item = M.adjust (second (++ [item])) label
 
-sendAllItems :: Label -> [(Label, Item)] -> Circle -> Circle
-sendAllItems thrower spread circle =
-  M.adjust (second (const [])) thrower $
-    foldr (uncurry sendItem) circle spread
+-- sendAllItems :: Label -> [(Label, Item)] -> Circle -> Circle
+-- sendAllItems thrower spread circle =
+--   M.adjust (second (const [])) thrower $
+--     foldr (uncurry sendItem) circle spread
 
 -- turn :: (Label, (MonkeyProperties, [Item])) -> Circle -> Circle
 -- turn (thrower, (mp, items)) circle =
 --   case uncons items of
 
---     -- Removes all items from the thrower in the circle. 
+--     -- Removes all items from the thrower in the circle.
 --     Nothing -> M.adjust (second (const [])) thrower circle
 
---     -- Throws an item to another monkey in the circle. 
+--     -- Throws an item to another monkey in the circle.
 --     Just (item, rest) ->
 --       let (modified, target) = (fst mp item, snd mp item)
 --        in let circle' =
 --                 M.adjust (second (++ [modified])) target circle
 --            in turn (thrower, (mp, rest)) circle'
 
-round :: Circle -> Circle
-round circle = foldr sender circle $ reverse $ M.assocs circle
-  where
-    sender (label, (mp, items)) = 
-      let targets = determineTargets mp items
-      in sendAllItems label targets
+-- round :: Circle -> Circle
+-- round circle = foldr sender circle $ reverse $ M.assocs circle
+--  where
+--   sender (label, (mp, items)) =
+--     let targets = determineTargets mp items
+--      in sendAllItems label targets
