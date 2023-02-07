@@ -10,9 +10,9 @@ import Text.Megaparsec (Parsec, choice, empty, optional, some)
 import Text.Megaparsec.Char (space, space1)
 import Text.Megaparsec.Char.Lexer qualified as L
 
-type Parser = Parsec Void Text
+--------------------------------------------------------------------------------
+
 data MonkeyOp = Add (Maybe Int) | Multiply (Maybe Int) deriving (Show, Eq)
-type Bananza = Map Label Monkey
 
 data Monkey = Monkey
   { items :: [Item]
@@ -25,7 +25,59 @@ data Monkey = Monkey
 newtype Item = Item Int deriving (Show, Eq)
 newtype Label = Label Int deriving (Show, Eq, Ord)
 
+applyOp :: Int -> MonkeyOp -> Int
+applyOp n (Add Nothing) = 2 * n
+applyOp n (Add (Just k)) = n + k
+applyOp n (Multiply Nothing) = n * n
+applyOp n (Multiply (Just k)) = n * k
+
+worryMod :: Monkey -> Item -> Item
+worryMod monkey (Item worry) = 
+  Item $ applyOp worry (operation monkey) `div` 3
+
+deduceTarget :: Monkey -> Item -> Label 
+deduceTarget monkey item = 
+  case worryMod monkey item of 
+    Item w' -> 
+      if w' `mod` (divisibility monkey) == 0
+        then fst (throwChoice monkey)
+        else snd (throwChoice monkey)
+
+-- relieveWorry :: Int -> Int
+-- relieveWorry n = n `div` 3
+
+-- throw :: Label -> (Item, [Item]) -> Monkey -> Bananza -> Bananza
+-- throw label (Item worry, remainingItems) m ms =
+--   M.update
+--     (\thrower -> Just $ thrower{items = remainingItems})
+--     label
+--     addItemToTarget
+--  where
+--   relieved = relieveWorry (applyOp worry (operation m))
+--   targetMonkey =
+--     if relieved `mod` divisibility m == 0
+--       then fst (throwChoice m)
+--       else snd (throwChoice m)
+--   addItemToTarget =
+--     M.update
+--       ( \target ->
+--           Just $ target{items = items target ++ [Item relieved]}
+--       )
+--       targetMonkey
+--       ms
+
+-- inspect :: Label -> Bananza -> Bananza
+-- inspect label ms =
+--   case uncons (items m) of
+--     Nothing -> ms
+--     Just unpacked -> throw label unpacked m ms
+--  where
+--   m = (M.!) ms label
+
+
 --------------------------------------------------------------------------------
+
+type Parser = Parsec Void Text
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -84,106 +136,3 @@ pMonkey =
     <*> (space *> pOperation)
     <*> (space *> pDivisibility)
     <*> (space *> pThrowChoice)
-
-pEntry :: Parser (Label, Monkey)
-pEntry =
-  (,)
-    <$> pLabel
-    <*> pMonkey
-
---------------------------------------------------------------------------------
-
-applyOp :: Int -> MonkeyOp -> Int
-applyOp n (Add Nothing) = 2 * n
-applyOp n (Add (Just k)) = n + k
-applyOp n (Multiply Nothing) = n * n
-applyOp n (Multiply (Just k)) = n * k
-
-relieveWorry :: Int -> Int
-relieveWorry n = n `div` 3
-
-throw :: Label -> (Item, [Item]) -> Monkey -> Bananza -> Bananza
-throw label (Item worry, remainingItems) m ms =
-  M.update
-    (\thrower -> Just $ thrower{items = remainingItems})
-    label
-    addItemToTarget
- where
-  relieved = relieveWorry (applyOp worry (operation m))
-  targetMonkey =
-    if relieved `mod` divisibility m == 0
-      then fst (throwChoice m)
-      else snd (throwChoice m)
-  addItemToTarget =
-    M.update
-      ( \target ->
-          Just $ target{items = items target ++ [Item relieved]}
-      )
-      targetMonkey
-      ms
-
-inspect :: Label -> Bananza -> Bananza
-inspect label ms =
-  case uncons (items m) of
-    Nothing -> ms
-    Just unpacked -> throw label unpacked m ms
- where
-  m = (M.!) ms label
-
--- throw :: Monkey -> Item -> [(Item, Label)] -> [(Item, Label)]
--- throw m (Item worry) labels =
---   if relieved `mod` divisibility m == 0
---     then (Item relieved, fst (throwChoice m)) : labels
---     else (Item relieved, snd (throwChoice m)) : labels
---  where
---   worried = modifyWorry worry (operation m)
---   relieved = relief worried
-
--- scatter :: Monkey -> [(Item, Label)]
--- scatter m = foldr (throw m) [] . startingItems $ m
-
--- singleMonkeyTurn :: Label -> [(Item, Label)] -> Bananza -> Bananza
--- singleMonkeyTurn thrower flyers bnz = sendFlyers
---  where
---   liquidateThrower = M.update (Just . emptyStartingItems) thrower bnz
---   sendFlyers = foldr send liquidateThrower flyers
---   send (item, toMonkey) = M.update (Just . throwAt item) toMonkey
---   emptyStartingItems mk = mk{startingItems = []}
-
--- throwAt :: Item -> Monkey -> Monkey
--- throwAt item m = m{startingItems = startingItems m ++ [item]}
-
--- turn :: Bananza -> Bananza
--- turn bnz = foldr executeTurn bnz $ reverse $ M.elems bnz
---  where
---   executeTurn m = singleMonkeyTurn (label m) (scatter m)
-
---------------------------------------------------------------------------------
-
-data TransferMap a b = TransferMap (Map a [b]) deriving (Show, Eq)
-
-data TransferError a
-  = FromKeyDoesNotExist a
-  | ToKeyDoesNotExist a
-  | EmptyTransferList a
-  deriving (Show, Eq)
-
-transfer ::
-  Ord a =>
-  a ->
-  a ->
-  TransferMap a b ->
-  Either (TransferError a) (TransferMap a b)
-transfer fromKey toKey (TransferMap m) =
-  case M.lookup fromKey m of
-    Nothing -> Left (FromKeyDoesNotExist fromKey)
-    Just [] -> Left (EmptyTransferList fromKey)
-    Just (item : rest) ->
-      case M.member toKey m of
-        False -> Left (ToKeyDoesNotExist toKey)
-        True ->
-          let added = M.adjust (\d -> d ++ [item]) toKey m
-           in Right $ TransferMap $ M.adjust (const rest) fromKey added
-
-get :: Ord a => a -> TransferMap a b -> Maybe [b]
-get key (TransferMap m) = M.lookup key m
