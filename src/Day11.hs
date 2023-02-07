@@ -141,25 +141,10 @@ getItems = M.fromList . map (\m -> (label m, MonkeyState 0 (items m)))
 
 runRounds ::
   Reducer ->
-  Times -> 
+  Times ->
   [Label] ->
   Map Label Monkey ->
   Map Label MonkeyState ->
   Map Label MonkeyState
 runRounds (Reducer r) (Times t) mkLabels mkProperties =
   execState $ replicateM_ t (round r mkLabels mkProperties)
-
---------------------------------------------------------------------------------
-
-newtype Factor = Factor Int deriving (Show, Eq, Ord)
-newtype Residue = Residue Int deriving (Show, Eq, Ord)
-newtype StartingWorry = StartingWorry Int deriving (Show, Eq, Ord)
-newtype ItemIdentifier = ItemIdentifier Int deriving (Show, Eq, Ord)
-
-type LabelledItem = (ItemIdentifier, StartingWorry)
-type ResidueMap = Map Factor Residue
-
-updateResidues :: (Int -> Int) -> ResidueMap -> ResidueMap
-updateResidues modifier = M.mapWithKey updater
-  where
-    updater (Factor f) (Residue r) = Residue $ modifier r `mod` f
