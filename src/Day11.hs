@@ -125,8 +125,8 @@ sendAllItems thrower spread circle =
 --            in turn (thrower, (mp, rest)) circle'
 
 round :: Circle -> Circle
-round circle = foldr sender circle $ M.assocs circle
+round circle = foldr sender circle $ reverse $ M.assocs circle
   where
-    sender (label, (mp, items)) inFlight = 
+    sender (label, (mp, items)) = 
       let targets = determineTargets mp items
-      in sendAllItems label targets inFlight
+      in sendAllItems label targets
