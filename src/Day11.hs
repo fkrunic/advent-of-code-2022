@@ -1,6 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TupleSections #-}
-
 module Day11 where
 
 import Control.Monad (forM_, replicateM_)
@@ -151,3 +148,4 @@ runRounds reducer mkLabels mkProperties times =
   execState $ replicateM_ times (round reducer mkLabels mkProperties)
 
 --------------------------------------------------------------------------------
+
