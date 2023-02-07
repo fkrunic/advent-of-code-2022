@@ -149,3 +149,15 @@ runRounds reducer mkLabels mkProperties times =
 
 --------------------------------------------------------------------------------
 
+newtype Factor = Factor Int deriving (Show, Eq, Ord)
+newtype Residue = Residue Int deriving (Show, Eq, Ord)
+newtype StartingWorry = StartingWorry Int deriving (Show, Eq, Ord)
+newtype ItemIdentifier = ItemIdentifier Int deriving (Show, Eq, Ord)
+
+type LabelledItem = (ItemIdentifier, StartingWorry)
+type ResidueMap = Map Factor Residue
+
+updateResidues :: (Int -> Int) -> ResidueMap -> ResidueMap
+updateResidues modifier = M.mapWithKey updater
+  where
+    updater (Factor f) (Residue r) = Residue $ modifier r `mod` f
