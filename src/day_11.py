@@ -1,4 +1,5 @@
 from collections import defaultdict
+from random import randint
 
 MK_LABELS = [0, 1, 2, 3]
 
@@ -58,3 +59,6 @@ if __name__ == "__main__":
 
   print(mk_items)
   print(mk_counters)
+
+  with open('large_number.txt', 'w') as f:
+    f.write("".join([str(randint(0, 9)) for _ in range(1000000)]))

@@ -1,3 +1,6 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TupleSections #-}
+
 module Day11 where
 
 import Control.Monad (forM_, replicateM_)
@@ -118,7 +121,7 @@ strictAdd :: Int -> Int -> Int
 strictAdd = ($!) (+)
 
 round ::
-  Int -> 
+  Int ->
   [Label] ->
   Map Label Monkey ->
   MonkeyItems ()
@@ -138,11 +141,48 @@ getItems :: [Monkey] -> Map Label MonkeyState
 getItems = M.fromList . map (\m -> (label m, MonkeyState 0 (items m)))
 
 runRounds ::
-  Int -> 
+  Int ->
   [Label] ->
   Map Label Monkey ->
-  Int -> 
+  Int ->
   Map Label MonkeyState ->
   Map Label MonkeyState
-runRounds reducer mkLabels mkProperties times = 
+runRounds reducer mkLabels mkProperties times =
   execState $ replicateM_ times (round reducer mkLabels mkProperties)
+
+--------------------------------------------------------------------------------
+
+newtype Factor = Factor Int deriving (Show, Eq, Ord, Num)
+newtype FactorOrder = FactorOrder Integer deriving (Show, Eq, Ord, Num)
+newtype LargeNumber = LargeNumber Integer deriving (Show, Eq, Ord, Num)
+newtype Residue = Residue Integer deriving (Show, Eq, Ord, Num)
+type PartialFactorization = (Residue, Map Factor FactorOrder)
+
+combine :: PartialFactorization -> LargeNumber
+combine = undefined
+
+isDivisible :: Factor -> PartialFactorization -> Maybe Bool
+isDivisible = undefined
+
+partialFactors :: LargeNumber -> [Factor] -> PartialFactorization
+partialFactors (LargeNumber n) fs =
+  foldr reduceIter initialFactorization fs
+ where
+  emptyFactors = map (,FactorOrder 0) fs
+  initialFactorization = (Residue n, M.fromList emptyFactors)
+
+reduceIter :: Factor -> PartialFactorization -> PartialFactorization
+reduceIter factor@(Factor f) (residue@(Residue r), fm) =
+  if r `mod` fromIntegral f == 0
+    then
+      let
+        residue' = Residue (r `div` fromIntegral f)
+       in
+        let fm' = M.insertWith (+) factor (FactorOrder 1) fm
+         in reduceIter factor (residue', fm')
+    else (residue, M.insertWith (+) factor (FactorOrder 0) fm)
+
+-- instance Num Factor where
+--   (+) (Factor a) (Factor b) = Factor (a + b)
+--   (*) (Factor a) (Factor b) = Factor (a * b)
+--   abs (Factor a) = Factor (abs a)
