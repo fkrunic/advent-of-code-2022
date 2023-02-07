@@ -98,20 +98,35 @@ pMonkey = do
 
 --------------------------------------------------------------------------------
 
-turn :: Label -> Circle -> Circle
-turn thrower circle = do
-  case M.lookup thrower circle of
-    Nothing -> error $ "No circle entry for monkey: " ++ show thrower
-    Just (mp, items) ->
-      case uncons items of
-        Nothing -> circle
-        Just (item, rest) ->
-          let (modified, target) = (fst mp item, snd mp item)
-           in let itemRemoved =
-                    M.adjust (second (const rest)) target circle
-               in let itemAdded =
-                        M.adjust (second (++ [modified])) target itemRemoved
-                   in turn thrower itemAdded
+determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
+determineTargets (modifier, throwChoice) = 
+  map $ \item -> (throwChoice item, modifier item)
+
+sendItem :: Label -> Item -> Circle -> Circle
+sendItem label item = M.adjust (second (++ [item])) label
+
+sendAllItems :: Label -> [(Label, Item)] -> Circle -> Circle
+sendAllItems thrower spread circle =
+  M.adjust (second (const [])) thrower $
+    foldr (uncurry sendItem) circle spread
+
+-- turn :: (Label, (MonkeyProperties, [Item])) -> Circle -> Circle
+-- turn (thrower, (mp, items)) circle =
+--   case uncons items of
+
+--     -- Removes all items from the thrower in the circle. 
+--     Nothing -> M.adjust (second (const [])) thrower circle
+
+--     -- Throws an item to another monkey in the circle. 
+--     Just (item, rest) ->
+--       let (modified, target) = (fst mp item, snd mp item)
+--        in let circle' =
+--                 M.adjust (second (++ [modified])) target circle
+--            in turn (thrower, (mp, rest)) circle'
 
 round :: Circle -> Circle
-round circle = foldr turn circle $ reverse $ M.keys circle
+round circle = foldr sender circle $ M.assocs circle
+  where
+    sender (label, (mp, items)) inFlight = 
+      let targets = determineTargets mp items
+      in sendAllItems label targets inFlight
