@@ -1,15 +1,18 @@
 module Day11 where
 
+import Control.Monad (forM_)
+import Control.Monad.Trans.State.Strict (State, get, modify, execState)
 import Data.Bifunctor (second)
 import Data.Functor (($>))
 import Data.List (uncons)
-import Data.Map (Map)
+import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Void (Void)
 import Text.Megaparsec (Parsec, choice, empty, optional, some)
 import Text.Megaparsec.Char (space, space1)
 import Text.Megaparsec.Char.Lexer qualified as L
+import Prelude hiding (round)
 
 type Parser = Parsec Void Text
 
@@ -24,7 +27,10 @@ data Monkey = Monkey
   , operation :: MonkeyOp
   , divisor :: Int
   , throwChoices :: (Label, Label)
-  } deriving (Show, Eq)
+  }
+  deriving (Show, Eq)
+
+type MonkeyItems = State (Map Label [Item])
 
 --------------------------------------------------------------------------------
 
@@ -78,12 +84,6 @@ pThrowChoice =
     <$> (Label <$> (symbol "If true: throw to monkey" *> integer))
     <*> (Label <$> (symbol "If false: throw to monkey" *> integer))
 
-applyOp :: MonkeyOp -> Int -> Int
-applyOp (Add Nothing) n = 2 * n
-applyOp (Add (Just k)) n = n + k
-applyOp (Multiply Nothing) n = n * n
-applyOp (Multiply (Just k)) n = n * k
-
 pMonkey :: Parser Monkey
 pMonkey =
   Monkey
@@ -94,6 +94,37 @@ pMonkey =
     <*> (space *> pThrowChoice)
 
 --------------------------------------------------------------------------------
+
+applyOp :: MonkeyOp -> Int -> Int
+applyOp (Add Nothing) n = 2 * n
+applyOp (Add (Just k)) n = n + k
+applyOp (Multiply Nothing) n = n * n
+applyOp (Multiply (Just k)) n = n * k
+
+round ::
+  [Label] ->
+  Map Label Monkey ->
+  MonkeyItems ()
+round mkLabels mkProperties =
+  forM_ mkLabels $ \label -> do
+    items <- (! label) <$> get
+    forM_ items $ \(Item worry) -> do
+      let props = mkProperties ! label
+          modified = applyOp (operation props) worry `div` 3
+          chooser = if modified `mod` divisor props == 0 then fst else snd
+          throwTarget = chooser (throwChoices props)
+      modify $ M.adjust (++ [Item modified]) throwTarget
+    modify $ M.adjust (const []) label
+
+getItems :: [Monkey] -> Map Label [Item]
+getItems = M.fromList . map (\m -> (label m, items m))
+
+runRound ::
+  [Label] ->
+  Map Label Monkey ->
+  Map Label [Item] ->
+  Map Label [Item]
+runRound mkLabels mkProperties = execState (round mkLabels mkProperties)
 
 -- determineTargets :: MonkeyProperties -> [Item] -> [(Label, Item)]
 -- determineTargets (modifier, throwChoice) =

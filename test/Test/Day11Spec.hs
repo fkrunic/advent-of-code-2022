@@ -14,6 +14,18 @@ spec =
   describe "Day 11" $ do
     it "Parsing Puzzle Input" $ do
       parser puzzleInput `shouldBe` [m0, m1, m2, m3]
+    it "First Round" $ do
+      let monkeys = [m0, m1, m2, m3]
+          props = fromList $ map (\m -> (label m, m)) monkeys
+          labels = map label monkeys
+          expectedItems =
+            [ [Item 20, Item 23, Item 27, Item 26]
+            , [Item 2080, Item 25, Item 167, Item 207, Item 401, Item 1046]
+            , []
+            , []
+            ]
+          actual = runRound labels props (getItems monkeys)
+      elems actual `shouldBe` expectedItems
 
 parser :: Text -> [Monkey]
 parser = fromRight [] . runParser (some pMonkey) ""
