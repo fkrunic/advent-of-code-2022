@@ -81,32 +81,46 @@ spec =
       actualCounters `shouldBe` expectedCounters      
 
     it "1000 Rounds - Residue Implementation" $ do
-      let expectedCounters = [5204, 4792, 199, 5192]
+      let expectedCounters = map Counter [5204, 4792, 199, 5192]
           indexedItems = generateIndexedItems exMonkeys
           factors = getFactors exMonkeys
           residuals = buildResiduals indexedItems factors
-          state = 
+          state = initialIndexedState exMonkeys
           actual = runResidues 
             (Times 1000) 
             (labels exMonkeys) 
             (props exMonkeys) 
-            (getItems exMonkeys)
-          actualCounters = map counter (elems actual)
+            (state, residuals)
+          actualCounters = map residueCounter $ elems actual
       actualCounters `shouldBe` expectedCounters  
+
+    it "10,000 Rounds - Residue Implementation" $ do
+      let expectedCounters = map Counter [52166, 47830, 1938, 52013]
+          indexedItems = generateIndexedItems exMonkeys
+          factors = getFactors exMonkeys
+          residuals = buildResiduals indexedItems factors
+          state = initialIndexedState exMonkeys
+          actual = runResidues 
+            (Times 10000) 
+            (labels exMonkeys) 
+            (props exMonkeys) 
+            (state, residuals)
+          actualCounters = map residueCounter $ elems actual
+      actualCounters `shouldBe` expectedCounters        
 
     describe "Counting Game Tests" $ do
       it "Generate Indexed Items" $ do
         generateIndexedItems exMonkeys `shouldBe`
-          [ (Index 0, Worry 79)
-          , (Index 1, Worry 98)
-          , (Index 2, Worry 54)
-          , (Index 3, Worry 65)
-          , (Index 4, Worry 75)
-          , (Index 5, Worry 74)
-          , (Index 6, Worry 79)
-          , (Index 7, Worry 60)
-          , (Index 8, Worry 97)
-          , (Index 9, Worry 74)
+          [ (Label 0, Index 0, Worry 79)
+          , (Label 0, Index 1, Worry 98)
+          , (Label 1, Index 2, Worry 54)
+          , (Label 1, Index 3, Worry 65)
+          , (Label 1, Index 4, Worry 75)
+          , (Label 1, Index 5, Worry 74)
+          , (Label 2, Index 6, Worry 79)
+          , (Label 2, Index 7, Worry 60)
+          , (Label 2, Index 8, Worry 97)
+          , (Label 3, Index 9, Worry 74)
           ]
 
 
