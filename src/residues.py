@@ -37,11 +37,22 @@ def round(reducer, monkey_items, monkey_counters, monkey_residues):
 
       props = MK_PROPERTIES[label]
       modifier = props["op"]
-      modified = modifier(item_worry) // reducer
+
+      for monkey_index, prop in enumerate(MK_PROPERTIES):
+        divisor = prop["divisibility"]
+        residue_key = (item_index, monkey_index)
+        existing_residue = monkey_residues[residue_key]
+        monkey_residues[residue_key] = (modifier(existing_residue) // reducer) % divisor
+
+      modified = (modifier(item_worry) // reducer) % divisor
 
       throw_choice_index = 0 if modified % props["divisibility"] == 0 else 1
       throw_target = props["throw_choice"][throw_choice_index]
-      monkey_items[throw_target].append((item_index, modified))
+
+      target_residue_key = (item_index, throw_target)
+      residue_item = (item_index, monkey_residues[target_residue_key])
+
+      monkey_items[throw_target].append(residue_item)
       monkey_counters[label] += 1
 
     monkey_items[label] = []
@@ -64,3 +75,4 @@ if __name__ == "__main__":
 
   print(mk_items)
   print(mk_counters)
+  print(mk_residues)
