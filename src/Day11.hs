@@ -162,7 +162,7 @@ newtype Index = Index Int deriving (Show, Eq, Ord)
 newtype Worry = Worry Int deriving (Show, Eq, Ord)
 
 type Modifier = Int -> Int
-type IndexedItem = (Index, Worry)
+type IndexedItem = (Label, Index, Worry)
 
 type ResidueMap = Map Factor Residue
 type ItemResiduals = Map Index ResidueMap
@@ -191,12 +191,14 @@ getFactors :: [Monkey] -> [Factor]
 getFactors = map getFactor
 
 generateIndexedItems :: [Monkey] -> [IndexedItem]
-generateIndexedItems = zipWith binder [0 ..] . concatMap items
+generateIndexedItems =
+  zipWith binder [0 ..]
+    . concatMap (\m -> map (label m,) $ items m)
  where
-  binder index (Item worry) = (Index index, Worry worry)
+  binder index (label, Item worry) = (label, Index index, Worry worry)
 
 buildResidueMap :: IndexedItem -> [Factor] -> ResidueMap
-buildResidueMap (_, Worry worry) = M.fromList . map (normalizer worry)
+buildResidueMap (_, _, Worry worry) = M.fromList . map (normalizer worry)
  where
   normalizer w (Factor f) = (Factor f, Residue $ w `mod` f)
 
@@ -204,7 +206,7 @@ buildResiduals :: [IndexedItem] -> [Factor] -> ItemResiduals
 buildResiduals items factors =
   M.fromList $ map builder items
  where
-  builder item@(Index index, _) = (Index index, buildResidueMap item factors)
+  builder item@(_, Index index, _) = (Index index, buildResidueMap item factors)
 
 residueRound ::
   [Label] ->
@@ -213,19 +215,17 @@ residueRound ::
 residueRound mkLabels mkProperties =
   forM_ mkLabels $ \label -> do
     items <- indexedHolding . (! label) . fst <$> get
-    forM_ items $ \indexedItem -> do
+    forM_ items $ \indexedItem@(_, index, _) -> do
       let props = mkProperties ! label
           factor = Factor (divisor props)
           modifier = applyOp (operation props)
-          index = fst indexedItem
       modify $ second (applyModifierToIndex index modifier)
-      residueWorry <- (! factor) . (! index) . snd <$> get 
+      residueWorry <- (! factor) . (! index) . snd <$> get
       let chooser = if residueWorry == Residue 0 then fst else snd
           throwTarget = chooser (throwChoices props)
       modify $ first $ M.adjust (addItem' indexedItem) throwTarget
       modify $ first $ M.adjust inc' label
     modify $ first $ M.adjust reset' label
-
 
 addItem' :: IndexedItem -> MonkeyIndexedState -> MonkeyIndexedState
 addItem' item mis = mis{indexedHolding = indexedHolding mis ++ [item]}
@@ -234,7 +234,7 @@ reset' :: MonkeyIndexedState -> MonkeyIndexedState
 reset' ms = ms{indexedHolding = []}
 
 inc' :: MonkeyIndexedState -> MonkeyIndexedState
-inc' mis = mis{residueCounter = residueCounter mis + Counter 1}    
+inc' mis = mis{residueCounter = residueCounter mis + Counter 1}
 
 runResidues ::
   Times ->
@@ -244,3 +244,13 @@ runResidues ::
   Map Label MonkeyIndexedState
 runResidues (Times t) mkLabels mkProperties =
   fst . execState (replicateM_ t (residueRound mkLabels mkProperties))
+
+initialIndexedState :: [Monkey] -> Map Label MonkeyIndexedState
+initialIndexedState mks = M.fromList $ map builder mks
+ where
+  indexedItems = generateIndexedItems mks
+  builder m =
+    ( label m
+    , MonkeyIndexedState (Counter 0) $
+        filter (\(lbl, _, _) -> lbl == label m) indexedItems
+    )

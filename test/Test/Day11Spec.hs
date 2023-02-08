@@ -80,17 +80,19 @@ spec =
           actualCounters = map counter (elems actual)
       actualCounters `shouldBe` expectedCounters      
 
-    it "1000 Rounds - No Reducer" $ do
-      pendingWith "Need to implement residue reduction"
-      -- let expectedCounters = [5204, 4792, 199, 5192]
-      --     actual = runRounds 
-      --       (Reducer 1) 
-      --       (Times 1000) 
-      --       (labels exMonkeys) 
-      --       (props exMonkeys) 
-      --       (getItems exMonkeys)
-      --     actualCounters = map counter (elems actual)
-      -- actualCounters `shouldBe` expectedCounters  
+    it "1000 Rounds - Residue Implementation" $ do
+      let expectedCounters = [5204, 4792, 199, 5192]
+          indexedItems = generateIndexedItems exMonkeys
+          factors = getFactors exMonkeys
+          residuals = buildResiduals indexedItems factors
+          state = 
+          actual = runResidues 
+            (Times 1000) 
+            (labels exMonkeys) 
+            (props exMonkeys) 
+            (getItems exMonkeys)
+          actualCounters = map counter (elems actual)
+      actualCounters `shouldBe` expectedCounters  
 
     describe "Counting Game Tests" $ do
       it "Generate Indexed Items" $ do
