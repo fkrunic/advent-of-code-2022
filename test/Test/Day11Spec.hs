@@ -91,15 +91,15 @@ spec =
           actualCounters = map counter (elems actual)
       actualCounters `shouldBe` expectedCounters  
 
-    it "1000 Rounds - Normalized Runner" $ do
-      let expectedCounters = [5204, 4792, 199, 5192]
-          actual = runRounds'
-            (Times 1000) 
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (getItems exMonkeys)
-          actualCounters = map counter (elems actual)
-      actualCounters `shouldBe` expectedCounters                   
+    -- it "1000 Rounds - Normalized Runner" $ do
+    --   let expectedCounters = [5204, 4792, 199, 5192]
+    --       actual = runRounds'
+    --         (Times 1000) 
+    --         (labels exMonkeys) 
+    --         (props exMonkeys) 
+    --         (getItems exMonkeys)
+    --       actualCounters = map counter (elems actual)
+    --   actualCounters `shouldBe` expectedCounters                   
 
 
 part1Solution :: Text -> Int

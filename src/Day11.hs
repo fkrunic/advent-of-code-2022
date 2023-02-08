@@ -149,28 +149,4 @@ runRounds ::
 runRounds (Reducer r) (Times t) mkLabels mkProperties =
   execState $ replicateM_ t (round r mkLabels mkProperties)
 
-round' ::
-  [Label] ->
-  Map Label Monkey ->
-  MonkeyItems ()
-round' mkLabels mkProperties =
-  forM_ mkLabels $ \label -> do
-    items <- holding . (! label) <$> get
-    forM_ items $ \(Item worry) -> do
-      let props = mkProperties ! label
-          normalized = worry `mod` divisor props
-          modified = applyOp (operation props) normalized
-          chooser = if modified `mod` divisor props == 0 then fst else snd
-          throwTarget = chooser (throwChoices props)
-      modify $ M.adjust (addItem (Item modified)) throwTarget
-      modify $ M.adjust inc label
-    modify $ M.adjust reset label
-
-runRounds' ::
-  Times ->
-  [Label] ->
-  Map Label Monkey ->
-  Map Label MonkeyState ->
-  Map Label MonkeyState
-runRounds' (Times t) mkLabels mkProperties =
-  execState $ replicateM_ t (round' mkLabels mkProperties)    
+-------------------------------------------------------------------------------- 
