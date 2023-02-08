@@ -27,7 +27,7 @@ MK_PROPERTIES = [
 ]
 
 
-def round(reducer, monkey_items, monkey_counters):
+def round(reducer, monkey_items, monkey_counters, monkey_residues):
   for label in MK_LABELS:
     items = monkey_items[label]
 
@@ -36,7 +36,8 @@ def round(reducer, monkey_items, monkey_counters):
       item_worry = item[1]
 
       props = MK_PROPERTIES[label]
-      modified = props["op"](item_worry) // reducer
+      modifier = props["op"]
+      modified = modifier(item_worry) // reducer
 
       throw_choice_index = 0 if modified % props["divisibility"] == 0 else 1
       throw_target = props["throw_choice"][throw_choice_index]
@@ -56,9 +57,10 @@ if __name__ == "__main__":
   ]
 
   mk_counters = defaultdict(int)
+  mk_residues = defaultdict(int)
 
   for _ in range(20):
-    round(3, mk_items, mk_counters)
+    round(3, mk_items, mk_counters, mk_residues)
 
   print(mk_items)
   print(mk_counters)
