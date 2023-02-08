@@ -55,9 +55,6 @@ spec =
       actualCounters `shouldBe` expectedCounters
       monkeyBusiness actualCounters `shouldBe` 10605
 
-    it "Part 1 Solution" $
-      part1Solution part1Input `shouldBe` 58322
-
     it "1 Round - No Reducer" $ do
       let expectedCounters = [2, 4, 3, 6]
           actual = runRounds 
@@ -78,35 +75,7 @@ spec =
             (props exMonkeys) 
             (getItems exMonkeys)
           actualCounters = map counter (elems actual)
-      actualCounters `shouldBe` expectedCounters      
-
-    it "1000 Rounds - Residue Implementation" $ do
-      let expectedCounters = map Counter [5204, 4792, 199, 5192]
-          indexedItems = generateIndexedItems exMonkeys
-          factors = getFactors exMonkeys
-          residuals = buildResiduals indexedItems factors
-          state = initialIndexedState exMonkeys
-          actual = runResidues 
-            (Times 1000) 
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (state, residuals)
-          actualCounters = map residueCounter $ elems actual
-      actualCounters `shouldBe` expectedCounters  
-
-    it "10,000 Rounds - Residue Implementation" $ do
-      let expectedCounters = map Counter [52166, 47830, 1938, 52013]
-          indexedItems = generateIndexedItems exMonkeys
-          factors = getFactors exMonkeys
-          residuals = buildResiduals indexedItems factors
-          state = initialIndexedState exMonkeys
-          actual = runResidues 
-            (Times 10000) 
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (state, residuals)
-          actualCounters = map residueCounter $ elems actual
-      actualCounters `shouldBe` expectedCounters        
+      actualCounters `shouldBe` expectedCounters          
 
     describe "Counting Game Tests" $ do
       it "Generate Indexed Items" $ do
@@ -123,6 +92,41 @@ spec =
           , (Label 3, Index 9, Worry 74)
           ]
 
+      it "1000 Rounds - Residue Implementation" $ do
+        let expectedCounters = map Counter [5204, 4792, 199, 5192]
+            indexedItems = generateIndexedItems exMonkeys
+            factors = getFactors exMonkeys
+            residuals = buildResiduals indexedItems factors
+            state = initialIndexedState exMonkeys
+            actual = runResidues 
+              (Times 1000) 
+              (labels exMonkeys) 
+              (props exMonkeys) 
+              (state, residuals)
+            actualCounters = map residueCounter $ elems actual
+        actualCounters `shouldBe` expectedCounters  
+
+      it "10,000 Rounds - Residue Implementation" $ do
+        let expectedCounters = map Counter [52166, 47830, 1938, 52013]
+            indexedItems = generateIndexedItems exMonkeys
+            factors = getFactors exMonkeys
+            residuals = buildResiduals indexedItems factors
+            state = initialIndexedState exMonkeys
+            actual = runResidues 
+              (Times 10000) 
+              (labels exMonkeys) 
+              (props exMonkeys) 
+              (state, residuals)
+            actualCounters = map residueCounter $ elems actual
+        actualCounters `shouldBe` expectedCounters              
+
+      describe "Puzzle Solutions" $ do
+        it "Part 1 Solution" $
+          part1Solution part1Input `shouldBe` 58322       
+
+        it "Part 2 Solution" $ do
+          part2Solution part1Input `shouldBe` 13937702909
+
 
 part1Solution :: Text -> Int
 part1Solution =
@@ -134,6 +138,23 @@ part1Solution =
     (labels mks)
     (props mks) 
     (getItems mks)
+
+part2Solution :: Text -> Int
+part2Solution =
+  monkeyBusiness . map (unpack . residueCounter) . elems . runner . parser
+  where
+    unpack (Counter c) = c
+    runner mks = 
+      runResidues 
+        (Times 10000) 
+        (labels mks) 
+        (props mks) 
+        (state, residuals)      
+      where
+        indexedItems = generateIndexedItems mks
+        factors = getFactors mks
+        residuals = buildResiduals indexedItems factors
+        state = initialIndexedState mks        
 
 monkeyBusiness :: [Int] -> Int
 monkeyBusiness counts = head ordered * ordered !! 1
