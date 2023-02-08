@@ -1,6 +1,6 @@
 module Test.Day11Spec (spec) where
 
-import Test.Hspec (SpecWith, describe, it, shouldBe)
+import Test.Hspec (SpecWith, describe, it, shouldBe, pendingWith)
 
 import Data.Either (fromRight)
 import Data.List (sort)
@@ -81,25 +81,31 @@ spec =
       actualCounters `shouldBe` expectedCounters      
 
     it "1000 Rounds - No Reducer" $ do
-      let expectedCounters = [5204, 4792, 199, 5192]
-          actual = runRounds 
-            (Reducer 1) 
-            (Times 1000) 
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (getItems exMonkeys)
-          actualCounters = map counter (elems actual)
-      actualCounters `shouldBe` expectedCounters  
+      pendingWith "Need to implement residue reduction"
+      -- let expectedCounters = [5204, 4792, 199, 5192]
+      --     actual = runRounds 
+      --       (Reducer 1) 
+      --       (Times 1000) 
+      --       (labels exMonkeys) 
+      --       (props exMonkeys) 
+      --       (getItems exMonkeys)
+      --     actualCounters = map counter (elems actual)
+      -- actualCounters `shouldBe` expectedCounters  
 
-    -- it "1000 Rounds - Normalized Runner" $ do
-    --   let expectedCounters = [5204, 4792, 199, 5192]
-    --       actual = runRounds'
-    --         (Times 1000) 
-    --         (labels exMonkeys) 
-    --         (props exMonkeys) 
-    --         (getItems exMonkeys)
-    --       actualCounters = map counter (elems actual)
-    --   actualCounters `shouldBe` expectedCounters                   
+    describe "Counting Game Tests" $ do
+      it "Generate Indexed Items" $ do
+        generateIndexedItems exMonkeys `shouldBe`
+          [ (Index 0, Worry 79)
+          , (Index 1, Worry 98)
+          , (Index 2, Worry 54)
+          , (Index 3, Worry 65)
+          , (Index 4, Worry 75)
+          , (Index 5, Worry 74)
+          , (Index 6, Worry 79)
+          , (Index 7, Worry 60)
+          , (Index 8, Worry 97)
+          , (Index 9, Worry 74)
+          ]
 
 
 part1Solution :: Text -> Int

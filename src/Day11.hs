@@ -151,15 +151,35 @@ runRounds ::
 runRounds (Reducer r) (Times t) mkLabels mkProperties =
   execState $ replicateM_ t (round r mkLabels mkProperties)
 
--------------------------------------------------------------------------------- 
+--------------------------------------------------------------------------------
 
 newtype Factor = Factor Int deriving (Show, Eq, Ord, Num)
 newtype Residue = Residue Int deriving (Show, Eq, Ord, Num)
+newtype Counter = Counter Int deriving (Show, Eq, Ord, Num)
+newtype Index = Index Int deriving (Show, Eq, Ord)
+newtype Worry = Worry Int deriving (Show, Eq, Ord)
+type Modifier = Int -> Int
+type IndexedItem = (Index, Worry)
 
 type ResidueMap = Map Factor Residue
+type ItemResiduals = Map Index ResidueMap
+type MonkeyCounters = Map Label Counter
 
-applyModifier :: (Int -> Int) -> ResidueMap -> ResidueMap
+type CountingGame = State (MonkeyCounters, ItemResiduals)
+
+applyModifier :: Modifier -> ResidueMap -> ResidueMap
 applyModifier modifier = M.mapWithKey updater
+ where
+  updater (Factor f) (Residue r) = Residue $ modifier r `mod` f
+
+applyModifierToItem :: Index -> Modifier -> ItemResiduals -> ItemResiduals
+applyModifierToItem index modifier = M.adjust (applyModifier modifier) index
+
+getFactor :: Monkey -> Factor
+getFactor = Factor . divisor
+
+generateIndexedItems :: [Monkey] -> [IndexedItem]
+generateIndexedItems = zipWith binder [0..] . concatMap items
   where
-    updater (Factor f) (Residue r) = Residue $ modifier r `mod` f
+    binder index (Item worry) = (Index index, Worry worry)
 
