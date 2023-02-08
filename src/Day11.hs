@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Day11 where
 
 import Control.Monad (forM_, replicateM_)
@@ -150,3 +152,14 @@ runRounds (Reducer r) (Times t) mkLabels mkProperties =
   execState $ replicateM_ t (round r mkLabels mkProperties)
 
 -------------------------------------------------------------------------------- 
+
+newtype Factor = Factor Int deriving (Show, Eq, Ord, Num)
+newtype Residue = Residue Int deriving (Show, Eq, Ord, Num)
+
+type ResidueMap = Map Factor Residue
+
+applyModifier :: (Int -> Int) -> ResidueMap -> ResidueMap
+applyModifier modifier = M.mapWithKey updater
+  where
+    updater (Factor f) (Residue r) = Residue $ modifier r `mod` f
+
