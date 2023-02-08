@@ -235,3 +235,12 @@ reset' ms = ms{indexedHolding = []}
 
 inc' :: MonkeyIndexedState -> MonkeyIndexedState
 inc' mis = mis{residueCounter = residueCounter mis + Counter 1}    
+
+runResidues ::
+  Times ->
+  [Label] ->
+  Map Label Monkey ->
+  (Map Label MonkeyIndexedState, ItemResiduals) ->
+  Map Label MonkeyIndexedState
+runResidues (Times t) mkLabels mkProperties =
+  fst . execState (replicateM_ t (residueRound mkLabels mkProperties))
