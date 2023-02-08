@@ -156,8 +156,10 @@ runRounds (Reducer r) (Times t) mkLabels mkProperties =
 newtype Factor = Factor Int deriving (Show, Eq, Ord, Num)
 newtype Residue = Residue Int deriving (Show, Eq, Ord, Num)
 newtype Counter = Counter Int deriving (Show, Eq, Ord, Num)
+
 newtype Index = Index Int deriving (Show, Eq, Ord)
 newtype Worry = Worry Int deriving (Show, Eq, Ord)
+
 type Modifier = Int -> Int
 type IndexedItem = (Index, Worry)
 
@@ -165,7 +167,13 @@ type ResidueMap = Map Factor Residue
 type ItemResiduals = Map Index ResidueMap
 type MonkeyCounters = Map Label Counter
 
-type CountingGame = State (MonkeyCounters, ItemResiduals)
+data MonkeyIndexedState = MonkeyIndexedState
+  { residueCounter :: Int
+  , indexedHolding :: [IndexedItem]
+  }
+  deriving (Show, Eq)
+
+type CountingGame = State (Map Label MonkeyIndexedState, ItemResiduals)
 
 applyModifier :: Modifier -> ResidueMap -> ResidueMap
 applyModifier modifier = M.mapWithKey updater
@@ -178,8 +186,21 @@ applyModifierToItem index modifier = M.adjust (applyModifier modifier) index
 getFactor :: Monkey -> Factor
 getFactor = Factor . divisor
 
-generateIndexedItems :: [Monkey] -> [IndexedItem]
-generateIndexedItems = zipWith binder [0..] . concatMap items
-  where
-    binder index (Item worry) = (Index index, Worry worry)
+getFactors :: [Monkey] -> [Factor]
+getFactors = map getFactor
 
+generateIndexedItems :: [Monkey] -> [IndexedItem]
+generateIndexedItems = zipWith binder [0 ..] . concatMap items
+ where
+  binder index (Item worry) = (Index index, Worry worry)
+
+buildResidueMap :: IndexedItem -> [Factor] -> ResidueMap
+buildResidueMap (_, Worry worry) = M.fromList . map (normalizer worry)
+ where
+  normalizer w (Factor f) = (Factor f, Residue $ w `mod` f)
+
+buildResiduals :: [IndexedItem] -> [Factor] -> ItemResiduals
+buildResiduals items factors =
+  M.fromList $ map builder items
+ where
+  builder item@(Index index, _) = (Index index, buildResidueMap item factors)
