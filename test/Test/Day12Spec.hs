@@ -14,7 +14,7 @@ spec :: SpecWith ()
 spec =
   describe "Day 12 Tests" $ do
     it "Parsing Puzzle Input" $ do
-      parser puzzleInput `shouldBe` parsedCells
+      parser exampleInput `shouldBe` parsedCells
 
     it "Converting Cells to Gridpoints" $ do
       toPoints parsedCells `shouldBe` parsedGrid
@@ -196,7 +196,83 @@ spec =
               ]
             end = ((XCoordinate 5, YCoordinate 2), (EndCell, Height 25)) -- E
             expected = [ end : path ]
-        expandPath path parsedGrid `shouldBe` expected 
+        expandPath path parsedGrid `shouldBe` expected
+
+    {-
+               (4)     (2)     (3)     (1)
+      Saaaa   >>>>v   v....   >>v..   v.>>v
+      azaza   ....v   v....   ..v..   v.^.v 
+      aaaaE   ....v   >>>>>   ..>>>   >>^.v
+
+    -}
+
+    describe "Finding Paths" $ do
+      it "Finding paths on the simpler grid" $ do
+        let startingPaths = 
+              [ [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S 
+                ] 
+              ]
+            firstPath = reverse
+              [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S 
+              , ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 0, YCoordinate 2), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 1, YCoordinate 2), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 2, YCoordinate 1), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 2, YCoordinate 0), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 3, YCoordinate 0), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 4, YCoordinate 0), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 4, YCoordinate 2), (EndCell, Height 1)) -- E
+              ]
+            secondPath = reverse
+              [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S 
+              , ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 0, YCoordinate 2), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 1, YCoordinate 2), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 4, YCoordinate 2), (EndCell, Height 1)) -- a
+              ]
+            thirdPath = reverse
+              [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S 
+              , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a 
+              , ((XCoordinate 2, YCoordinate 0), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 2, YCoordinate 1), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 4, YCoordinate 2), (EndCell, Height 1)) -- a
+              ]
+            fourthPath = reverse
+              [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S 
+              , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 2, YCoordinate 0), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 3, YCoordinate 0), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 4, YCoordinate 0), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 4, YCoordinate 2), (EndCell, Height 1)) -- a
+              ]
+            expected = [firstPath, secondPath, thirdPath, fourthPath]
+        findPaths startingPaths simplerGrid `shouldBe` expected
+
+    describe "Puzzle Solutions" $ do
+      it "Example Input" $ do
+        part1Solution exampleInput `shouldBe` 31
+
+      it "Part 1 Solution" $ do
+        part1Solution puzzleInput `shouldBe` 0
+
+
+part1Solution :: Text -> Int
+part1Solution = 
+  flip (-) 1
+    . minimum 
+    . map length 
+    . findPaths startPaths 
+    . toPoints 
+    . parser 
+  where
+    startPaths = [[((XCoordinate 0, YCoordinate 0), (StartCell, Height 0))]]
 
 parser :: Text -> [[Cell]]
 parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
@@ -300,8 +376,8 @@ parsedCells =
     ]
   ]
 
-puzzleInput :: Text
-puzzleInput =
+exampleInput :: Text
+exampleInput =
   T.intercalate
     "\n"
     [ "Sabqponm"
@@ -310,3 +386,77 @@ puzzleInput =
     , "acctuvwj"
     , "abdefghi"
     ]
+
+{-
+  Saaaa
+  azaza
+  aaaaE
+-}
+
+simplerGrid :: Grid 
+simplerGrid = 
+  M.fromList 
+    [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S
+    , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 2, YCoordinate 0), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 3, YCoordinate 0), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 4, YCoordinate 0), (GenericCell, Height 0)) -- a
+
+    , ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 1, YCoordinate 1), (GenericCell, Height 25)) -- z
+    , ((XCoordinate 2, YCoordinate 1), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 3, YCoordinate 1), (GenericCell, Height 25)) -- z
+    , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 0)) -- a
+
+    , ((XCoordinate 0, YCoordinate 2), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 1, YCoordinate 2), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 0)) -- a
+    , ((XCoordinate 4, YCoordinate 2), (EndCell, Height 1)) -- E
+    ]
+
+puzzleInput :: Text 
+puzzleInput = 
+  T.intercalate "\n"
+  [ "abcccccccaaaaaccccaaaaaaaccccccccccccccccccccccccccccccccccccaaaaa"
+  , "abaacccaaaaaaccccccaaaaaaaaaaaaaccccccccccccccccccccccccccccaaaaaa"
+  , "abaacccaaaaaaaccccaaaaaaaaaaaaaacccccccccccccaacccccccccccccaaaaaa"
+  , "abaacccccaaaaaacaaaaaaaaaaaaaaaacccccccccccccaacccccccccccccacacaa"
+  , "abaccccccaaccaacaaaaaaaaaacccaacccccccccccccaaacccccccccccccccccaa"
+  , "abcccccccaaaacccaaaaaaaaacccccccccccccaaacccaaacccccccccccccccccaa"
+  , "abccccccccaaaccccccccaaaacccccccccccccaaaaacaaaccacacccccccccccccc"
+  , "abccccccccaaacaaacccccaaacccccccccccccaaaaaaajjjjjkkkcccccaacccccc"
+  , "abcccccaaaaaaaaaacccccaaccccccccccciiiiiijjjjjjjjjkkkcaaaaaacccccc"
+  , "abcccccaaaaaaaaacccccccccccccccccciiiiiiijjjjjjjrrkkkkaaaaaaaacccc"
+  , "abcccccccaaaaaccccccccccccccccccciiiiiiiijjjjrrrrrppkkkaaaaaaacccc"
+  , "abcccaaccaaaaaacccccccccccaacaaciiiiqqqqqrrrrrrrrpppkkkaaaaaaacccc"
+  , "abccaaaaaaaaaaaaccccacccccaaaaaciiiqqqqqqrrrrrruuppppkkaaaaacccccc"
+  , "abcccaaaaaaacaaaacaaacccccaaaaaahiiqqqqtttrrruuuuupppkkaaaaacccccc"
+  , "abcaaaaaaaccccaaaaaaacccccaaaaaahhqqqtttttuuuuuuuuuppkkkccaacccccc"
+  , "abcaaaaaaaaccccaaaaaacccccaaaaaahhqqqtttttuuuuxxuuuppkklcccccccccc"
+  , "abcaaaaaaaacaaaaaaaaaaacccccaaachhhqqtttxxxuuxxyyuuppllllccccccccc"
+  , "abcccaaacaccaaaaaaaaaaaccccccccchhhqqtttxxxxxxxyuupppplllccccccccc"
+  , "abaacaacccccaaaaaaaaaaaccccccccchhhqqtttxxxxxxyyvvvpppplllcccccccc"
+  , "abaacccccccccaaaaaaacccccccccccchhhpppttxxxxxyyyvvvvpqqqlllccccccc"
+  , "SbaaccccccaaaaaaaaaaccccccccccchhhppptttxxxEzzyyyyvvvqqqlllccccccc"
+  , "abaaaaccccaaaaaaaaacccccccccccchhhpppsssxxxyyyyyyyyvvvqqqlllcccccc"
+  , "abaaaacccccaaaaaaaacccccccccccgggpppsssxxyyyyyyyyyvvvvqqqlllcccccc"
+  , "abaaacccaaaacaaaaaaaccccccccccgggpppsswwwwwwyyyvvvvvvqqqllllcccccc"
+  , "abaaccccaaaacaaccaaaacccccccccgggppssswwwwwwyyywvvvvqqqqmmmccccccc"
+  , "abaaccccaaaacaaccaaaaccaaaccccggpppssssswwswwyywvqqqqqqmmmmccccccc"
+  , "abcccccccaaacccccaaacccaaacaccgggpppssssssswwwwwwrqqmmmmmccccccccc"
+  , "abcccccccccccccccccccaacaaaaacgggppooosssssrwwwwrrrmmmmmcccccccccc"
+  , "abcccccccccccccccccccaaaaaaaacggggoooooooorrrwwwrrnmmmdddccaaccccc"
+  , "abaccccccccccccaacccccaaaaaccccggggoooooooorrrrrrrnmmddddcaaaccccc"
+  , "abaccccccccaaaaaaccccccaaaaaccccggfffffooooorrrrrnnndddddaaaaccccc"
+  , "abaacccccccaaaaaacccccaaaaaacccccffffffffoonrrrrrnnndddaaaaaaacccc"
+  , "abaaccccccccaaaaaaaccacaaaacccccccccffffffonnnnnnnndddaaaaaaaacccc"
+  , "abccccccccccaaaaaaaaaaaaaaaccccccccccccfffennnnnnnddddccaaaccccccc"
+  , "abcccccccccaaaaaaacaaaaaaaaaacccccccccccffeennnnnedddccccaaccccccc"
+  , "abcccccccccaaaaaaccaaaaaaaaaaaccccccccccaeeeeeeeeeedcccccccccccccc"
+  , "abccccccccccccaaaccaaaaaaaaaaaccccccccccaaaeeeeeeeecccccccccccccaa"
+  , "abcccccccaaccccccccaaaaaaaacccccccccccccaaaceeeeecccccccccccccccaa"
+  , "abaaccaaaaaaccccccccaaaaaaaacccccccccccccaccccaaacccccccccccaaacaa"
+  , "abaaccaaaaacccccaaaaaaaaaaacccccccccccccccccccccacccccccccccaaaaaa"
+  , "abaccaaaaaaaaccaaaaaaaaaaaaaacccccccccccccccccccccccccccccccaaaaaa"    
+  ]

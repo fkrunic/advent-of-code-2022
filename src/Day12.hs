@@ -91,3 +91,20 @@ expandPath path@(p : _) =
   map (: path)
     . filter (not . flip isAlreadyOnPath path . fst)
     . nextMoves p
+
+safeExpandPath :: Path -> Grid -> [Path]
+safeExpandPath p
+  | pathReachedEnd p = const [p]
+  | otherwise = expandPath p
+
+pathReachedEnd :: Path -> Bool
+pathReachedEnd = any ((== EndCell) . fst . snd)
+
+findPaths :: [Path] -> Grid -> [Path]
+findPaths [] _ = []
+findPaths paths grid =
+  if all pathReachedEnd step
+    then step
+    else findPaths step grid
+ where
+  step = concatMap (`safeExpandPath` grid) paths
