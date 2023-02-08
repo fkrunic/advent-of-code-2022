@@ -81,3 +81,13 @@ nextMoves (coordinate, cell) grid = possibleGPS
       . map (\coord -> M.lookup coord grid >>= Just . (coord,))
 
   possibleGPS = scanCells moveOptions
+
+isAlreadyOnPath :: Coordinate -> Path -> Bool
+isAlreadyOnPath coordinate = any ((== coordinate) . fst)
+
+expandPath :: Path -> Grid -> [Path]
+expandPath [] = const []
+expandPath path@(p : _) =
+  map (: path)
+    . filter (not . flip isAlreadyOnPath path . fst)
+    . nextMoves p
