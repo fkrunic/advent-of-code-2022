@@ -4,6 +4,7 @@ module Day11 where
 
 import Control.Monad (forM_, replicateM_)
 import Control.Monad.Trans.State.Strict (State, execState, get, modify)
+import Data.Bifunctor (first, second)
 import Data.Functor (($>))
 import Data.Map (Map, (!))
 import Data.Map qualified as M
@@ -168,7 +169,7 @@ type ItemResiduals = Map Index ResidueMap
 type MonkeyCounters = Map Label Counter
 
 data MonkeyIndexedState = MonkeyIndexedState
-  { residueCounter :: Int
+  { residueCounter :: Counter
   , indexedHolding :: [IndexedItem]
   }
   deriving (Show, Eq)
@@ -180,8 +181,8 @@ applyModifier modifier = M.mapWithKey updater
  where
   updater (Factor f) (Residue r) = Residue $ modifier r `mod` f
 
-applyModifierToItem :: Index -> Modifier -> ItemResiduals -> ItemResiduals
-applyModifierToItem index modifier = M.adjust (applyModifier modifier) index
+applyModifierToIndex :: Index -> Modifier -> ItemResiduals -> ItemResiduals
+applyModifierToIndex index modifier = M.adjust (applyModifier modifier) index
 
 getFactor :: Monkey -> Factor
 getFactor = Factor . divisor
@@ -204,3 +205,33 @@ buildResiduals items factors =
   M.fromList $ map builder items
  where
   builder item@(Index index, _) = (Index index, buildResidueMap item factors)
+
+residueRound ::
+  [Label] ->
+  Map Label Monkey ->
+  CountingGame ()
+residueRound mkLabels mkProperties =
+  forM_ mkLabels $ \label -> do
+    items <- indexedHolding . (! label) . fst <$> get
+    forM_ items $ \indexedItem -> do
+      let props = mkProperties ! label
+          factor = Factor (divisor props)
+          modifier = applyOp (operation props)
+          index = fst indexedItem
+      modify $ second (applyModifierToIndex index modifier)
+      residueWorry <- (! factor) . (! index) . snd <$> get 
+      let chooser = if residueWorry == Residue 0 then fst else snd
+          throwTarget = chooser (throwChoices props)
+      modify $ first $ M.adjust (addItem' indexedItem) throwTarget
+      modify $ first $ M.adjust inc' label
+    modify $ first $ M.adjust reset' label
+
+
+addItem' :: IndexedItem -> MonkeyIndexedState -> MonkeyIndexedState
+addItem' item mis = mis{indexedHolding = indexedHolding mis ++ [item]}
+
+reset' :: MonkeyIndexedState -> MonkeyIndexedState
+reset' ms = ms{indexedHolding = []}
+
+inc' :: MonkeyIndexedState -> MonkeyIndexedState
+inc' mis = mis{residueCounter = residueCounter mis + Counter 1}    
