@@ -17,13 +17,52 @@ spec =
       parser puzzleInput `shouldBe` parsedCells
 
     it "Converting Cells to Gridpoints" $ do
-      toPoints parsedCells `shouldBe` parsedGPS
+      toPoints parsedCells `shouldBe` parsedGrid
+
+    describe "Finding Next Moves" $ do
+      it "From Start Position" $ do
+        let start = ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0))
+            actual = nextMoves start parsedGrid
+            expected =
+              [ ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a
+              , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a
+              ]
+        actual `shouldBe` expected
+
+      it "From Close to End" $ do
+        let start = ((XCoordinate 5, YCoordinate 1), (GenericCell, Height 23)) -- x
+            actual = nextMoves start parsedGrid
+            expected =
+              [ ((XCoordinate 5, YCoordinate 0), (GenericCell, Height 14)) -- o
+              , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 24)) -- y
+              , ((XCoordinate 6, YCoordinate 1), (GenericCell, Height 23)) -- x
+              ]
+        actual `shouldBe` expected
+
+      it "From Top-Right Corner" $ do
+        let start = ((XCoordinate 7, YCoordinate 0), (GenericCell, Height 12)) -- m
+            actual = nextMoves start parsedGrid
+            expected =
+              [ ((XCoordinate 7, YCoordinate 1), (GenericCell, Height 11)) -- l
+              , ((XCoordinate 6, YCoordinate 0), (GenericCell, Height 13)) -- n
+              ]
+        actual `shouldBe` expected
+
+      it "From Spiral" $ do
+        let start = ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 18)) -- s
+            actual = nextMoves start parsedGrid
+            expected =
+              [ ((XCoordinate 3, YCoordinate 1), (GenericCell, Height 17)) -- r
+              , ((XCoordinate 3, YCoordinate 3), (GenericCell, Height 19)) -- t
+              , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 2)) -- c
+              ]
+        actual `shouldBe` expected
 
 parser :: Text -> [[Cell]]
 parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
 
-parsedGPS :: Grid
-parsedGPS =
+parsedGrid :: Grid
+parsedGrid =
   M.fromList
     [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S
     , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a

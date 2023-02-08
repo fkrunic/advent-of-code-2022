@@ -6,6 +6,7 @@ import Data.Char (ord)
 import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
+import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
 import Data.Void (Void)
 import Text.Megaparsec
@@ -19,11 +20,11 @@ newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord)
 newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord)
 type Coordinate = (XCoordinate, YCoordinate)
 
-data Move = UpMove | DownMove | LeftMove | RightMove deriving (Show, Eq)
+data Move = UpMove | DownMove | LeftMove | RightMove deriving (Show, Eq, Enum)
 
 data CellType = StartCell | EndCell | GenericCell deriving (Show, Eq)
 type Cell = (CellType, Height)
-type GridPoint = (Cell, Coordinate)
+type GridPoint = (Coordinate, Cell)
 type Path = [GridPoint]
 type Grid = Map Coordinate Cell
 
@@ -57,5 +58,26 @@ toPoints xxs =
     , (xCoord, cell) <- zip [0 ..] xs
     ]
 
-canClimbTo :: Cell -> Cell -> Bool
-canClimbTo (_, Height starting) (_, Height next) = next <= starting + 1
+canClimbFrom :: Cell -> Cell -> Bool
+canClimbFrom (_, Height starting) (_, Height next) = next <= starting + 1
+
+shift :: Move -> Coordinate -> Coordinate
+shift UpMove (xCoord, YCoordinate y) = (xCoord, YCoordinate (y - 1))
+shift DownMove (xCoord, YCoordinate y) = (xCoord, YCoordinate (y + 1))
+shift LeftMove (XCoordinate x, yCoord) = (XCoordinate (x - 1), yCoord)
+shift RightMove (XCoordinate x, yCoord) = (XCoordinate (x + 1), yCoord)
+
+nextMoves :: GridPoint -> Grid -> [GridPoint]
+nextMoves (coordinate, cell) grid = possibleGPS
+ where
+  moveOptions = map (`shift` coordinate) [UpMove .. RightMove]
+
+  scanCells :: [Coordinate] -> [GridPoint]
+  scanCells =
+    filter (canClimbFrom cell . snd)
+      . fromMaybe []
+      . sequence
+      . filter isJust
+      . map (\coord -> M.lookup coord grid >>= Just . (coord,))
+
+  possibleGPS = scanCells moveOptions
