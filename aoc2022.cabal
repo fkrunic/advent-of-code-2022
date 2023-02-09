@@ -52,6 +52,7 @@ library
     , containers
     , ghc
     , megaparsec
+    , monad-loops
     , text
     , transformers
   default-language: Haskell2010
@@ -73,6 +74,7 @@ executable aoc2022-exe
     , containers
     , ghc
     , megaparsec
+    , monad-loops
     , text
     , transformers
   default-language: Haskell2010
@@ -108,6 +110,7 @@ test-suite aoc2022-test
     , ghc
     , hspec
     , megaparsec
+    , monad-loops
     , text
     , transformers
   default-language: Haskell2010

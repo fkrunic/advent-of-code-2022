@@ -24,6 +24,7 @@ dependencies:
 - containers
 - ghc
 - megaparsec
+- monad-loops
 - text
 - transformers
 
