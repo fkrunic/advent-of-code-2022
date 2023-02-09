@@ -72,12 +72,13 @@ updateDistances (CurrentNode (_, cd)) (uv@(UnvisitedNode (p, td)), nd) =
   candidate = addDistances cd nd
 
 step3 ::
+  Ord a =>
   (CurrentNode a -> Set (UnvisitedNode a, TentativeDistance)) ->
   DjikstraAlgo a ()
 step3 getNeighbors = do
   current <- fst <$> get
   let neighbors = getNeighbors current
-      initialUnvisited = map fst neighbors
-      updatedVisited = map (updateDistances current) initialUnvisited
+      initialUnvisited = S.map fst neighbors
+      updatedVisited = S.map (updateDistances current) neighbors
   modify $ second (`S.difference` initialUnvisited)
   modify $ second (`S.union` updatedVisited)
