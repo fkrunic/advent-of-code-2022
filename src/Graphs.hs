@@ -21,6 +21,7 @@ newtype Vertex a = Vertex a deriving (Show, Eq, Ord)
 type DistanceMap a = Map (Vertex a) Distance
 type VoidMap key = Map key Void
 type DijkstraAlgo a = State (DijkstraSetup a)
+type Edges a = Map (Vertex a, Vertex a) Distance
 
 data DijkstraSetup a = DijkstraSetup
   { dist :: DistanceMap a
@@ -64,8 +65,8 @@ popMinVertex = do
   modifyQ (M.update (const Nothing) u)
   return u
 
-algo :: DijkstraAlgo a (DistanceMap a)
-algo = do
+algo :: Edges a -> DijkstraAlgo a (DistanceMap a)
+algo edges = do
   whileM_ (get <&> (not . M.null . q)) $ do
     return ()
   dist <$> get
