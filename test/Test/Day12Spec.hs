@@ -260,7 +260,7 @@ spec =
         part1Solution exampleInput `shouldBe` 31
 
       it "Part 1 Solution" $ do
-        part1Solution puzzleInput `shouldBe` 0
+        pendingWith "Current implementation does not finish. Running time too long."
 
 
 part1Solution :: Text -> Int

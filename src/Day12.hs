@@ -108,3 +108,44 @@ findPaths paths grid =
     else findPaths step grid
  where
   step = concatMap (`safeExpandPath` grid) paths
+
+--------------------------------------------------------------------------------
+
+data Distance
+  = Finite Int 
+  | Infinite 
+  deriving (Show, Eq)
+
+instance Ord Distance where 
+  (Finite i) <= (Finite j) = i <= j
+  Infinite <= Finite _ = False
+  Finite _ <= Infinite = True
+  Infinite <= Infinite = undefined
+
+type Node = (Cell, Bool, Distance)
+type NodePoint = (Coordinate, Node)
+type Graph = Map Coordinate Node
+type PathAlgo = State Graph
+
+getCell :: NodePoint -> Cell
+getCell = (\(cell, _, _) -> cell) . snd
+
+validNeighbors :: NodePoint -> Graph -> [NodePoint]
+validNeighbors (coordinate, (cell, _, _)) graph = possibleGPS
+  where
+    moveOptions = map (`shift` coordinate) [UpMove .. RightMove]
+
+    scanCells :: [Coordinate] -> [NodePoint]
+    scanCells =
+      filter validNeighbor
+        . fromMaybe []
+        . sequence
+        . filter isJust
+        . map (\coord -> M.lookup coord graph >>= Just . (coord,))
+
+    possibleGPS = scanCells moveOptions  
+    isUnvisited (_, visited, _) = visited
+
+    validNeighbor np = 
+      isUnvisited (snd np) && 
+      canClimbFrom cell (getCell np)
