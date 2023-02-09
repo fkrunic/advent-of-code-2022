@@ -82,3 +82,6 @@ step3 getNeighbors = do
       updatedVisited = S.map (updateDistances current) neighbors
   modify $ second (`S.difference` initialUnvisited)
   modify $ second (`S.union` updatedVisited)
+
+toUnvisited :: CurrentNode a -> UnvisitedNode a
+toUnvisited (CurrentNode n) = UnvisitedNode n
