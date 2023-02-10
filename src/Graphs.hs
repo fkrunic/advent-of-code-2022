@@ -5,6 +5,7 @@ module Graphs where
 import Control.Monad (forM_, when)
 import Control.Monad.Loops (whileM_)
 import Control.Monad.Trans.State.Strict
+import Data.Bifunctor (first)
 import Data.Functor ((<&>))
 import Data.List (sortBy)
 import Data.Map (Map, (!))
@@ -72,7 +73,7 @@ popMinVertex = do
 
 algo ::
   Ord a =>
-  (Vertex a -> Vertex a -> Distance) -> 
+  (Vertex a -> Vertex a -> Distance) ->
   (Vertex a -> [Vertex a]) ->
   DijkstraAlgo a ()
 algo getDistance getNeighbors = do
@@ -95,7 +96,25 @@ dijkstra ::
   (Vertex a -> Vertex a -> Distance) ->
   (Vertex a -> [Vertex a]) ->
   DistanceMap a
-dijkstra source vertices getEdges getNeighbors =
-  dist $ execState (algo getEdges getNeighbors) setupAlgo
+dijkstra source vertices getDistance getNeighbors =
+  dist $ execState (algo getDistance getNeighbors) setupAlgo
  where
   setupAlgo = setup source vertices
+
+--------------------------------------------------------------------------------
+
+unpackDistance :: Distance -> Maybe Word
+unpackDistance (Finite w) = Just w
+unpackDistance Infinite = Nothing
+
+unpackVertex :: Vertex a -> a
+unpackVertex (Vertex a) = a
+
+extractTargetDistance :: (a -> Bool) -> DistanceMap a -> Maybe Word
+extractTargetDistance p =
+  unpackDistance
+    . snd
+    . head
+    . filter (p . fst)
+    . map (first unpackVertex)
+    . M.assocs
