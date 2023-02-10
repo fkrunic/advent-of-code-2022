@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-
 module Day12 where
 
 import Data.Char (ord)

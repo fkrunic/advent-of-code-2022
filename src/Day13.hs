@@ -1,8 +1,50 @@
 module Day13 where
 
+import Data.Text (Text)
+import Data.Void (Void)
+import Text.Megaparsec 
+import Text.Megaparsec.Char
+import Text.Megaparsec.Char.Lexer qualified as L
+
+
 data Comparison 
   = CInt Int 
   | CList [Comparison]
+  deriving (Show, Eq)
+
+type Parser = Parsec Void Text
+
+sc :: Parser ()
+sc = L.space space1 empty empty
+
+lexer :: Parser a -> Parser a
+lexer = L.lexeme sc
+
+symbol :: Text -> Parser Text
+symbol = L.symbol sc
+
+integer :: Parser Int
+integer = lexer L.decimal
+
+pInt :: Parser Comparison
+pInt = CInt <$> integer
+
+pList :: Parser Comparison
+pList = 
+  symbol "[" *> 
+  (CList <$> many (pComparison <* optional (symbol ","))) <*
+  symbol "]"
+
+pComparison :: Parser Comparison
+pComparison = choice [pInt, pList]
+
+pPair :: Parser (Comparison, Comparison)
+pPair = 
+  (,) <$>
+    (pComparison <* optional newline) <*>
+    (pComparison <* optional newline)
+
+--------------------------------------------------------------------------------
 
 valid :: Comparison -> Comparison -> Bool
 valid (CInt i) (CInt j) = i <= j
