@@ -13,6 +13,8 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer qualified as L
 
+import Graphs
+
 type Parser = Parsec Void Text
 
 newtype Height = Height Int deriving (Show, Eq, Ord)
@@ -22,7 +24,7 @@ type Coordinate = (XCoordinate, YCoordinate)
 
 data Move = UpMove | DownMove | LeftMove | RightMove deriving (Show, Eq, Enum)
 
-data CellType = StartCell | EndCell | GenericCell deriving (Show, Eq)
+data CellType = StartCell | EndCell | GenericCell deriving (Show, Eq, Ord)
 type Cell = (CellType, Height)
 type GridPoint = (Coordinate, Cell)
 type Path = [GridPoint]
@@ -110,3 +112,12 @@ findPaths paths grid =
   step = concatMap (`safeExpandPath` grid) paths
 
 --------------------------------------------------------------------------------
+
+getNeighbors :: Grid -> Vertex GridPoint -> [Vertex GridPoint]
+getNeighbors grid (Vertex gp) = map Vertex $ nextMoves gp grid
+
+getDistance :: Vertex GridPoint -> Vertex GridPoint -> Distance
+getDistance _ _ = Finite 1
+
+vertices :: Grid -> [Vertex GridPoint]
+vertices = map Vertex . M.assocs

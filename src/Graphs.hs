@@ -70,8 +70,12 @@ popMinVertex = do
   modifyQ (M.update (const Nothing) u)
   return u
 
-algo :: Ord a => Edges a -> (Vertex a -> [Vertex a]) -> DijkstraAlgo a ()
-algo edges getNeighbors = do
+algo ::
+  Ord a =>
+  (Vertex a -> Vertex a -> Distance) -> 
+  (Vertex a -> [Vertex a]) ->
+  DijkstraAlgo a ()
+algo getDistance getNeighbors = do
   whileM_ (get <&> (not . M.null . q)) $ do
     u <- popMinVertex
     unvisited <- S.fromList . M.keys . q <$> get
@@ -79,7 +83,7 @@ algo edges getNeighbors = do
         unvisitedNeighbors = S.intersection (S.fromList neighbors) unvisited
     forM_ unvisitedNeighbors $ \v -> do
       dist' <- dist <$> get
-      let alt = addDistances (dist' ! u) (edges ! (u, v))
+      let alt = addDistances (dist' ! u) (getDistance u v)
       when (alt < dist' ! v) $ do
         modifyDist $ M.adjust (const alt) v
         modifyPrev $ M.adjust (const u) v
@@ -88,10 +92,10 @@ dijkstra ::
   Ord a =>
   Vertex a ->
   [Vertex a] ->
-  Edges a ->
+  (Vertex a -> Vertex a -> Distance) ->
   (Vertex a -> [Vertex a]) ->
   DistanceMap a
-dijkstra source vertices edges getNeighbors =
-  dist $ execState (algo edges getNeighbors) setupAlgo
+dijkstra source vertices getEdges getNeighbors =
+  dist $ execState (algo getEdges getNeighbors) setupAlgo
  where
   setupAlgo = setup source vertices
