@@ -4,7 +4,6 @@ import Test.Hspec
 
 import Data.Either (fromRight)
 import Data.Map.Strict qualified as M
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day12
@@ -269,8 +268,14 @@ spec =
       it "Example Input - Dijkstra" $ do
         part1Dijkstra exampleInput `shouldBe` 31
 
+      it "Example Input - Dijkstra (Multiple Sources)" $ do
+        part2Dijkstra exampleInput `shouldBe` 29
+
       it "Part 1 Solution - Dijkstra" $ do
         part1Dijkstra puzzleInput `shouldBe` 339
+
+      it "Part 2 Solution - Dijkstra" $ do
+        part2Dijkstra puzzleInput `shouldBe` 332
 
 
 part1Solution :: Text -> Int
@@ -294,6 +299,20 @@ part1Dijkstra t = targetDistance
   targetDistance =
     maybe (-1) fromIntegral $
       extractTargetDistance ((== EndCell) . fst . snd) dMap
+
+part2Dijkstra :: Text -> Int
+part2Dijkstra t = targetDistance
+  where
+    grid = toPoints $ parser t
+    sources = map Vertex $ filter ((== Height 0) . snd . snd) $ M.assocs grid
+    dMap = dijkstraMultipleSources 
+      sources 
+      (vertices grid) 
+      getDistance 
+      (getNeighbors grid)
+    targetDistance = 
+      maybe (-1) fromIntegral $ 
+        extractTargetDistance ((== EndCell) . fst . snd) dMap
 
 parser :: Text -> [[Cell]]
 parser = fromRight [] . runParser (some (pLine <* optional newline)) ""

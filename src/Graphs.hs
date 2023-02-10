@@ -61,6 +61,19 @@ setup source vertices = DijkstraSetup{..}
   prev = M.fromList $ map (,undefined) vertices
   q = M.fromList $ map (,undefined) vertices
 
+setupForMultipleSources ::
+  Ord a => [Vertex a] -> [Vertex a] -> DijkstraSetup a
+setupForMultipleSources sources vertices = DijkstraSetup{..}
+ where
+  dist =
+    M.mapWithKey setDistance $ M.fromList $ map (,Infinite) vertices
+  prev = M.fromList $ map (,undefined) vertices
+  q = M.fromList $ map (,undefined) vertices
+  setDistance source d =
+    if source `elem` sources
+      then Finite 0
+      else d
+
 popMinVertex :: Ord a => DijkstraAlgo a (Vertex a)
 popMinVertex = do
   qVertices <- M.keys . q <$> get
@@ -100,6 +113,18 @@ dijkstra source vertices getDistance getNeighbors =
   dist $ execState (algo getDistance getNeighbors) setupAlgo
  where
   setupAlgo = setup source vertices
+
+dijkstraMultipleSources ::
+  Ord a =>
+  [Vertex a] ->
+  [Vertex a] ->
+  (Vertex a -> Vertex a -> Distance) ->
+  (Vertex a -> [Vertex a]) ->
+  DistanceMap a
+dijkstraMultipleSources sources vertices getDistance getNeighbors =
+  dist $ execState (algo getDistance getNeighbors) multiSetup
+ where
+  multiSetup = setupForMultipleSources sources vertices
 
 --------------------------------------------------------------------------------
 
