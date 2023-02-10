@@ -2,13 +2,13 @@
 
 module Graphs where
 
+import Control.Monad (forM_, when)
 import Control.Monad.Loops (whileM_)
 import Control.Monad.Trans.State.Strict
 import Data.Functor ((<&>))
 import Data.List (sortBy)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
-import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Void (Void)
 
@@ -22,10 +22,11 @@ type DistanceMap a = Map (Vertex a) Distance
 type VoidMap key = Map key Void
 type DijkstraAlgo a = State (DijkstraSetup a)
 type Edges a = Map (Vertex a, Vertex a) Distance
+type TrimmedGraph a = Map (Vertex a) (Vertex a)
 
 data DijkstraSetup a = DijkstraSetup
   { dist :: DistanceMap a
-  , prev :: DistanceMap a
+  , prev :: TrimmedGraph a
   , q :: VoidMap (Vertex a)
   }
   deriving (Show, Eq, Ord)
@@ -36,10 +37,14 @@ instance Ord Distance where
   Infinite <= Finite _ = False
   Infinite <= Infinite = True
 
+addDistances :: Distance -> Distance -> Distance
+addDistances (Finite i) (Finite j) = Finite (i + j)
+addDistances _ _ = Infinite
+
 modifyDist :: (DistanceMap a -> DistanceMap a) -> DijkstraAlgo a ()
 modifyDist f = modify $ \s -> s{dist = f (dist s)}
 
-modifyPrev :: (DistanceMap a -> DistanceMap a) -> DijkstraAlgo a ()
+modifyPrev :: (TrimmedGraph a -> TrimmedGraph a) -> DijkstraAlgo a ()
 modifyPrev f = modify $ \s -> s{prev = f (prev s)}
 
 modifyQ :: (VoidMap (Vertex a) -> VoidMap (Vertex a)) -> DijkstraAlgo a ()
@@ -65,8 +70,28 @@ popMinVertex = do
   modifyQ (M.update (const Nothing) u)
   return u
 
-algo :: Edges a -> DijkstraAlgo a (DistanceMap a)
-algo edges = do
+algo :: Ord a => Edges a -> (Vertex a -> [Vertex a]) -> DijkstraAlgo a ()
+algo edges getNeighbors = do
   whileM_ (get <&> (not . M.null . q)) $ do
-    return ()
-  dist <$> get
+    u <- popMinVertex
+    unvisited <- S.fromList . M.keys . q <$> get
+    let neighbors = getNeighbors u
+        unvisitedNeighbors = S.intersection (S.fromList neighbors) unvisited
+    forM_ unvisitedNeighbors $ \v -> do
+      dist' <- dist <$> get
+      let alt = addDistances (dist' ! u) (edges ! (u, v))
+      when (alt < dist' ! v) $ do
+        modifyDist $ M.adjust (const alt) v
+        modifyPrev $ M.adjust (const u) v
+
+dijkstra ::
+  Ord a =>
+  Vertex a ->
+  [Vertex a] ->
+  Edges a ->
+  (Vertex a -> [Vertex a]) ->
+  DistanceMap a
+dijkstra source vertices edges getNeighbors =
+  dist $ execState (algo edges getNeighbors) setupAlgo
+ where
+  setupAlgo = setup source vertices
