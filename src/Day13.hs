@@ -2,13 +2,12 @@ module Day13 where
 
 import Data.Text (Text)
 import Data.Void (Void)
-import Text.Megaparsec 
+import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer qualified as L
 
-
-data Comparison 
-  = CInt Int 
+data Comparison
+  = CInt Int
   | CList [Comparison]
   deriving (Show, Eq)
 
@@ -30,19 +29,19 @@ pInt :: Parser Comparison
 pInt = CInt <$> integer
 
 pList :: Parser Comparison
-pList = 
-  symbol "[" *> 
-  (CList <$> many (pComparison <* optional (symbol ","))) <*
-  symbol "]"
+pList =
+  symbol "["
+    *> (CList <$> many (pComparison <* optional (symbol ",")))
+    <* symbol "]"
 
 pComparison :: Parser Comparison
 pComparison = choice [pInt, pList]
 
 pPair :: Parser (Comparison, Comparison)
-pPair = 
-  (,) <$>
-    (pComparison <* optional newline) <*>
-    (pComparison <* optional newline)
+pPair =
+  (,)
+    <$> (pComparison <* optional newline)
+    <*> (pComparison <* optional newline)
 
 --------------------------------------------------------------------------------
 
@@ -50,6 +49,11 @@ valid :: Comparison -> Comparison -> Bool
 valid (CInt i) (CInt j) = i <= j
 valid (CList []) (CList _) = True
 valid (CList _) (CList []) = False
-valid (CList (x:xs)) (CList (y:ys)) = valid x y && valid (CList xs) (CList ys)
+valid (CList (x : xs)) (CList (y : ys))
+  | x == y = valid (CList xs) (CList ys)
+  | otherwise = valid x y
 valid lone@(CInt _) xs = valid (CList [lone]) xs
 valid xs lone@(CInt _) = valid xs (CList [lone])
+-- valid (CList []) (CInt _) = True
+-- valid (CInt _) (CList []) = False
+-- valid (CList (x : _)) (CInt i) = valid x
