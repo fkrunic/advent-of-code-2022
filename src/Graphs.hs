@@ -34,7 +34,6 @@ data DijkstraSetup a = DijkstraSetup
   deriving (Show, Eq, Ord)
 
 instance Ord Distance where
-  (<=) :: Distance -> Distance -> Bool
   Finite i <= Finite j = i <= j
   Finite _ <= Infinite = True
   Infinite <= Finite _ = False
