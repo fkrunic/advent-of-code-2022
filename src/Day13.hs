@@ -2,8 +2,8 @@ module Day13 where
 
 import Data.Text (Text)
 import Data.Void (Void)
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import Text.Megaparsec (Parsec, choice, empty, many, optional)
+import Text.Megaparsec.Char (newline, space1)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 data Comparison
@@ -12,6 +12,8 @@ data Comparison
   deriving (Show, Eq)
 
 type Parser = Parsec Void Text
+
+--------------------------------------------------------------------------------
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -54,6 +56,6 @@ valid (CList (x : xs)) (CList (y : ys))
   | otherwise = valid x y
 valid lone@(CInt _) xs = valid (CList [lone]) xs
 valid xs lone@(CInt _) = valid xs (CList [lone])
--- valid (CList []) (CInt _) = True
--- valid (CInt _) (CList []) = False
--- valid (CList (x : _)) (CInt i) = valid x
+
+organize :: Comparison -> Comparison -> Ordering
+organize c1 c2 = if valid c1 c2 then LT else GT

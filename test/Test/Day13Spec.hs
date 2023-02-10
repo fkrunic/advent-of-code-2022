@@ -2,6 +2,8 @@ module Test.Day13Spec where
 
 import Data.Bifunctor (second)
 import Data.Either (fromRight)
+import Data.List (elemIndex, sortBy)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day13
@@ -62,18 +64,40 @@ spec =
         valid left right `shouldBe` False
 
     describe "Puzzle Solutions" $ do
-      it "Example Input" $ do
+      it "Example Input - Part 1" $ do
         part1Solution exampleInput `shouldBe` 13
 
       it "Part 1 Solution" $ do
         part1Solution puzzleInput `shouldBe` 6235
 
+      it "Example Input - Part 2" $ do
+        part2Solution exampleInput `shouldBe` 140
+
+      it "Part 2 Solution" $ do
+        part2Solution puzzleInput `shouldBe` 22866
+
+d1, d2 :: Comparison
+d1 = CList [CList [CInt 2]]
+d2 = CList [CList [CInt 6]]
+
 part1Solution :: Text -> Int
-part1Solution = 
+part1Solution =
   sum
-  . map fst
-  . filter snd 
-  . map (second (uncurry valid)) . zip [1..] . parser         
+    . map fst
+    . filter snd
+    . map (second (uncurry valid))
+    . zip [1 ..]
+    . parser
+
+part2Solution :: Text -> Int
+part2Solution t = fromMaybe (-1) decoderKey
+ where
+  sortWithDivs = sortBy organize . (++ [d1, d2]) . concatMap expand . parser
+  sortedComps = sortWithDivs t
+  expand (c1, c2) = [c1, c2]
+  d1Key = (+ 1) <$> elemIndex d1 sortedComps
+  d2Key = (+ 1) <$> elemIndex d2 sortedComps
+  decoderKey = (*) <$> d1Key <*> d2Key
 
 parser :: Text -> [(Comparison, Comparison)]
 parser = fromRight [] . runParser (some (pPair <* space)) ""
@@ -193,8 +217,9 @@ exampleInput =
     ]
 
 puzzleInput :: Text
-puzzleInput = 
-  T.intercalate "\n"
+puzzleInput =
+  T.intercalate
+    "\n"
     [ "[[1,4,7,4,8],[],[8,0,7,[],[]]]"
     , "[[10,[5,[0,2,5,3,3],[9,7,9],6],7,9,[2,9,[],4,0]],[8]]"
     , ""
@@ -643,5 +668,5 @@ puzzleInput =
     , "[[0,[],8]]"
     , ""
     , "[[[[6,8],[10,1,5,1,5]],[[]],[[4,0,10,6],4,[10,5,1],9],[10],[10,[],[10,2],[10,4,3,7],[3]]],[10,2,[10,[],8],[8,[1,5,0,7,5],[],[4,9,10]],9]]"
-    , "[[[],10,[],8,10],[[[],7,0,[10,0,1,10,4]],5],[8,[4,3],[[10,10,9,1],[3,0,6]],4],[[]],[]]"      
+    , "[[[],10,[],8,10],[[[],7,0,[10,0,1,10,4]],5],[8,[4,3],[[10,10,9,1],[3,0,6]],4],[[]],[]]"
     ]
