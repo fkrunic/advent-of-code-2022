@@ -1,4 +1,11 @@
-module Day13 where
+module Day13 (
+  Comparison (..),
+  organize,
+  pInt,
+  pList,
+  pPair,
+  valid,
+) where
 
 import Data.Text (Text)
 import Data.Void (Void)

@@ -1,4 +1,4 @@
-module Test.Day13Spec where
+module Test.Day13Spec (spec) where
 
 import Data.Bifunctor (second)
 import Data.Either (fromRight)
@@ -6,10 +6,17 @@ import Data.List (elemIndex, sortBy)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day13
-import Test.Hspec
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import Day13 (
+  Comparison (..),
+  organize,
+  pInt,
+  pList,
+  pPair,
+  valid,
+ )
+import Test.Hspec (SpecWith, describe, it, shouldBe)
+import Text.Megaparsec (runParser, some)
+import Text.Megaparsec.Char (space)
 
 spec :: SpecWith ()
 spec =
