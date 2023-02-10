@@ -5,6 +5,7 @@ module Graphs where
 import Control.Monad (forM_, when)
 import Control.Monad.Loops (whileM_)
 import Control.Monad.Trans.State.Strict
+    ( State, execState, get, modify )
 import Data.Bifunctor (first)
 import Data.Functor ((<&>))
 import Data.List (sortBy)
@@ -33,6 +34,7 @@ data DijkstraSetup a = DijkstraSetup
   deriving (Show, Eq, Ord)
 
 instance Ord Distance where
+  (<=) :: Distance -> Distance -> Bool
   Finite i <= Finite j = i <= j
   Finite _ <= Infinite = True
   Infinite <= Finite _ = False

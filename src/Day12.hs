@@ -9,11 +9,11 @@ import Data.Map.Strict qualified as M
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
 import Data.Void (Void)
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import Text.Megaparsec (Parsec, choice, empty, some)
+import Text.Megaparsec.Char (char, letterChar, space1)
 import Text.Megaparsec.Char.Lexer qualified as L
 
-import Graphs
+import Graphs (Distance (Finite), Vertex (..))
 
 type Parser = Parsec Void Text
 
@@ -83,33 +83,6 @@ nextMoves (coordinate, cell) grid = possibleGPS
       . map (\coord -> M.lookup coord grid >>= Just . (coord,))
 
   possibleGPS = scanCells moveOptions
-
-isAlreadyOnPath :: Coordinate -> Path -> Bool
-isAlreadyOnPath coordinate = any ((== coordinate) . fst)
-
-expandPath :: Path -> Grid -> [Path]
-expandPath [] = const []
-expandPath path@(p : _) =
-  map (: path)
-    . filter (not . flip isAlreadyOnPath path . fst)
-    . nextMoves p
-
-safeExpandPath :: Path -> Grid -> [Path]
-safeExpandPath p
-  | pathReachedEnd p = const [p]
-  | otherwise = expandPath p
-
-pathReachedEnd :: Path -> Bool
-pathReachedEnd = any ((== EndCell) . fst . snd)
-
-findPaths :: [Path] -> Grid -> [Path]
-findPaths [] _ = []
-findPaths paths grid =
-  if all pathReachedEnd step
-    then step
-    else findPaths step grid
- where
-  step = concatMap (`safeExpandPath` grid) paths
 
 --------------------------------------------------------------------------------
 
