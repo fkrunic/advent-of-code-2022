@@ -162,7 +162,7 @@ fillStep grid =
     FallIntoAbyss -> Nothing
     BlockSource _ -> Nothing
     LandOnBlocker c ->
-      Just $ M.adjust (const Sand) c grid
+      Just $ M.insertWith const c Sand grid
 
 fillNStep :: Int -> Grid Element -> Maybe (Grid Element)
 fillNStep n grid = foldrM (\_ g -> fillStep g) grid [1 .. n]
