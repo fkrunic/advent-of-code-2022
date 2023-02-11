@@ -137,7 +137,7 @@ dropSand current grid =
   case grid ! downMove of
     Air -> dropSand downMove grid
     Abyss -> Nothing
-    Source -> undefined
+    Source -> Just current
     _ ->
       if not (isBlocking (grid ! ldMove))
         then dropSand ldMove grid
