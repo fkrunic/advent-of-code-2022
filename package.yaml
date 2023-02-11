@@ -29,8 +29,9 @@ dependencies:
 - transformers
 
 default-extensions:
-- OverloadedStrings
 - ImportQualifiedPost
+- OverloadedStrings
+- RecordWildCards
 - TupleSections
 
 ghc-options:

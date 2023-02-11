@@ -47,8 +47,9 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      OverloadedStrings
       ImportQualifiedPost
+      OverloadedStrings
+      RecordWildCards
       TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
@@ -68,8 +69,9 @@ executable aoc2022-exe
   hs-source-dirs:
       app
   default-extensions:
-      OverloadedStrings
       ImportQualifiedPost
+      OverloadedStrings
+      RecordWildCards
       TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -105,8 +107,9 @@ test-suite aoc2022-test
   hs-source-dirs:
       test
   default-extensions:
-      OverloadedStrings
       ImportQualifiedPost
+      OverloadedStrings
+      RecordWildCards
       TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:

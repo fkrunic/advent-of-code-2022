@@ -1,8 +1,10 @@
 module Day14 where
 
-import Data.Map (Map)
+import Data.Map (Map, (!))
 import Data.Map qualified as M
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import Data.Text qualified as T
 
 import Grids
 import Parsing
@@ -58,28 +60,42 @@ defineGrid :: [DrawPath] -> Maybe (Grid Element)
 defineGrid dps = do
   rocks <- concat <$> mapM chainPath dps
   let combined = source : rocks
-      xMin = minimum $ map (unpackX . fst) combined
-      xMax = maximum $ map (unpackX . fst) combined
-      yMin = minimum $ map (unpackY . snd) combined
-      yMax = maximum $ map (unpackY . snd) combined
-      gridXMin = xMin - 1
-      gridXMax = xMax + 1
-      gridYMax = yMax + 1
-      abyssRow = [point x gridYMax | x <- [gridXMin .. gridXMax]]
-      gridCoords = [point x y | x <- [xMin .. xMax], y <- [yMin .. yMax]]
+      Boundaries gridXMin gridXMax gridYMin gridYMax =
+        padBounds 1 $ getBounds combined
+      abyssRow = [(xCoord, gridYMax) | xCoord <- [gridXMin .. gridXMax]]
+      gridCoords =
+        [ (xCoord, yCoord)
+        | xCoord <- [gridXMin .. gridXMax]
+        , yCoord <- [gridYMin .. gridYMax]
+        ]
       canvas = M.fromList $ map (,Air) gridCoords
       grid =
-        bulkAdjust abyssRow (const Abyss) $
-          bulkAdjust rocks (const Rock) canvas
-  return $ M.adjust (const Source) source grid
+        M.adjust (const Source) source $
+          bulkAdjust abyssRow (const Abyss) $
+            bulkAdjust rocks (const Rock) canvas
+  return grid
  where
   source = point 500 0
 
---------------------------------------------------------------------------------  
+--------------------------------------------------------------------------------
 
-drawElement :: Element -> Text
-drawElement Sand = "o"
-drawElement Rock = "#"
-drawElement Air = "."
-drawElement Abyss = "*"
-drawElement Source = "+"
+elementSymbol :: Element -> Text
+elementSymbol Sand = "o"
+elementSymbol Rock = "#"
+elementSymbol Air = "."
+elementSymbol Abyss = "*"
+elementSymbol Source = "+"
+
+drawGrid :: Grid Element -> Text
+drawGrid grid = T.intercalate "\n" rows
+ where
+  Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
+
+  drawElement :: Coordinate -> Grid Element -> Text
+  drawElement (xc, yc) = elementSymbol . fromMaybe Air . M.lookup (xc, yc)
+  
+  rows =
+    [ T.intercalate "" row
+    | yCoord <- [yMin .. yMax]
+    , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
+    ]

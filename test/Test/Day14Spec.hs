@@ -1,5 +1,8 @@
 module Test.Day14Spec (spec) where
 
+import Data.Map qualified as M
+import Data.Maybe (fromMaybe)
+import Data.Text qualified as T
 import Day14
 import Grids
 import Test.Hspec
@@ -65,3 +68,29 @@ spec =
 
       it "No points along (1,1) -> (4,1) -> (5,3)" $ do
         chainPath [point 1 1, point 4 1, point 5 3] `shouldBe` Nothing
+
+    describe "Rendering Grid" $ do
+      it "Drawing a grid with no sand" $ do
+        let paths =
+              [ [point 498 4, point 498 6, point 496 6]
+              , [point 503 4, point 502 4, point 502 9, point 494 9]
+              ]
+            grid = fromMaybe M.empty $ defineGrid paths
+            actual = drawGrid grid
+            expected =
+              T.intercalate
+                "\n"
+                [ "............"
+                , ".......+...."
+                , "............"
+                , "............"
+                , "............"
+                , ".....#...##."
+                , ".....#...#.."
+                , "...###...#.."
+                , ".........#.."
+                , ".........#.."
+                , ".#########.."
+                , "************"
+                ]
+        actual `shouldBe` expected
