@@ -75,6 +75,8 @@ defineGrid dps = do
  where
   source = point 500 0
 
+--------------------------------------------------------------------------------  
+
 drawElement :: Element -> Text
 drawElement Sand = "o"
 drawElement Rock = "#"
