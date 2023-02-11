@@ -1,6 +1,7 @@
 module Day14 where
 
 import Data.Foldable (foldrM)
+import Data.Functor (($>))
 import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Maybe (fromMaybe)
@@ -11,17 +12,28 @@ import Grids
 import Parsing
 
 import Text.Megaparsec
+import Text.Megaparsec.Char
+import Text.Megaparsec.Char.Lexer qualified as L
 
 type DrawPath = [Coordinate]
 data Element = Sand | Rock | Air | Abyss | Source deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 
+scKeepsNewLine :: Parser ()
+scKeepsNewLine = L.space (some (char ' ') $> ()) empty empty
+
+newlineSafeLexer :: Parser a -> Parser a
+newlineSafeLexer = L.lexeme scKeepsNewLine
+
+spaceInt :: Parser Int
+spaceInt = newlineSafeLexer L.decimal
+
 pVector :: Parser Coordinate
 pVector =
   (,)
-    <$> (XCoordinate <$> integer <* symbol ",")
-    <*> (YCoordinate <$> integer)
+    <$> (XCoordinate <$> spaceInt <* symbol ",")
+    <*> (YCoordinate <$> spaceInt)
 
 pDrawPath :: Parser DrawPath
 pDrawPath = some (pVector <* optional (symbol "->"))
