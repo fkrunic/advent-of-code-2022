@@ -38,3 +38,29 @@ spec =
             end = (XCoordinate 3, YCoordinate 3)
         pointsAlong start end `shouldBe` Nothing
         pointsAlong end start `shouldBe` Nothing
+
+      it "Chaining points (1,1) -> (3,1) -> (3,3)" $ do
+        let p1 = point 1 1
+            p2 = point 2 1
+            p3 = point 3 1
+            p4 = point 3 2
+            p5 = point 3 3
+            expected = [p1, p2, p3, p4, p5]
+        chainPath [p1, p3, p5] `shouldBe` Just expected
+
+      it "Chaining points (5,1) -> (1,1) -> (1,5)" $ do
+        chainPath [point 5 1, point 1 1, point 1 5]
+          `shouldBe` Just
+            [ point 5 1
+            , point 4 1
+            , point 3 1
+            , point 2 1
+            , point 1 1
+            , point 1 2
+            , point 1 3
+            , point 1 4
+            , point 1 5
+            ]
+
+      it "No points along (1,1) -> (4,1) -> (5,3)" $ do
+        chainPath [point 1 1, point 4 1, point 5 3] `shouldBe` Nothing

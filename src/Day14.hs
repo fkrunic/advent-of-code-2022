@@ -6,6 +6,7 @@ import Parsing
 import Text.Megaparsec
 
 type DrawPath = [Coordinate]
+data Element = Sand | Rock | Abyss deriving (Show, Eq) 
 
 --------------------------------------------------------------------------------
 
@@ -38,3 +39,13 @@ pointsAlong c1 c2
   yLine =
     map (\y -> (fst c1, YCoordinate y)) $
       numbersBetween (unpackY $ snd c1) (unpackY $ snd c2)
+
+chainPath :: [Coordinate] -> Maybe [Coordinate]
+chainPath = foldr builder (Just [])
+  where
+    builder _ Nothing = Nothing
+    builder coord (Just []) = Just [coord]
+    builder coord (Just (x:rest)) = (++ rest) <$> pointsAlong coord x
+
+defineGrid :: [DrawPath] -> Grid Element
+defineGrid rocks = undefined

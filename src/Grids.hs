@@ -12,3 +12,6 @@ unpackX (XCoordinate x) = x
 
 unpackY :: YCoordinate -> Int
 unpackY (YCoordinate y) = y
+
+point :: Int -> Int -> Coordinate
+point x y = (XCoordinate x, YCoordinate y)
