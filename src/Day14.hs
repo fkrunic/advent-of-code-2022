@@ -94,6 +94,26 @@ defineGrid dps = do
             bulkAdjust rocks (const Rock) canvas
   return grid
 
+defineGridNoAbyss :: [DrawPath] -> Maybe (Grid Element)
+defineGridNoAbyss dps = do
+    rocks <- concat <$> mapM chainPath dps
+    let combined = source : rocks
+        gridBounds = getBounds combined
+        Boundaries _ _ gridYMin gridYMax = padBounds 2 gridBounds
+        Boundaries longXMin longXMax _ _ = padBounds 1000 gridBounds
+        longFloor = [(xCoord, gridYMax) | xCoord <- [longXMin .. longXMax]]
+        gridCoords =
+          [ (xCoord, yCoord)
+          | xCoord <- [longXMin .. longXMax]
+          , yCoord <- [gridYMin .. gridYMax]
+          ]
+        canvas = M.fromList $ map (,Air) gridCoords
+        grid =
+          M.adjust (const Source) source $
+            bulkAdjust longFloor (const Rock) $
+              bulkAdjust rocks (const Rock) canvas
+    return grid  
+
 source :: Coordinate
 source = point 500 0
 
@@ -143,14 +163,16 @@ dropSand current grid =
   case grid ! downMove of
     Air -> dropSand downMove grid
     Abyss -> FallIntoAbyss
-    Source -> BlockSource current
+    Source -> undefined
     _ ->
       if not (isBlocking (grid ! ldMove))
         then dropSand ldMove grid
         else
           if not (isBlocking (grid ! rdMove))
             then dropSand rdMove grid
-            else LandOnBlocker current
+            else if current == source 
+              then BlockSource current
+              else LandOnBlocker current
  where
   ldMove = peekLeftDiagonal current
   rdMove = peekRightDiagonal current
@@ -162,7 +184,15 @@ fillStep grid =
     FallIntoAbyss -> Nothing
     BlockSource _ -> Nothing
     LandOnBlocker c ->
-      Just $ M.insertWith const c Sand grid
+      Just $ M.adjust (const Sand) c grid
+
+fillStepSourceBlock :: Grid Element -> Maybe (Grid Element) 
+fillStepSourceBlock grid = 
+  case dropSand source grid of
+    FallIntoAbyss -> undefined
+    BlockSource _ -> Nothing
+    LandOnBlocker c ->
+      Just $ M.adjust (const Sand) c grid  
 
 fillNStep :: Int -> Grid Element -> Maybe (Grid Element)
 fillNStep n grid = foldrM (\_ g -> fillStep g) grid [1 .. n]

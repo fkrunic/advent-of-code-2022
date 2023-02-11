@@ -210,11 +210,17 @@ spec =
         fillNStep 100 exampleGrid `shouldBe` Nothing
 
     describe "Puzzle Solutions" $ do
-      it "Example Input" $ do
+      it "Example Input - Part 1" $ do
         part1Solution exampleInput `shouldBe` 24
 
       it "Part 1 Solution" $ do
         part1Solution puzzleInput `shouldBe` 843
+
+      it "Example Input - Part 2" $ do
+        part2Solution exampleInput `shouldBe` 93
+
+      it "Part 2 Solution" $ do
+        part2Solution puzzleInput `shouldBe` 27625
 
 exampleGrid :: Grid Element
 exampleGrid = fromMaybe M.empty $ defineGrid paths
@@ -235,6 +241,15 @@ part1Solution = iter 0 . fromMaybe M.empty . defineGrid . parser
     case fillStep grid of
       Just g' -> iter (n + 1) g'
       Nothing -> n
+
+part2Solution :: Text -> Int
+part2Solution = iter 0 . fromMaybe M.empty . defineGridNoAbyss . parser 
+  where
+    iter :: Int -> Grid Element -> Int
+    iter n grid =
+      case fillStepSourceBlock grid of
+        Just g' -> iter (n + 1) g'
+        Nothing -> n + 1
 
 exampleInput :: Text
 exampleInput = "498,4 -> 498,6 -> 496,6\n503,4 -> 502,4 -> 502,9 -> 494,9"
