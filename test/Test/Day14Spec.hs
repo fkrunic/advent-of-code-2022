@@ -1,7 +1,7 @@
 module Test.Day14Spec (spec) where
 
 import Data.Map qualified as M
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.Text qualified as T
 import Day14
 import Grids
@@ -71,12 +71,7 @@ spec =
 
     describe "Rendering Grid" $ do
       it "Drawing a grid with no sand" $ do
-        let paths =
-              [ [point 498 4, point 498 6, point 496 6]
-              , [point 503 4, point 502 4, point 502 9, point 494 9]
-              ]
-            grid = fromMaybe M.empty $ defineGrid paths
-            actual = drawGrid grid
+        let actual = drawGrid exampleGrid
             expected =
               T.intercalate
                 "\n"
@@ -94,3 +89,117 @@ spec =
                 , "************"
                 ]
         actual `shouldBe` expected
+
+      it "First sand pebble dropped" $ do
+        let actual = drawGrid $ fromJust $ fillStep exampleGrid
+        let expected =
+              T.intercalate
+                "\n"
+                [ "............"
+                , ".......+...."
+                , "............"
+                , "............"
+                , "............"
+                , ".....#...##."
+                , ".....#...#.."
+                , "...###...#.."
+                , ".........#.."
+                , ".......o.#.."
+                , ".#########.."
+                , "************"
+                ]     
+        actual `shouldBe` expected    
+
+      it "Second sand pebble dropped" $ do
+        let actual = drawGrid $ fromJust $ fillNStep 2 exampleGrid
+        let expected =
+              T.intercalate
+                "\n"
+                [ "............"
+                , ".......+...."
+                , "............"
+                , "............"
+                , "............"
+                , ".....#...##."
+                , ".....#...#.."
+                , "...###...#.."
+                , ".........#.."
+                , "......oo.#.."
+                , ".#########.."
+                , "************"
+                ]     
+        actual `shouldBe` expected  
+
+      it "Five pebbles dropped" $ do
+        let actual = drawGrid $ fromJust $ fillNStep 5 exampleGrid
+        let expected =
+              T.intercalate
+                "\n"
+                [ "............"
+                , ".......+...."
+                , "............"
+                , "............"
+                , "............"
+                , ".....#...##."
+                , ".....#...#.."
+                , "...###...#.."
+                , ".......o.#.."
+                , ".....oooo#.."
+                , ".#########.."
+                , "************"
+                ]     
+        actual `shouldBe` expected      
+
+      it "22 pebbles dropped" $ do
+        let actual = drawGrid $ fromJust $ fillNStep 22 exampleGrid
+        let expected =
+              T.intercalate
+                "\n"
+                [ "............"
+                , ".......+...."
+                , "............"
+                , ".......o...."
+                , "......ooo..."
+                , ".....#ooo##."
+                , ".....#ooo#.."
+                , "...###ooo#.."
+                , ".....oooo#.."
+                , "....ooooo#.."
+                , ".#########.."
+                , "************"
+                ]     
+        actual `shouldBe` expected        
+
+      it "24 pebbles dropped" $ do
+          let actual = drawGrid $ fromJust $ fillNStep 24 exampleGrid
+          let expected =
+                T.intercalate
+                  "\n"
+                  [ "............"
+                  , ".......+...."
+                  , "............"
+                  , ".......o...."
+                  , "......ooo..."
+                  , ".....#ooo##."
+                  , "....o#ooo#.."
+                  , "...###ooo#.."
+                  , ".....oooo#.."
+                  , "..o.ooooo#.."
+                  , ".#########.."
+                  , "************"
+                  ]     
+          actual `shouldBe` expected      
+
+      it "25+ pebbles dropped" $ do
+        fillNStep 25 exampleGrid `shouldBe` Nothing
+        fillNStep 30 exampleGrid `shouldBe` Nothing
+        fillNStep 100 exampleGrid `shouldBe` Nothing
+
+
+exampleGrid :: Grid Element 
+exampleGrid = fromMaybe M.empty $ defineGrid paths
+  where
+    paths =
+      [ [point 498 4, point 498 6, point 496 6]
+      , [point 503 4, point 502 4, point 502 9, point 494 9]
+      ]

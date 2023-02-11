@@ -1,6 +1,7 @@
 module Day14 where
 
-import Data.Map (Map)
+import Data.Foldable (foldrM)
+import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -74,8 +75,9 @@ defineGrid dps = do
           bulkAdjust abyssRow (const Abyss) $
             bulkAdjust rocks (const Rock) canvas
   return grid
- where
-  source = point 500 0
+
+source :: Coordinate
+source = point 500 0
 
 --------------------------------------------------------------------------------
 
@@ -99,3 +101,47 @@ drawGrid grid = T.intercalate "\n" rows
     | yCoord <- [yMin .. yMax]
     , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
     ]
+
+--------------------------------------------------------------------------------
+
+isBlocking :: Element -> Bool
+isBlocking Sand = True
+isBlocking Rock = True
+isBlocking _ = False
+
+peekDown :: Coordinate -> Coordinate
+peekDown (xCoord, YCoordinate y) = (xCoord, YCoordinate (y + 1))
+
+peekLeftDiagonal :: Coordinate -> Coordinate
+peekLeftDiagonal (XCoordinate x, YCoordinate y) =
+  (XCoordinate (x - 1), YCoordinate (y + 1))
+
+peekRightDiagonal :: Coordinate -> Coordinate
+peekRightDiagonal (XCoordinate x, YCoordinate y) =
+  (XCoordinate (x + 1), YCoordinate (y + 1))
+
+dropSand :: Coordinate -> Grid Element -> Maybe Coordinate
+dropSand current grid =
+  case grid ! downMove of
+    Air -> dropSand downMove grid
+    Abyss -> Nothing
+    Source -> undefined
+    _ ->
+      if not (isBlocking (grid ! ldMove))
+        then dropSand ldMove grid
+        else
+          if not (isBlocking (grid ! rdMove))
+            then dropSand rdMove grid
+            else Just current
+ where
+  ldMove = peekLeftDiagonal current
+  rdMove = peekRightDiagonal current
+  downMove = peekDown current
+
+fillStep :: Grid Element -> Maybe (Grid Element)
+fillStep grid =
+  dropSand source grid
+    >>= \c -> Just $ M.adjust (const Sand) c grid
+
+fillNStep :: Int -> Grid Element -> Maybe (Grid Element)
+fillNStep n grid = foldrM (\_ g -> fillStep g) grid [1 .. n]
