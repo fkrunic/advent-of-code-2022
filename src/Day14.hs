@@ -18,6 +18,12 @@ import Text.Megaparsec.Char.Lexer qualified as L
 type DrawPath = [Coordinate]
 data Element = Sand | Rock | Air | Abyss | Source deriving (Show, Eq)
 
+data DropOutcome
+  = FallIntoAbyss
+  | LandOnBlocker Coordinate
+  | BlockSource Coordinate
+  deriving (Show, Eq, Ord)
+
 --------------------------------------------------------------------------------
 
 scKeepsNewLine :: Parser ()
@@ -132,19 +138,19 @@ peekRightDiagonal :: Coordinate -> Coordinate
 peekRightDiagonal (XCoordinate x, YCoordinate y) =
   (XCoordinate (x + 1), YCoordinate (y + 1))
 
-dropSand :: Coordinate -> Grid Element -> Maybe Coordinate
+dropSand :: Coordinate -> Grid Element -> DropOutcome
 dropSand current grid =
   case grid ! downMove of
     Air -> dropSand downMove grid
-    Abyss -> Nothing
-    Source -> Just current
+    Abyss -> FallIntoAbyss
+    Source -> BlockSource current
     _ ->
       if not (isBlocking (grid ! ldMove))
         then dropSand ldMove grid
         else
           if not (isBlocking (grid ! rdMove))
             then dropSand rdMove grid
-            else Just current
+            else LandOnBlocker current
  where
   ldMove = peekLeftDiagonal current
   rdMove = peekRightDiagonal current
@@ -152,8 +158,11 @@ dropSand current grid =
 
 fillStep :: Grid Element -> Maybe (Grid Element)
 fillStep grid =
-  dropSand source grid
-    >>= \c -> Just $ M.adjust (const Sand) c grid
+  case dropSand source grid of
+    FallIntoAbyss -> Nothing
+    BlockSource _ -> Nothing
+    LandOnBlocker c ->
+      Just $ M.adjust (const Sand) c grid
 
 fillNStep :: Int -> Grid Element -> Maybe (Grid Element)
 fillNStep n grid = foldrM (\_ g -> fillStep g) grid [1 .. n]
