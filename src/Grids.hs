@@ -1,9 +1,11 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Grids where
 
 import Data.Map (Map)
 
-newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord)
-newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord)
+newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord, Enum)
+newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord, Enum)
 type Coordinate = (XCoordinate, YCoordinate)
 type Grid = Map Coordinate
 
@@ -15,3 +17,4 @@ unpackY (YCoordinate y) = y
 
 point :: Int -> Int -> Coordinate
 point x y = (XCoordinate x, YCoordinate y)
+
