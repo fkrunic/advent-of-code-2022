@@ -4,9 +4,9 @@ module Day08 (
 ) where
 
 import Data.Char (digitToInt)
-import Data.List (unfoldr)
-import Data.Map (Map)
 import Data.Map.Strict qualified as M
+
+import Grids
 
 data TreeView = TreeView
   { treeHeight :: Height
@@ -17,15 +17,9 @@ data TreeView = TreeView
   }
   deriving (Show, Eq)
 
-newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord)
-
-newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord)
-
-type Coordinate = (XCoordinate, YCoordinate)
-
 newtype Height = Height Int deriving (Show, Eq, Ord)
 
-type Grid a = Map Coordinate a
+--------------------------------------------------------------------------------
 
 isOnExterior :: TreeView -> Bool
 isOnExterior t =
@@ -76,37 +70,14 @@ toGrid xxs =
     , (xCoord, v) <- zip [1 ..] ys
     ]
 
-moveNorth :: Coordinate -> Coordinate
-moveNorth (xCoord, YCoordinate y) = (xCoord, YCoordinate (y - 1))
-
-moveSouth :: Coordinate -> Coordinate
-moveSouth (xCoord, YCoordinate y) = (xCoord, YCoordinate (y + 1))
-
-moveWest :: Coordinate -> Coordinate
-moveWest (XCoordinate x, yCoord) = (XCoordinate (x - 1), yCoord)
-
-moveEast :: Coordinate -> Coordinate
-moveEast (XCoordinate x, yCoord) = (XCoordinate (x + 1), yCoord)
-
-generateDirectionalView ::
-  Grid a ->
-  (Coordinate -> Coordinate) ->
-  Coordinate ->
-  [a]
-generateDirectionalView grid mover = tail . unfoldr scanner
- where
-  scanner coord = do
-    v <- M.lookup coord grid
-    Just (v, mover coord)
-
 generateTreeView :: Grid Height -> Coordinate -> Height -> TreeView
 generateTreeView grid coord height =
   TreeView
     { treeHeight = height
-    , treeNorthView = generateDirectionalView grid moveNorth coord
-    , treeSouthView = generateDirectionalView grid moveSouth coord
-    , treeWestView = generateDirectionalView grid moveWest coord
-    , treeEastView = generateDirectionalView grid moveEast coord
+    , treeNorthView = map snd $ generateDirectionalView grid moveNorth coord
+    , treeSouthView = map snd $ generateDirectionalView grid moveSouth coord
+    , treeWestView = map snd $ generateDirectionalView grid moveWest coord
+    , treeEastView = map snd $ generateDirectionalView grid moveEast coord
     }
 
 markVisibility :: Grid Height -> [(Coordinate, Bool)]

@@ -1,6 +1,6 @@
 module Day14 where
 
-import Data.Map (Map, (!))
+import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -93,7 +93,7 @@ drawGrid grid = T.intercalate "\n" rows
 
   drawElement :: Coordinate -> Grid Element -> Text
   drawElement (xc, yc) = elementSymbol . fromMaybe Air . M.lookup (xc, yc)
-  
+
   rows =
     [ T.intercalate "" row
     | yCoord <- [yMin .. yMax]
