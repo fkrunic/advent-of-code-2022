@@ -38,22 +38,43 @@ isBelowLine :: LineDefinition -> Coordinate -> Bool
 isBelowLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y <= m * x + b
 
--- scannedRegion :: (SensorLocation, BeaconLocation) -> [Coordinate]
--- scannedRegion (SensorLocation sLoc, BeaconLocation bLoc) = [sLoc]
---   where
---     ManhattanDistance d = manhattanDistance sLoc bLoc
---     northBoundary = shift sLoc (DeltaX 0, DeltaY $ negate $ fromIntegral d)
---     southBoundary = shift sLoc (DeltaX 0, DeltaY $ fromIntegral d)
---     westBoundary = shift sLoc (DeltaX $ negate $ fromIntegral d, DeltaY 0)
---     eastBoundary = shift sLoc (DeltaX $ fromIntegral d, DeltaY 0)
+isInScannerRegion :: (SensorLocation, BeaconLocation) -> Coordinate -> Bool
+isInScannerRegion
+  (SensorLocation sLoc@(XCoordinate _, YCoordinate sy), BeaconLocation bLoc)
+  coord =
+    and
+      [ isBelowLine q1Line coord
+      , isBelowLine q2Line coord
+      , isAboveLine q3Line coord
+      , isAboveLine q4Line coord
+      ]
+   where
+    ManhattanDistance d = manhattanDistance sLoc bLoc
 
---     -- y = sLoc@y, x = westBoundary@x
---     -- y = mx + b
---     -- y = x + b
---     -- sLoc@y = westBoundary@x + b
---     -- b = sLoc@y - westBoundary@x
---     -- (m=1, b=sLoc@y - westBoundary@x)
---     q1 (xCoord, yCoord) =
+    (XCoordinate wbx, YCoordinate _) =
+      shift sLoc (DeltaX $ negate $ fromIntegral d, DeltaY 0)
+
+    (XCoordinate ebx, YCoordinate _) =
+      shift sLoc (DeltaX $ fromIntegral d, DeltaY 0)
+
+    -- y = sLoc@y, x = westBoundary@x
+    -- y = mx + b
+    -- y = x + b
+    -- sLoc@y = westBoundary@x + b
+    -- b = sLoc@y - westBoundary@x
+    -- (m=1, b=sLoc@y - westBoundary@x)
+    q1Line = (Slope 1, Constant $ sy - wbx)
+
+    -- y = sLoc@y, x = eastBoundary@x
+    -- y = mx + b
+    -- y = -x + b
+    q2Line = (Slope (-1), Constant $ sy + ebx)
+
+    -- y = sLoc@y, x = westBoundary@x
+    q3Line = (Slope (-1), Constant $ sy + wbx)
+
+    -- y = sLoc@y, x = eastBoundary@x
+    q4Line = (Slope 1, Constant $ sy - ebx)
 
 --------------------------------------------------------------------------------
 
