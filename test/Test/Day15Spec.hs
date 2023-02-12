@@ -40,6 +40,22 @@ spec =
                 ]
         actual `shouldBe` expected
 
+      it "Can render two separated beacons" $ do
+        let locs = 
+              [ (SensorLocation (point 0 0), BeaconLocation (point 2 0))
+              , (SensorLocation (point 7 0), BeaconLocation (point 6 0))
+              ]
+            actual = renderField locs
+            expected = 
+              T.intercalate "\n"
+                [ "..#........"
+                , ".###.....#."
+                , "##S#B...BS#"
+                , ".###.....#."
+                , "..#........"
+                ]
+        actual `shouldBe` expected
+
 parser :: Text -> [(SensorLocation, BeaconLocation)]
 parser = fromRight [] . runParser (some pLine) ""
 
