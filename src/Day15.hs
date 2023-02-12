@@ -127,17 +127,20 @@ toCells (SensorLocation sLoc, BeaconLocation bLoc) =
     getSensorBoundary (SensorLocation sLoc) (BeaconLocation bLoc)
   boundingCells = map (,Empty) [north, south, east, west]
 
-renderField :: [(SensorLocation, BeaconLocation)] -> Text
-renderField locs = drawGrid' (drawCell scanner) grid
+generateGrid :: [(SensorLocation, BeaconLocation)] -> Grid CellType
+generateGrid locs = M.unionWith const concreteGrid boundaryGrid
  where
-  regionCheckers = map isInScannerRegion locs
-  scanner = combineRegions regionCheckers
   concreteGrid =
     M.fromList $
       concatMap (unpackConcreteCells . fst . toCells) locs
   boundaryGrid =
     M.fromList $
       concatMap (unpackBoundaryCells . snd . toCells) locs
-  grid = M.unionWith const concreteGrid boundaryGrid
   unpackConcreteCells (ConcreteCells cs) = cs
-  unpackBoundaryCells (BoundaryCells cs) = cs
+  unpackBoundaryCells (BoundaryCells cs) = cs      
+
+renderField :: [(SensorLocation, BeaconLocation)] -> Text
+renderField locs = drawGrid' (drawCell scanner) grid
+ where
+  scanner = combineRegions $ map isInScannerRegion locs
+  grid = generateGrid locs
