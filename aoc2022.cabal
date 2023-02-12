@@ -39,6 +39,7 @@ library
       Day12
       Day13
       Day14
+      Day15
       Graphs
       Grids
       Parsing
@@ -103,6 +104,7 @@ test-suite aoc2022-test
       Test.Day12Spec
       Test.Day13Spec
       Test.Day14Spec
+      Test.Day15Spec
       Paths_aoc2022
   hs-source-dirs:
       test

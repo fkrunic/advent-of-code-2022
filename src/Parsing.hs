@@ -19,3 +19,6 @@ symbol = L.symbol sc
 
 integer :: Parser Int
 integer = lexer L.decimal
+
+signedInteger :: Parser Int
+signedInteger = L.signed sc integer
