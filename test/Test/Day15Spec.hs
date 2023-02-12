@@ -15,14 +15,30 @@ import Text.Megaparsec
 spec :: SpecWith ()
 spec =
   describe "Day 15 Tests" $ do
-    it "Parse Single Beacon Line" $ do
-      let line = "Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
-          actual = runParser pLine "" line
-          expected = head exampleSpread
-      actual `shouldBe` Right expected
+    describe "Parsing Tests" $ do
+      it "Single Beacon Line" $ do
+        let line = "Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
+            actual = runParser pLine "" line
+            expected = head exampleSpread
+        actual `shouldBe` Right expected
 
-    it "Parses Example Input" $ do
-      parser exampleInput `shouldBe` exampleSpread
+      it "Example Input" $ do
+        parser exampleInput `shouldBe` exampleSpread
+
+    describe "Rendering Sensors and Beacons" $ do
+      it "Can render a single beacon" $ do
+        let locs = [(SensorLocation (point 0 0), BeaconLocation (point 2 0))]
+            actual = renderField locs
+            expected =
+              T.intercalate
+                "\n"
+                [ "..#.."
+                , ".###."
+                , "##S#B"
+                , ".###."
+                , "..#.."
+                ]
+        actual `shouldBe` expected
 
 parser :: Text -> [(SensorLocation, BeaconLocation)]
 parser = fromRight [] . runParser (some pLine) ""

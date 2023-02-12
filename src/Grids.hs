@@ -99,6 +99,16 @@ drawGrid defaultElement elementSymbol grid = T.intercalate "\n" rows
     , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
     ]
 
+drawGrid' :: (Coordinate -> Grid a -> Text) -> Grid a -> Text
+drawGrid' drawElement grid = T.intercalate "\n" rows
+ where
+  Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
+  rows =
+    [ T.intercalate "" row
+    | yCoord <- [yMin .. yMax]
+    , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
+    ]    
+
 manhattanDistance :: Coordinate -> Coordinate -> ManhattanDistance
 manhattanDistance
   (XCoordinate x1, YCoordinate y1)
