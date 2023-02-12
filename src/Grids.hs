@@ -11,6 +11,13 @@ import Data.Text qualified as T
 
 newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord, Enum)
 newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord, Enum)
+
+newtype ManhattanDistance = ManhattanDistance Word deriving (Show, Eq, Ord)
+
+newtype DeltaX = DeltaX Int deriving (Show, Eq, Ord)
+newtype DeltaY = DeltaY Int deriving (Show, Eq, Ord)
+type Delta = (DeltaX, DeltaY)
+
 type Coordinate = (XCoordinate, YCoordinate)
 type Grid = Map Coordinate
 
@@ -83,7 +90,7 @@ drawGrid defaultElement elementSymbol grid = T.intercalate "\n" rows
  where
   Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
 
-  drawElement (xc, yc) = 
+  drawElement (xc, yc) =
     elementSymbol . fromMaybe defaultElement . M.lookup (xc, yc)
 
   rows =
@@ -91,3 +98,14 @@ drawGrid defaultElement elementSymbol grid = T.intercalate "\n" rows
     | yCoord <- [yMin .. yMax]
     , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
     ]
+
+manhattanDistance :: Coordinate -> Coordinate -> ManhattanDistance
+manhattanDistance
+  (XCoordinate x1, YCoordinate y1)
+  (XCoordinate x2, YCoordinate y2) =
+    ManhattanDistance $ fromIntegral $ abs (x1 - x2) + abs (y1 - y2)
+
+shift :: Coordinate -> Delta -> Coordinate
+shift (XCoordinate x, YCoordinate y) (DeltaX dx, DeltaY dy) =
+  (XCoordinate (x + dx), YCoordinate (y + dy))
+
