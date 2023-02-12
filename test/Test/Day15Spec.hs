@@ -56,6 +56,28 @@ spec =
                 ]
         actual `shouldBe` expected
 
+      it "Can render two overlapping sensors" $ do
+        let locs = 
+              [ (SensorLocation (point 0 0), BeaconLocation (point 5 0)) 
+              , (SensorLocation (point 3 (-3)), BeaconLocation (point 5 (-3)))
+              ]
+            actual = renderField locs
+            expected = 
+              T.intercalate "\n"
+                [ ".....#..#.."
+                , "....######."
+                , "...#####S#B"
+                , "..########."
+                , ".#########."                
+                , "#####S####B"
+                , ".#########."
+                , "..#######.."
+                , "...#####..."
+                , "....###...."
+                , ".....#....."
+                ]
+        actual `shouldBe` expected
+
 parser :: Text -> [(SensorLocation, BeaconLocation)]
 parser = fromRight [] . runParser (some pLine) ""
 
