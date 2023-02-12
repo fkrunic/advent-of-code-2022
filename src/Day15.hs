@@ -76,6 +76,9 @@ isInScannerRegion
     -- y = sLoc@y, x = eastBoundary@x
     q4Line = (Slope 1, Constant $ sy - ebx)
 
+combineRegions :: Coordinate -> [Coordinate -> Bool] -> Bool
+combineRegions coord = any (\inRegion -> inRegion coord)
+
 --------------------------------------------------------------------------------
 
 drawCellType :: CellType -> Text
