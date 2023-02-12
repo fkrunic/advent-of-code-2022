@@ -4,6 +4,8 @@ import Test.Hspec
 
 import Data.Bifunctor (bimap)
 import Data.Either (fromRight)
+import Data.Map ((!))
+import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day15
@@ -41,13 +43,14 @@ spec =
         actual `shouldBe` expected
 
       it "Can render two separated beacons" $ do
-        let locs = 
+        let locs =
               [ (SensorLocation (point 0 0), BeaconLocation (point 2 0))
               , (SensorLocation (point 7 0), BeaconLocation (point 6 0))
               ]
             actual = renderField locs
-            expected = 
-              T.intercalate "\n"
+            expected =
+              T.intercalate
+                "\n"
                 [ "..#........"
                 , ".###.....#."
                 , "##S#B...BS#"
@@ -57,18 +60,19 @@ spec =
         actual `shouldBe` expected
 
       it "Can render two overlapping sensors" $ do
-        let locs = 
-              [ (SensorLocation (point 0 0), BeaconLocation (point 5 0)) 
+        let locs =
+              [ (SensorLocation (point 0 0), BeaconLocation (point 5 0))
               , (SensorLocation (point 3 (-3)), BeaconLocation (point 5 (-3)))
               ]
             actual = renderField locs
-            expected = 
-              T.intercalate "\n"
+            expected =
+              T.intercalate
+                "\n"
                 [ ".....#..#.."
                 , "....######."
                 , "...#####S#B"
                 , "..########."
-                , ".#########."                
+                , ".#########."
                 , "#####S####B"
                 , ".#########."
                 , "..#######.."
@@ -77,6 +81,22 @@ spec =
                 , ".....#....."
                 ]
         actual `shouldBe` expected
+
+    describe "Puzzle Solutions" $ do
+      it "Part 1 - Example Input" $ do
+        part1Solution (YCoordinate 10) exampleInput `shouldBe` 26
+
+      it "Part 1 - Puzzle Input" $ do
+        part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
+
+part1Solution :: YCoordinate -> Text -> Int
+part1Solution rowY t = length $ filter (== Empty) tiles
+ where
+  sensors = parser t
+  scanner = combineRegions $ map isInScannerRegion sensors
+  grid = generateGrid sensors
+  Boundaries xMin xMax _ _ = getBounds $ M.keys grid
+  tiles = map (\x -> determineCell scanner (x, rowY) grid) [xMin .. xMax]
 
 parser :: Text -> [(SensorLocation, BeaconLocation)]
 parser = fromRight [] . runParser (some pLine) ""
@@ -120,3 +140,40 @@ exampleSpread =
     , (point 14 3, point 15 3)
     , (point 20 1, point 15 3)
     ]
+
+puzzleInput :: Text
+puzzleInput = 
+  T.intercalate "\n" 
+    [ "Sensor at x=2765643, y=3042538: closest beacon is at x=2474133, y=3521072"
+    , "Sensor at x=2745662, y=2324735: closest beacon is at x=2491341, y=1883354"
+    , "Sensor at x=2015742, y=2904055: closest beacon is at x=2474133, y=3521072"
+    , "Sensor at x=3375262, y=3203288: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=3276468, y=3892409: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=952573, y=3147055: closest beacon is at x=-41010, y=2905006"
+    , "Sensor at x=1823659, y=1779343: closest beacon is at x=1592718, y=2000000"
+    , "Sensor at x=1156328, y=865741: closest beacon is at x=1592718, y=2000000"
+    , "Sensor at x=3938443, y=271482: closest beacon is at x=4081274, y=1177185"
+    , "Sensor at x=2815232, y=1641178: closest beacon is at x=2491341, y=1883354"
+    , "Sensor at x=3984799, y=3424711: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=1658825, y=3999931: closest beacon is at x=2474133, y=3521072"
+    , "Sensor at x=3199859, y=1285962: closest beacon is at x=4081274, y=1177185"
+    , "Sensor at x=3538649, y=2788193: closest beacon is at x=3725736, y=2414539"
+    , "Sensor at x=3522208, y=3336284: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=3093758, y=3492396: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=2464979, y=562119: closest beacon is at x=2491341, y=1883354"
+    , "Sensor at x=3665010, y=1556840: closest beacon is at x=3735739, y=2128164"
+    , "Sensor at x=207525, y=3893957: closest beacon is at x=-41010, y=2905006"
+    , "Sensor at x=3894678, y=1974599: closest beacon is at x=3735739, y=2128164"
+    , "Sensor at x=2185146, y=3822275: closest beacon is at x=2474133, y=3521072"
+    , "Sensor at x=31166, y=1467978: closest beacon is at x=-41010, y=2905006"
+    , "Sensor at x=3242364, y=3335961: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=3773718, y=3999789: closest beacon is at x=3321219, y=3415236"
+    , "Sensor at x=423046, y=2227938: closest beacon is at x=-41010, y=2905006"
+    , "Sensor at x=1600225, y=2529059: closest beacon is at x=1592718, y=2000000"
+    , "Sensor at x=3291752, y=2241389: closest beacon is at x=3735739, y=2128164"
+    , "Sensor at x=2741333, y=3984346: closest beacon is at x=2474133, y=3521072"
+    , "Sensor at x=3935288, y=2292902: closest beacon is at x=3725736, y=2414539"
+    , "Sensor at x=291635, y=140996: closest beacon is at x=212146, y=-1154950"
+    , "Sensor at x=3966296, y=2600346: closest beacon is at x=3725736, y=2414539"
+    , "Sensor at x=2228916, y=1461096: closest beacon is at x=2491341, y=1883354"      
+    ]    
