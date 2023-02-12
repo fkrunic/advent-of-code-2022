@@ -1,4 +1,16 @@
-module Day14 where
+module Day14 (
+  DrawPath,
+  Element,
+  chainPath,
+  defineGrid,
+  defineGridNoAbyss,
+  drawGrid,
+  fillNStep,
+  fillStep,
+  fillStepSourceBlock,
+  pDrawPath,
+  pointsAlong,
+) where
 
 import Data.Foldable (foldrM)
 import Data.Functor (($>))
@@ -8,11 +20,23 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 
-import Grids
-import Parsing
+import Parsing (Parser, symbol)
 
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import Grids (
+  Boundaries (Boundaries),
+  Coordinate,
+  Grid,
+  XCoordinate (XCoordinate),
+  YCoordinate (YCoordinate),
+  getBounds,
+  padBounds,
+  point,
+  unpackX,
+  unpackY,
+ )
+
+import Text.Megaparsec (empty, optional, some)
+import Text.Megaparsec.Char (char)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 type DrawPath = [Coordinate]
@@ -96,23 +120,23 @@ defineGrid dps = do
 
 defineGridNoAbyss :: [DrawPath] -> Maybe (Grid Element)
 defineGridNoAbyss dps = do
-    rocks <- concat <$> mapM chainPath dps
-    let combined = source : rocks
-        gridBounds = getBounds combined
-        Boundaries _ _ gridYMin gridYMax = padBounds 2 gridBounds
-        Boundaries longXMin longXMax _ _ = padBounds 1000 gridBounds
-        longFloor = [(xCoord, gridYMax) | xCoord <- [longXMin .. longXMax]]
-        gridCoords =
-          [ (xCoord, yCoord)
-          | xCoord <- [longXMin .. longXMax]
-          , yCoord <- [gridYMin .. gridYMax]
-          ]
-        canvas = M.fromList $ map (,Air) gridCoords
-        grid =
-          M.adjust (const Source) source $
-            bulkAdjust longFloor (const Rock) $
-              bulkAdjust rocks (const Rock) canvas
-    return grid  
+  rocks <- concat <$> mapM chainPath dps
+  let combined = source : rocks
+      gridBounds = getBounds combined
+      Boundaries _ _ gridYMin gridYMax = padBounds 2 gridBounds
+      Boundaries longXMin longXMax _ _ = padBounds 1000 gridBounds
+      longFloor = [(xCoord, gridYMax) | xCoord <- [longXMin .. longXMax]]
+      gridCoords =
+        [ (xCoord, yCoord)
+        | xCoord <- [longXMin .. longXMax]
+        , yCoord <- [gridYMin .. gridYMax]
+        ]
+      canvas = M.fromList $ map (,Air) gridCoords
+      grid =
+        M.adjust (const Source) source $
+          bulkAdjust longFloor (const Rock) $
+            bulkAdjust rocks (const Rock) canvas
+  return grid
 
 source :: Coordinate
 source = point 500 0
@@ -170,9 +194,10 @@ dropSand current grid =
         else
           if not (isBlocking (grid ! rdMove))
             then dropSand rdMove grid
-            else if current == source 
-              then BlockSource current
-              else LandOnBlocker current
+            else
+              if current == source
+                then BlockSource current
+                else LandOnBlocker current
  where
   ldMove = peekLeftDiagonal current
   rdMove = peekRightDiagonal current
@@ -186,13 +211,13 @@ fillStep grid =
     LandOnBlocker c ->
       Just $ M.adjust (const Sand) c grid
 
-fillStepSourceBlock :: Grid Element -> Maybe (Grid Element) 
-fillStepSourceBlock grid = 
+fillStepSourceBlock :: Grid Element -> Maybe (Grid Element)
+fillStepSourceBlock grid =
   case dropSand source grid of
     FallIntoAbyss -> undefined
     BlockSource _ -> Nothing
     LandOnBlocker c ->
-      Just $ M.adjust (const Sand) c grid  
+      Just $ M.adjust (const Sand) c grid
 
 fillNStep :: Int -> Grid Element -> Maybe (Grid Element)
 fillNStep n grid = foldrM (\_ g -> fillStep g) grid [1 .. n]

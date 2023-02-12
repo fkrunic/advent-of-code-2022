@@ -5,11 +5,25 @@ import Data.Map qualified as M
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day14
-import Grids
-import Test.Hspec
-import Text.Megaparsec
-import Text.Megaparsec.Char
+
+import Day14 (
+  DrawPath,
+  Element,
+  chainPath,
+  defineGrid,
+  defineGridNoAbyss,
+  drawGrid,
+  fillNStep,
+  fillStep,
+  fillStepSourceBlock,
+  pDrawPath,
+  pointsAlong,
+ )
+
+import Grids (Grid, point)
+import Test.Hspec (SpecWith, describe, it, shouldBe)
+import Text.Megaparsec (optional, runParser, some)
+import Text.Megaparsec.Char (newline)
 
 spec :: SpecWith ()
 spec =
@@ -243,13 +257,13 @@ part1Solution = iter 0 . fromMaybe M.empty . defineGrid . parser
       Nothing -> n
 
 part2Solution :: Text -> Int
-part2Solution = iter 0 . fromMaybe M.empty . defineGridNoAbyss . parser 
-  where
-    iter :: Int -> Grid Element -> Int
-    iter n grid =
-      case fillStepSourceBlock grid of
-        Just g' -> iter (n + 1) g'
-        Nothing -> n + 1
+part2Solution = iter 0 . fromMaybe M.empty . defineGridNoAbyss . parser
+ where
+  iter :: Int -> Grid Element -> Int
+  iter n grid =
+    case fillStepSourceBlock grid of
+      Just g' -> iter (n + 1) g'
+      Nothing -> n + 1
 
 exampleInput :: Text
 exampleInput = "498,4 -> 498,6 -> 496,6\n503,4 -> 502,4 -> 502,9 -> 494,9"
