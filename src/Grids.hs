@@ -5,6 +5,9 @@ module Grids where
 import Data.List (unfoldr)
 import Data.Map (Map)
 import Data.Map qualified as M
+import Data.Maybe (fromMaybe)
+import Data.Text (Text)
+import Data.Text qualified as T
 
 newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord, Enum)
 newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord, Enum)
@@ -18,6 +21,8 @@ data Boundaries = Boundaries
   , yMax :: YCoordinate
   }
   deriving (Show, Eq, Ord)
+
+--------------------------------------------------------------------------------
 
 unpackX :: XCoordinate -> Int
 unpackX (XCoordinate x) = x
@@ -72,3 +77,17 @@ generateDirectionalView grid mover = tail . unfoldr scanner
   scanner coord = do
     v <- M.lookup coord grid
     Just ((coord, v), mover coord)
+
+drawGrid :: a -> (a -> Text) -> Grid a -> Text
+drawGrid defaultElement elementSymbol grid = T.intercalate "\n" rows
+ where
+  Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
+
+  drawElement (xc, yc) = 
+    elementSymbol . fromMaybe defaultElement . M.lookup (xc, yc)
+
+  rows =
+    [ T.intercalate "" row
+    | yCoord <- [yMin .. yMax]
+    , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
+    ]

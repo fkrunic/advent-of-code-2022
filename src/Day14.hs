@@ -4,21 +4,19 @@ module Day14 (
   chainPath,
   defineGrid,
   defineGridNoAbyss,
-  drawGrid,
   fillNStep,
   fillStep,
   fillStepSourceBlock,
   pDrawPath,
   pointsAlong,
+  renderGrid,
 ) where
 
 import Data.Foldable (foldrM)
 import Data.Functor (($>))
 import Data.Map (Map, (!))
 import Data.Map qualified as M
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import Data.Text qualified as T
 
 import Parsing (Parser, symbol)
 
@@ -28,6 +26,7 @@ import Grids (
   Grid,
   XCoordinate (XCoordinate),
   YCoordinate (YCoordinate),
+  drawGrid,
   getBounds,
   padBounds,
   point,
@@ -150,19 +149,22 @@ elementSymbol Air = "."
 elementSymbol Abyss = "*"
 elementSymbol Source = "+"
 
-drawGrid :: Grid Element -> Text
-drawGrid grid = T.intercalate "\n" rows
- where
-  Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
+renderGrid :: Grid Element -> Text
+renderGrid = drawGrid Air elementSymbol
 
-  drawElement :: Coordinate -> Grid Element -> Text
-  drawElement (xc, yc) = elementSymbol . fromMaybe Air . M.lookup (xc, yc)
+-- drawGrid :: Grid Element -> Text
+-- drawGrid grid = T.intercalate "\n" rows
+--  where
+--   Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
 
-  rows =
-    [ T.intercalate "" row
-    | yCoord <- [yMin .. yMax]
-    , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
-    ]
+--   drawElement :: Coordinate -> Grid Element -> Text
+--   drawElement (xc, yc) = elementSymbol . fromMaybe Air . M.lookup (xc, yc)
+
+--   rows =
+--     [ T.intercalate "" row
+--     | yCoord <- [yMin .. yMax]
+--     , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
+--     ]
 
 --------------------------------------------------------------------------------
 

@@ -12,7 +12,7 @@ import Day14 (
   chainPath,
   defineGrid,
   defineGridNoAbyss,
-  drawGrid,
+  renderGrid,
   fillNStep,
   fillStep,
   fillStepSourceBlock,
@@ -99,7 +99,7 @@ spec =
 
     describe "Rendering Grid" $ do
       it "Drawing a grid with no sand" $ do
-        let actual = drawGrid exampleGrid
+        let actual = renderGrid exampleGrid
             expected =
               T.intercalate
                 "\n"
@@ -119,7 +119,7 @@ spec =
         actual `shouldBe` expected
 
       it "First sand pebble dropped" $ do
-        let actual = drawGrid $ fromJust $ fillStep exampleGrid
+        let actual = renderGrid $ fromJust $ fillStep exampleGrid
         let expected =
               T.intercalate
                 "\n"
@@ -139,7 +139,7 @@ spec =
         actual `shouldBe` expected
 
       it "Second sand pebble dropped" $ do
-        let actual = drawGrid $ fromJust $ fillNStep 2 exampleGrid
+        let actual = renderGrid $ fromJust $ fillNStep 2 exampleGrid
         let expected =
               T.intercalate
                 "\n"
@@ -159,7 +159,7 @@ spec =
         actual `shouldBe` expected
 
       it "Five pebbles dropped" $ do
-        let actual = drawGrid $ fromJust $ fillNStep 5 exampleGrid
+        let actual = renderGrid $ fromJust $ fillNStep 5 exampleGrid
         let expected =
               T.intercalate
                 "\n"
@@ -179,7 +179,7 @@ spec =
         actual `shouldBe` expected
 
       it "22 pebbles dropped" $ do
-        let actual = drawGrid $ fromJust $ fillNStep 22 exampleGrid
+        let actual = renderGrid $ fromJust $ fillNStep 22 exampleGrid
         let expected =
               T.intercalate
                 "\n"
@@ -199,7 +199,7 @@ spec =
         actual `shouldBe` expected
 
       it "24 pebbles dropped" $ do
-        let actual = drawGrid $ fromJust $ fillNStep 24 exampleGrid
+        let actual = renderGrid $ fromJust $ fillNStep 24 exampleGrid
         let expected =
               T.intercalate
                 "\n"
