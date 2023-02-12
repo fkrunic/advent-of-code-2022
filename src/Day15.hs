@@ -144,3 +144,11 @@ renderField locs = drawGrid' (drawCell scanner) grid
  where
   scanner = combineRegions $ map isInScannerRegion locs
   grid = generateGrid locs
+
+tuningFrequency :: Coordinate -> Int
+tuningFrequency (XCoordinate x, YCoordinate y) = 4000000 * x + y
+
+-- y = mx + b
+-- 56000011 = 4000000 * x + y
+-- tuningLine :: Coordinate -> LineDefinition
+-- tuningLine
