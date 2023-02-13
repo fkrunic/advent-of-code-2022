@@ -194,20 +194,6 @@ generateGrid (LocationLayout locs ml) =
   unpackConcreteCells (ConcreteCells cs) = cs
   unpackBoundaryCells (BoundaryCells cs) = cs
 
--- data SensorPair = SensorPair
---   { sensorID :: SensorID
---   , sensorPair :: (SensorLocation, BeaconLocation)
---   }
---   deriving (Show, Eq)
-
--- makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
-
--- data LocationLayout = LocationLayout
---   { sensorPairs :: [(SensorLocation, BeaconLocation)]
---   , markerLoc :: Maybe MarkerLocation
---   }
---   deriving (Show, Eq)
-
 renderField :: LocationLayout -> Text
 renderField layout = drawGrid' (drawCell (isJust . scanner)) grid
  where
@@ -229,9 +215,6 @@ reflectAcrossSensor
    where
     dx = sx - cx
     x' = cx + 2 * dx
-
--- findEmptyTile :: Coordinate -> Boundaries -> Grid CellType -> Maybe Coordinate
--- findEmptyTile current (Boundaries xMin xMax yMin yMax) grid =
 
 reflect :: Quadrant -> Quadrant
 reflect Q1 = Q2
