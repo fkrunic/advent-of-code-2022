@@ -1,5 +1,6 @@
 module Day15 where
 
+import Data.Map (Map)
 import Data.Map.Strict qualified as M
 import Data.Text (Text)
 import Grids
@@ -49,6 +50,16 @@ type LineDefinition = (Slope, Constant)
 
 data CellType = Unknown | Sensor | Beacon | Empty | Marker deriving (Show, Eq)
 type Cell = (Coordinate, CellType)
+
+type ScannerAssoc = Map Scanner SensorID
+type SensorLimits = Map SensorID SensorBoundary
+
+data Field = Field
+  { cellGrid :: Grid Cell
+  , scannerAssoc :: ScannerAssoc
+  , sensorLimits :: SensorLimits
+  }
+  deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 

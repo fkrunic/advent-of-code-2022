@@ -275,7 +275,7 @@ part1Solution :: YCoordinate -> Text -> Int
 part1Solution rowY t = length $ filter (== Empty) tiles
  where
   sensors = map sensorPair $ parser t
-  scanner = combineRegions $ map isInScannerRegion sensors
+  scanner = activateAll $ map makeScanner sensors
   grid = generateGrid (LocationLayout sensors Nothing)
   Boundaries xMin xMax _ _ = getBounds $ M.keys grid
   tiles = map (\x -> determineCell scanner (x, rowY) grid) [xMin .. xMax]
