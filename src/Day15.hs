@@ -137,7 +137,7 @@ generateGrid locs = M.unionWith const concreteGrid boundaryGrid
     M.fromList $
       concatMap (unpackBoundaryCells . snd . toCells) locs
   unpackConcreteCells (ConcreteCells cs) = cs
-  unpackBoundaryCells (BoundaryCells cs) = cs      
+  unpackBoundaryCells (BoundaryCells cs) = cs
 
 renderField :: [(SensorLocation, BeaconLocation)] -> Text
 renderField locs = drawGrid' (drawCell scanner) grid
@@ -145,10 +145,15 @@ renderField locs = drawGrid' (drawCell scanner) grid
   scanner = combineRegions $ map isInScannerRegion locs
   grid = generateGrid locs
 
+--------------------------------------------------------------------------------
+
 tuningFrequency :: Coordinate -> Int
 tuningFrequency (XCoordinate x, YCoordinate y) = 4000000 * x + y
 
--- y = mx + b
--- 56000011 = 4000000 * x + y
--- tuningLine :: Coordinate -> LineDefinition
--- tuningLine
+reflectAcrossSensor :: SensorLocation -> Coordinate -> Coordinate
+reflectAcrossSensor
+  (SensorLocation (XCoordinate sx, _))
+  (XCoordinate cx, yCoord) = (XCoordinate x', yCoord)
+   where
+    dx = sx - cx
+    x' = cx + 2 * dx

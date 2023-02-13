@@ -127,14 +127,127 @@ spec =
                 ]
         actual `shouldBe` expected
 
+      it "Can render an adjusted grid" $ do
+        let actual = renderField adjustedSpread
+            expected =
+              T.intercalate
+                "\n"
+                [ "..........#.........................."
+                , ".........###........................."
+                , "........#####........................"
+                , ".......#######......................."
+                , "......#########.............#........"
+                , ".....###########...........###......."
+                , "....#############.........#####......"
+                , "...###############.......#######....."
+                , "..#################.....#########...."
+                , ".###################...###########..."
+                , "##########S##########.#############.."
+                , ".###################.#######S#######."
+                , "..#################...#############.."
+                , "...###############.....B##########..."
+                , "....#############.......#########...."
+                , ".....###########.........#######....."
+                , "......#########...........#####......"
+                , ".......#######.............###......."
+                , "........#####.............#####......"
+                , ".........###.............#######....."
+                , "..........B.............#########...."
+                , "..........#............###########..."
+                , ".........###..........#############.."
+                , "........#####........###############."
+                , ".......#######......########S########"
+                , "......B########....#################."
+                , ".....###########..B################.."
+                , "....##################S##########B..."
+                , "...#######S######################...."
+                , "....#############..#############....."
+                , ".....###########...######S######....."
+                , "......#########.....###########......"
+                , ".......#######.......########B......."
+                , "........#####.........#######........"
+                , ".........###...........#####........."
+                , "..........#.............###.........."
+                , ".........................#..........."
+                ]
+        actual `shouldBe` expected
+
+    describe "Sensor Reflections" $ do
+      it "Can reflect a beacon on the same line" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 0
+            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
+            locs = [(SensorLocation sLoc, BeaconLocation updated)]
+            actual = renderField locs
+            expected =
+              T.intercalate
+                "\n"
+                [ "..#.."
+                , ".###."
+                , "B#S##"
+                , ".###."
+                , "..#.."
+                ]
+        actual `shouldBe` expected
+
+      it "Can reflect a beacon on an offset line" $ do
+        let sLoc = point 0 0
+            bLoc = point 1 1
+            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
+            locs = [(SensorLocation sLoc, BeaconLocation updated)]
+            actual = renderField locs
+            expected =
+              T.intercalate
+                "\n"
+                [ "..#.."
+                , ".###."
+                , "##S##"
+                , ".B##."
+                , "..#.."
+                ]
+        actual `shouldBe` expected       
+
+      it "Can reflect a beacon on the north boundary" $ do
+        let sLoc = point 0 0
+            bLoc = point 0 (-2)
+            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
+            locs = [(SensorLocation sLoc, BeaconLocation updated)]
+            actual = renderField locs
+            expected =
+              T.intercalate
+                "\n"
+                [ "..B.."
+                , ".###."
+                , "##S##"
+                , ".###."
+                , "..#.."
+                ]
+        actual `shouldBe` expected  
+
+      it "Can reflect a beacon on the south boundary" $ do
+        let sLoc = point 0 0
+            bLoc = point 0 2
+            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
+            locs = [(SensorLocation sLoc, BeaconLocation updated)]
+            actual = renderField locs
+            expected =
+              T.intercalate
+                "\n"
+                [ "..#.."
+                , ".###."
+                , "##S##"
+                , ".###."
+                , "..B.."
+                ]
+        actual `shouldBe` expected                  
+
     describe "Puzzle Solutions" $ do
       it "Part 1 - Example Input" $ do
         part1Solution (YCoordinate 10) exampleInput `shouldBe` 26
 
       it "Part 1 - Puzzle Input" $ do
         pendingWith "solving part 2"
-
--- part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
+        -- part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
 
 part1Solution :: YCoordinate -> Text -> Int
 part1Solution rowY t = length $ filter (== Empty) tiles
@@ -186,6 +299,26 @@ exampleSpread =
     , (point 16 7, point 15 3)
     , (point 14 3, point 15 3)
     , (point 20 1, point 15 3)
+    ]
+
+adjustedSpread :: [(SensorLocation, BeaconLocation)]
+adjustedSpread =
+  map
+    (bimap SensorLocation BeaconLocation)
+    [ (point 2 18, point (-2) 15)
+    , -- , (point 9 16, point 10 16)
+      -- , (point 13 2, point 15 3)
+      -- , (point 12 14, point 10 16)
+      -- , (point 10 20, point 10 16)
+      (point 14 17, point 10 16)
+    , -- , (point 8 7, point 2 10)
+      (point 2 0, point 2 10)
+    , -- , (point 0 11, point 2 10)
+      (point 20 14, point 25 17)
+    , (point 17 20, point 21 22)
+    , -- , (point 16 7, point 15 3)
+      -- , (point 14 3, point 15 3)
+      (point 20 1, point 15 3)
     ]
 
 puzzleInput :: Text
