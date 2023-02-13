@@ -8,12 +8,19 @@ import Text.Megaparsec.Char (space)
 
 newtype SensorLocation = SensorLocation Coordinate deriving (Show, Eq, Ord)
 newtype BeaconLocation = BeaconLocation Coordinate deriving (Show, Eq, Ord)
+newtype MarkerLocation = MarkerLocation Coordinate deriving (Show, Eq, Ord)
 
 data SensorBoundary = SensorBoundary
   { northBoundary :: Coordinate
   , southBoundary :: Coordinate
   , eastBoundary :: Coordinate
   , westBoundary :: Coordinate
+  }
+  deriving (Show, Eq)
+
+data LocationLayout = LocationLayout
+  { sensorPairs :: [(SensorLocation, BeaconLocation)]
+  , markerLoc :: Maybe MarkerLocation
   }
   deriving (Show, Eq)
 
@@ -129,8 +136,11 @@ toCells (SensorLocation sLoc, BeaconLocation bLoc) =
     getSensorBoundary (SensorLocation sLoc) (BeaconLocation bLoc)
   boundingCells = map (,Empty) [north, south, east, west]
 
-generateGrid :: [(SensorLocation, BeaconLocation)] -> Grid CellType
-generateGrid locs = M.unionWith const concreteGrid boundaryGrid
+generateGrid :: LocationLayout -> Grid CellType
+generateGrid (LocationLayout locs ml) =
+  case ml of
+    Nothing -> merged
+    Just (MarkerLocation mkLoc) -> M.insertWith const mkLoc Marker merged
  where
   concreteGrid =
     M.fromList $
@@ -138,14 +148,15 @@ generateGrid locs = M.unionWith const concreteGrid boundaryGrid
   boundaryGrid =
     M.fromList $
       concatMap (unpackBoundaryCells . snd . toCells) locs
+  merged = M.unionWith const concreteGrid boundaryGrid
   unpackConcreteCells (ConcreteCells cs) = cs
   unpackBoundaryCells (BoundaryCells cs) = cs
 
-renderField :: [(SensorLocation, BeaconLocation)] -> Text
-renderField locs = drawGrid' (drawCell scanner) grid
+renderField :: LocationLayout -> Text
+renderField layout = drawGrid' (drawCell scanner) grid
  where
-  scanner = combineRegions $ map isInScannerRegion locs
-  grid = generateGrid locs
+  scanner = combineRegions $ map isInScannerRegion (sensorPairs layout)
+  grid = generateGrid layout
 
 --------------------------------------------------------------------------------
 

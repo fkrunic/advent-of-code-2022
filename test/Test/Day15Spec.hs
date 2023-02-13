@@ -30,7 +30,7 @@ spec =
     describe "Rendering Sensors and Beacons" $ do
       it "Can render a single beacon" $ do
         let locs = [(SensorLocation (point 0 0), BeaconLocation (point 2 0))]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -47,7 +47,7 @@ spec =
               [ (SensorLocation (point 0 0), BeaconLocation (point 2 0))
               , (SensorLocation (point 7 0), BeaconLocation (point 6 0))
               ]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -64,7 +64,7 @@ spec =
               [ (SensorLocation (point 0 0), BeaconLocation (point 5 0))
               , (SensorLocation (point 3 (-3)), BeaconLocation (point 5 (-3)))
               ]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -83,7 +83,7 @@ spec =
         actual `shouldBe` expected
 
       it "Can render the example grid" $ do
-        let actual = renderField exampleSpread
+        let actual = renderField (LocationLayout exampleSpread Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -128,7 +128,7 @@ spec =
         actual `shouldBe` expected
 
       it "Can render an adjusted grid" $ do
-        let actual = renderField adjustedSpread
+        let actual = renderField (LocationLayout adjustedSpread Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -178,7 +178,7 @@ spec =
             bLoc = point 2 0
             updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
             locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -195,7 +195,7 @@ spec =
             bLoc = point 1 1
             updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
             locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -212,7 +212,7 @@ spec =
             bLoc = point 0 (-2)
             updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
             locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -229,7 +229,7 @@ spec =
             bLoc = point 0 2
             updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
             locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField locs
+            actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
                 "\n"
@@ -254,7 +254,7 @@ part1Solution rowY t = length $ filter (== Empty) tiles
  where
   sensors = parser t
   scanner = combineRegions $ map isInScannerRegion sensors
-  grid = generateGrid sensors
+  grid = generateGrid (LocationLayout sensors Nothing)
   Boundaries xMin xMax _ _ = getBounds $ M.keys grid
   tiles = map (\x -> determineCell scanner (x, rowY) grid) [xMin .. xMax]
 
