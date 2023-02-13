@@ -173,20 +173,25 @@ spec =
         actual `shouldBe` expected
 
     describe "Sensor Reflections" $ do
-      it "Can reflect a beacon on the same line" $ do
+      it "Can reflect a marker on the same line as beacon" $ do
         let sLoc = point 0 0
             bLoc = point 2 0
-            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
-            locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField (LocationLayout locs Nothing)
+            mkLoc = point (-3) 0
+            updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            layout =
+              LocationLayout
+                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                , markerLoc = Just $ MarkerLocation updated
+                }
+            actual = renderField layout
             expected =
               T.intercalate
                 "\n"
-                [ "..#.."
-                , ".###."
-                , "B#S##"
-                , ".###."
-                , "..#.."
+                [ "..#..."
+                , ".###.."
+                , "##S#BX"
+                , ".###.."
+                , "..#..."
                 ]
         actual `shouldBe` expected
 
@@ -205,7 +210,7 @@ spec =
                 , ".B##."
                 , "..#.."
                 ]
-        actual `shouldBe` expected       
+        actual `shouldBe` expected
 
       it "Can reflect a beacon on the north boundary" $ do
         let sLoc = point 0 0
@@ -222,7 +227,7 @@ spec =
                 , ".###."
                 , "..#.."
                 ]
-        actual `shouldBe` expected  
+        actual `shouldBe` expected
 
       it "Can reflect a beacon on the south boundary" $ do
         let sLoc = point 0 0
@@ -239,7 +244,7 @@ spec =
                 , ".###."
                 , "..B.."
                 ]
-        actual `shouldBe` expected                  
+        actual `shouldBe` expected
 
     describe "Puzzle Solutions" $ do
       it "Part 1 - Example Input" $ do
@@ -247,7 +252,8 @@ spec =
 
       it "Part 1 - Puzzle Input" $ do
         pendingWith "solving part 2"
-        -- part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
+
+-- part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
 
 part1Solution :: YCoordinate -> Text -> Int
 part1Solution rowY t = length $ filter (== Empty) tiles
