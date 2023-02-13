@@ -2,6 +2,7 @@ module Day15 where
 
 import Data.Map (Map)
 import Data.Map.Strict qualified as M
+import Data.Maybe (isJust)
 import Data.Text (Text)
 import Grids
 import Parsing
@@ -28,7 +29,7 @@ data SensorBoundary = SensorBoundary
   deriving (Show, Eq)
 
 data LocationLayout = LocationLayout
-  { sensorPairs :: [(SensorLocation, BeaconLocation)]
+  { sensorPairs :: [SensorPair]
   , markerLoc :: Maybe MarkerLocation
   }
   deriving (Show, Eq)
@@ -99,14 +100,16 @@ isBelowLine :: LineDefinition -> Coordinate -> Bool
 isBelowLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y <= m * x + b
 
-activate :: Scanner -> Coordinate -> Bool
-activate (Scanner q1Line q2Line q3Line q4Line) coord =
-  and
+activate :: SensorID -> Scanner -> Coordinate -> Maybe SensorID
+activate sid (Scanner q1Line q2Line q3Line q4Line) coord =
+  if and
     [ isBelowLine q1Line coord
     , isBelowLine q2Line coord
     , isAboveLine q3Line coord
     , isAboveLine q4Line coord
     ]
+    then Just sid
+    else Nothing
 
 makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
 makeScanner (sensorLoc, beaconLoc) = Scanner{..}
@@ -135,8 +138,12 @@ makeScanner (sensorLoc, beaconLoc) = Scanner{..}
   -- y = sLoc@y, x = eastBoundary@x
   q4Line = (Slope 1, Constant $ sy - ebx)
 
-activateAll :: [Scanner] -> Coordinate -> Bool
-activateAll scs coord = any (`activate` coord) scs
+activateAll :: [(SensorID, Scanner)] -> Coordinate -> Maybe SensorID
+activateAll [] _ = Nothing
+activateAll ((sid, scanner) : scs) coord =
+  case activate sid scanner coord of
+    Just tag -> Just tag
+    Nothing -> activateAll scs coord
 
 --------------------------------------------------------------------------------
 
@@ -177,18 +184,35 @@ generateGrid (LocationLayout locs ml) =
  where
   concreteGrid =
     M.fromList $
-      concatMap (unpackConcreteCells . fst . toCells) locs
+      concatMap (unpackConcreteCells . fst . toCells . sensorPair) locs
   boundaryGrid =
     M.fromList $
-      concatMap (unpackBoundaryCells . snd . toCells) locs
+      concatMap (unpackBoundaryCells . snd . toCells . sensorPair) locs
   merged = M.unionWith const concreteGrid boundaryGrid
   unpackConcreteCells (ConcreteCells cs) = cs
   unpackBoundaryCells (BoundaryCells cs) = cs
 
+-- data SensorPair = SensorPair
+--   { sensorID :: SensorID
+--   , sensorPair :: (SensorLocation, BeaconLocation)
+--   }
+--   deriving (Show, Eq)
+
+-- makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
+
+-- data LocationLayout = LocationLayout
+--   { sensorPairs :: [(SensorLocation, BeaconLocation)]
+--   , markerLoc :: Maybe MarkerLocation
+--   }
+--   deriving (Show, Eq)
+
 renderField :: LocationLayout -> Text
-renderField layout = drawGrid' (drawCell scanner) grid
+renderField layout = drawGrid' (drawCell (isJust . scanner)) grid
  where
-  scanner = activateAll $ map makeScanner (sensorPairs layout)
+  scanner =
+    activateAll $
+      map (\sp -> (sensorID sp, makeScanner (sensorPair sp))) $
+        sensorPairs layout
   grid = generateGrid layout
 
 --------------------------------------------------------------------------------

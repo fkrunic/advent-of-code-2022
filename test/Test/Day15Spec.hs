@@ -6,6 +6,7 @@ import Data.Bifunctor (bimap)
 import Data.Either (fromRight)
 import Data.Map ((!))
 import Data.Map qualified as M
+import Data.Maybe (isJust)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day15
@@ -29,7 +30,13 @@ spec =
 
     describe "Rendering Sensors and Beacons" $ do
       it "Can render a single beacon" $ do
-        let locs = [(SensorLocation (point 0 0), BeaconLocation (point 2 0))]
+        let sp =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair =
+                    (SensorLocation (point 0 0), BeaconLocation (point 2 0))
+                }
+            locs = [sp]
             actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
@@ -43,10 +50,19 @@ spec =
         actual `shouldBe` expected
 
       it "Can render two separated beacons" $ do
-        let locs =
-              [ (SensorLocation (point 0 0), BeaconLocation (point 2 0))
-              , (SensorLocation (point 7 0), BeaconLocation (point 6 0))
-              ]
+        let sp1 =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair =
+                    (SensorLocation (point 0 0), BeaconLocation (point 2 0))
+                }
+            sp2 =
+              SensorPair
+                { sensorID = SensorID 2
+                , sensorPair =
+                    (SensorLocation (point 7 0), BeaconLocation (point 6 0))
+                }
+            locs = [sp1, sp2]
             actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
@@ -60,10 +76,17 @@ spec =
         actual `shouldBe` expected
 
       it "Can render two overlapping sensors" $ do
-        let locs =
-              [ (SensorLocation (point 0 0), BeaconLocation (point 5 0))
-              , (SensorLocation (point 3 (-3)), BeaconLocation (point 5 (-3)))
-              ]
+        let sp1 =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair = (SensorLocation (point 0 0), BeaconLocation (point 5 0))
+                }
+            sp2 =
+              SensorPair
+                { sensorID = SensorID 2
+                , sensorPair = (SensorLocation (point 3 (-3)), BeaconLocation (point 5 (-3)))
+                }
+            locs = [sp1, sp2]
             actual = renderField (LocationLayout locs Nothing)
             expected =
               T.intercalate
@@ -83,7 +106,7 @@ spec =
         actual `shouldBe` expected
 
       it "Can render the example grid" $ do
-        let layout = LocationLayout (map sensorPair exampleSpread) Nothing
+        let layout = LocationLayout exampleSpread Nothing
             actual = renderField layout
             expected =
               T.intercalate
@@ -179,9 +202,14 @@ spec =
             bLoc = point 2 0
             mkLoc = point (-2) 0
             updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            sp1 =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair = (SensorLocation sLoc, BeaconLocation bLoc)
+                }
             layout =
               LocationLayout
-                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                { sensorPairs = [sp1]
                 , markerLoc = Just $ MarkerLocation updated
                 }
             actual = renderField layout
@@ -201,9 +229,14 @@ spec =
             bLoc = point (-1) 1
             mkLoc = point (-1) (-1)
             updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            sp1 =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair = (SensorLocation sLoc, BeaconLocation bLoc)
+                }
             layout =
               LocationLayout
-                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                { sensorPairs = [sp1]
                 , markerLoc = Just $ MarkerLocation updated
                 }
             actual = renderField layout
@@ -223,9 +256,14 @@ spec =
             bLoc = point (-1) 1
             mkLoc = point 0 (-2)
             updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            sp1 =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair = (SensorLocation sLoc, BeaconLocation bLoc)
+                }
             layout =
               LocationLayout
-                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                { sensorPairs = [sp1]
                 , markerLoc = Just $ MarkerLocation updated
                 }
             actual = renderField layout
@@ -245,9 +283,14 @@ spec =
             bLoc = point (-1) 1
             mkLoc = point 0 2
             updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            sp1 =
+              SensorPair
+                { sensorID = SensorID 1
+                , sensorPair = (SensorLocation sLoc, BeaconLocation bLoc)
+                }
             layout =
               LocationLayout
-                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                { sensorPairs = [sp1]
                 , markerLoc = Just $ MarkerLocation updated
                 }
             actual = renderField layout
@@ -274,11 +317,14 @@ spec =
 part1Solution :: YCoordinate -> Text -> Int
 part1Solution rowY t = length $ filter (== Empty) tiles
  where
-  sensors = map sensorPair $ parser t
-  scanner = activateAll $ map makeScanner sensors
-  grid = generateGrid (LocationLayout sensors Nothing)
+  sps = parser t
+  scanner =
+    activateAll $
+      map (\sp -> (sensorID sp, makeScanner (sensorPair sp))) sps
+  grid = generateGrid (LocationLayout sps Nothing)
   Boundaries xMin xMax _ _ = getBounds $ M.keys grid
-  tiles = map (\x -> determineCell scanner (x, rowY) grid) [xMin .. xMax]
+  tiles =
+    map (\x -> determineCell (isJust . scanner) (x, rowY) grid) [xMin .. xMax]
 
 parser :: Text -> [SensorPair]
 parser = fromRight [] . runParser pSensors ""
@@ -305,41 +351,40 @@ exampleInput =
 
 exampleSpread :: [SensorPair]
 exampleSpread =
-    [ SensorPair (SensorID 1) (SensorLocation $ point 2 18, BeaconLocation $ point (-2) 15)
-    , SensorPair (SensorID 2) (SensorLocation $ point 9 16, BeaconLocation $ point 10 16)
-    , SensorPair (SensorID 3) (SensorLocation $ point 13 2, BeaconLocation $ point 15 3)
-    , SensorPair (SensorID 4) (SensorLocation $ point 12 14, BeaconLocation $ point 10 16)
-    , SensorPair (SensorID 5) (SensorLocation $ point 10 20, BeaconLocation $ point 10 16)
-    , SensorPair (SensorID 6) (SensorLocation $ point 14 17, BeaconLocation $ point 10 16)
-    , SensorPair (SensorID 7) (SensorLocation $ point 8 7, BeaconLocation $ point 2 10)
-    , SensorPair (SensorID 8) (SensorLocation $ point 2 0, BeaconLocation $ point 2 10)
-    , SensorPair (SensorID 9) (SensorLocation $ point 0 11, BeaconLocation $ point 2 10)
-    , SensorPair (SensorID 10) (SensorLocation $ point 20 14, BeaconLocation $ point 25 17)
-    , SensorPair (SensorID 11) (SensorLocation $ point 17 20, BeaconLocation $ point 21 22)
-    , SensorPair (SensorID 12) (SensorLocation $ point 16 7, BeaconLocation $ point 15 3)
-    , SensorPair (SensorID 13) (SensorLocation $ point 14 3, BeaconLocation $ point 15 3)
-    , SensorPair (SensorID 14) (SensorLocation $ point 20 1, BeaconLocation $ point 15 3)
-    ]
+  [ SensorPair (SensorID 1) (SensorLocation $ point 2 18, BeaconLocation $ point (-2) 15)
+  , SensorPair (SensorID 2) (SensorLocation $ point 9 16, BeaconLocation $ point 10 16)
+  , SensorPair (SensorID 3) (SensorLocation $ point 13 2, BeaconLocation $ point 15 3)
+  , SensorPair (SensorID 4) (SensorLocation $ point 12 14, BeaconLocation $ point 10 16)
+  , SensorPair (SensorID 5) (SensorLocation $ point 10 20, BeaconLocation $ point 10 16)
+  , SensorPair (SensorID 6) (SensorLocation $ point 14 17, BeaconLocation $ point 10 16)
+  , SensorPair (SensorID 7) (SensorLocation $ point 8 7, BeaconLocation $ point 2 10)
+  , SensorPair (SensorID 8) (SensorLocation $ point 2 0, BeaconLocation $ point 2 10)
+  , SensorPair (SensorID 9) (SensorLocation $ point 0 11, BeaconLocation $ point 2 10)
+  , SensorPair (SensorID 10) (SensorLocation $ point 20 14, BeaconLocation $ point 25 17)
+  , SensorPair (SensorID 11) (SensorLocation $ point 17 20, BeaconLocation $ point 21 22)
+  , SensorPair (SensorID 12) (SensorLocation $ point 16 7, BeaconLocation $ point 15 3)
+  , SensorPair (SensorID 13) (SensorLocation $ point 14 3, BeaconLocation $ point 15 3)
+  , SensorPair (SensorID 14) (SensorLocation $ point 20 1, BeaconLocation $ point 15 3)
+  ]
 
-adjustedSpread :: [(SensorLocation, BeaconLocation)]
+-- 2,3,4,5,7,9,12,13
+adjustedSpread :: [SensorPair]
 adjustedSpread =
-  map
-    (bimap SensorLocation BeaconLocation)
-    [ (point 2 18, point (-2) 15)
-    , -- , (point 9 16, point 10 16)
-      -- , (point 13 2, point 15 3)
-      -- , (point 12 14, point 10 16)
-      -- , (point 10 20, point 10 16)
-      (point 14 17, point 10 16)
-    , -- , (point 8 7, point 2 10)
-      (point 2 0, point 2 10)
-    , -- , (point 0 11, point 2 10)
-      (point 20 14, point 25 17)
-    , (point 17 20, point 21 22)
-    , -- , (point 16 7, point 15 3)
-      -- , (point 14 3, point 15 3)
-      (point 20 1, point 15 3)
-    ]
+  [ SensorPair (SensorID 1) (SensorLocation $ point 2 18, BeaconLocation $ point (-2) 15)
+  , -- , SensorPair (SensorID 2) (SensorLocation $ point 9 16, BeaconLocation $ point 10 16)
+    -- , SensorPair (SensorID 3) (SensorLocation $ point 13 2, BeaconLocation $ point 15 3)
+    -- , SensorPair (SensorID 4) (SensorLocation $ point 12 14, BeaconLocation $ point 10 16)
+    -- , SensorPair (SensorID 5) (SensorLocation $ point 10 20, BeaconLocation $ point 10 16)
+    SensorPair (SensorID 6) (SensorLocation $ point 14 17, BeaconLocation $ point 10 16)
+  , -- , SensorPair (SensorID 7) (SensorLocation $ point 8 7, BeaconLocation $ point 2 10)
+    SensorPair (SensorID 8) (SensorLocation $ point 2 0, BeaconLocation $ point 2 10)
+  , -- , SensorPair (SensorID 9) (SensorLocation $ point 0 11, BeaconLocation $ point 2 10)
+    SensorPair (SensorID 10) (SensorLocation $ point 20 14, BeaconLocation $ point 25 17)
+  , SensorPair (SensorID 11) (SensorLocation $ point 17 20, BeaconLocation $ point 21 22)
+  , -- , SensorPair (SensorID 12) (SensorLocation $ point 16 7, BeaconLocation $ point 15 3)
+    -- , SensorPair (SensorID 13) (SensorLocation $ point 14 3, BeaconLocation $ point 15 3)
+    SensorPair (SensorID 14) (SensorLocation $ point 20 1, BeaconLocation $ point 15 3)
+  ]
 
 puzzleInput :: Text
 puzzleInput =
