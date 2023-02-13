@@ -119,6 +119,22 @@ activate sid (Scanner q1Line q2Line q3Line q4Line) coord =
     then Just sid
     else Nothing
 
+ {-
+           y-
+           |
+          .|.
+         . | .
+        .  |  .
+       . Q3|Q4 .
+  (x-)-----S-----(x+)
+       . Q1|Q2 .
+        .  |  .
+         . | .
+          .|.
+           |                     
+           y+
+ -}   
+
 makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
 makeScanner (sensorLoc, beaconLoc) = Scanner{..}
  where
