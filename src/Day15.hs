@@ -117,9 +117,9 @@ drawCellType Marker = "X"
 determineCell :: (Coordinate -> Bool) -> Coordinate -> Grid CellType -> CellType
 determineCell scanner coord grid =
   case M.lookup coord grid of
+    Just Marker -> Marker
     Just Sensor -> Sensor
     Just Beacon -> Beacon
-    Just Marker -> Marker
     _ ->
       if scanner coord
         then Empty
