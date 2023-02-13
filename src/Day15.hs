@@ -32,11 +32,19 @@ data LocationLayout = LocationLayout
   }
   deriving (Show, Eq)
 
+data Scanner = Scanner
+  { q1Line :: LineDefinition
+  , q2Line :: LineDefinition
+  , q3Line :: LineDefinition
+  , q4Line :: LineDefinition
+  }
+  deriving (Show, Eq, Ord)
+
 newtype ConcreteCells = ConcreteCells [Cell] deriving (Show, Eq)
 newtype BoundaryCells = BoundaryCells [Cell] deriving (Show, Eq)
 
-newtype Slope = Slope Int deriving (Show, Eq)
-newtype Constant = Constant Int deriving (Show, Eq)
+newtype Slope = Slope Int deriving (Show, Eq, Ord)
+newtype Constant = Constant Int deriving (Show, Eq, Ord)
 type LineDefinition = (Slope, Constant)
 
 data CellType = Unknown | Sensor | Beacon | Empty | Marker deriving (Show, Eq)
@@ -80,14 +88,17 @@ isBelowLine :: LineDefinition -> Coordinate -> Bool
 isBelowLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y <= m * x + b
 
-isInScannerRegion :: (SensorLocation, BeaconLocation) -> Coordinate -> Bool
-isInScannerRegion (sensorLoc, beaconLoc) coord =
+activate :: Scanner -> Coordinate -> Bool
+activate (Scanner q1Line q2Line q3Line q4Line) coord =
   and
     [ isBelowLine q1Line coord
     , isBelowLine q2Line coord
     , isAboveLine q3Line coord
     , isAboveLine q4Line coord
     ]
+
+makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
+makeScanner (sensorLoc, beaconLoc) = Scanner{..}
  where
   SensorLocation (XCoordinate _, YCoordinate sy) = sensorLoc
   sbd = getSensorBoundary sensorLoc beaconLoc
@@ -113,8 +124,8 @@ isInScannerRegion (sensorLoc, beaconLoc) coord =
   -- y = sLoc@y, x = eastBoundary@x
   q4Line = (Slope 1, Constant $ sy - ebx)
 
-combineRegions :: [Coordinate -> Bool] -> Coordinate -> Bool
-combineRegions regions coord = any (\inRegion -> inRegion coord) regions
+activateAll :: [Scanner] -> Coordinate -> Bool
+activateAll scs coord = any (`activate` coord) scs
 
 --------------------------------------------------------------------------------
 
@@ -166,7 +177,7 @@ generateGrid (LocationLayout locs ml) =
 renderField :: LocationLayout -> Text
 renderField layout = drawGrid' (drawCell scanner) grid
  where
-  scanner = combineRegions $ map isInScannerRegion (sensorPairs layout)
+  scanner = activateAll $ map makeScanner (sensorPairs layout)
   grid = generateGrid layout
 
 --------------------------------------------------------------------------------
@@ -181,3 +192,6 @@ reflectAcrossSensor
    where
     dx = sx - cx
     x' = cx + 2 * dx
+
+-- findEmptyTile :: Coordinate -> Boundaries -> Grid CellType -> Maybe Coordinate
+-- findEmptyTile current (Boundaries xMin xMax yMin yMax) grid =
