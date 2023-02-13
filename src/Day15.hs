@@ -24,7 +24,7 @@ newtype Slope = Slope Int deriving (Show, Eq)
 newtype Constant = Constant Int deriving (Show, Eq)
 type LineDefinition = (Slope, Constant)
 
-data CellType = Unknown | Sensor | Beacon | Empty deriving (Show, Eq)
+data CellType = Unknown | Sensor | Beacon | Empty | Marker deriving (Show, Eq)
 type Cell = (Coordinate, CellType)
 
 --------------------------------------------------------------------------------
@@ -105,12 +105,14 @@ drawCellType Unknown = "."
 drawCellType Sensor = "S"
 drawCellType Beacon = "B"
 drawCellType Empty = "#"
+drawCellType Marker = "X"
 
 determineCell :: (Coordinate -> Bool) -> Coordinate -> Grid CellType -> CellType
 determineCell scanner coord grid =
   case M.lookup coord grid of
     Just Sensor -> Sensor
     Just Beacon -> Beacon
+    Just Marker -> Marker
     _ ->
       if scanner coord
         then Empty
