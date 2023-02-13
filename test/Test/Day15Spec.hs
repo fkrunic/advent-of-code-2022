@@ -176,7 +176,7 @@ spec =
       it "Can reflect a marker on the same line as beacon" $ do
         let sLoc = point 0 0
             bLoc = point 2 0
-            mkLoc = point (-3) 0
+            mkLoc = point (-2) 0
             updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
             layout =
               LocationLayout
@@ -187,24 +187,51 @@ spec =
             expected =
               T.intercalate
                 "\n"
-                [ "..#..."
-                , ".###.."
-                , "##S#BX"
-                , ".###.."
-                , "..#..."
+                [ "..#.."
+                , ".###."
+                , "##S#X"
+                , ".###."
+                , "..#.."
                 ]
         actual `shouldBe` expected
 
-      it "Can reflect a beacon on an offset line" $ do
+      it "Can reflect a marker on an offset line" $ do
         let sLoc = point 0 0
-            bLoc = point 1 1
-            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
-            locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField (LocationLayout locs Nothing)
+            bLoc = point (-1) 1
+            mkLoc = point (-1) (-1)
+            updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            layout =
+              LocationLayout
+                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                , markerLoc = Just $ MarkerLocation updated
+                }
+            actual = renderField layout
             expected =
               T.intercalate
                 "\n"
                 [ "..#.."
+                , ".##X."
+                , "##S##"
+                , ".B##."
+                , "..#.."
+                ]
+        actual `shouldBe` expected
+
+      it "Can reflect a marker on the north boundary" $ do
+        let sLoc = point 0 0
+            bLoc = point (-1) 1
+            mkLoc = point 0 (-2)
+            updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            layout =
+              LocationLayout
+                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                , markerLoc = Just $ MarkerLocation updated
+                }
+            actual = renderField layout
+            expected =
+              T.intercalate
+                "\n"
+                [ "..X.."
                 , ".###."
                 , "##S##"
                 , ".B##."
@@ -212,37 +239,25 @@ spec =
                 ]
         actual `shouldBe` expected
 
-      it "Can reflect a beacon on the north boundary" $ do
+      it "Can reflect a marker on the south boundary" $ do
         let sLoc = point 0 0
-            bLoc = point 0 (-2)
-            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
-            locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField (LocationLayout locs Nothing)
-            expected =
-              T.intercalate
-                "\n"
-                [ "..B.."
-                , ".###."
-                , "##S##"
-                , ".###."
-                , "..#.."
-                ]
-        actual `shouldBe` expected
-
-      it "Can reflect a beacon on the south boundary" $ do
-        let sLoc = point 0 0
-            bLoc = point 0 2
-            updated = reflectAcrossSensor (SensorLocation sLoc) bLoc
-            locs = [(SensorLocation sLoc, BeaconLocation updated)]
-            actual = renderField (LocationLayout locs Nothing)
+            bLoc = point (-1) 1
+            mkLoc = point 0 2
+            updated = reflectAcrossSensor (SensorLocation sLoc) mkLoc
+            layout =
+              LocationLayout
+                { sensorPairs = [(SensorLocation sLoc, BeaconLocation bLoc)]
+                , markerLoc = Just $ MarkerLocation updated
+                }
+            actual = renderField layout
             expected =
               T.intercalate
                 "\n"
                 [ "..#.."
                 , ".###."
                 , "##S##"
-                , ".###."
-                , "..B.."
+                , ".B##."
+                , "..X.."
                 ]
         actual `shouldBe` expected
 
