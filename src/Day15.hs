@@ -106,7 +106,19 @@ riseOverRun :: Coordinate -> Coordinate -> Slope
 riseOverRun
   (XCoordinate x1, YCoordinate y1)
   (XCoordinate x2, YCoordinate y2) =
-    Slope $ (y2 - y1) `div` (x2 - x1)
+    if x2 - x1 == 0
+      then undefined
+      else Slope $ (y2 - y1) `div` (x2 - x1)
+
+deduceConstant :: Slope -> Coordinate -> Constant
+deduceConstant (Slope m) (XCoordinate bx, YCoordinate by) =
+  Constant $ by - m * bx
+
+regionCapture :: Slope -> (LineDefinition -> Coordinate -> Bool)
+regionCapture (Slope s)
+  | s >= 1 = isBelowLine
+  | s <= (-1) = isAboveLine
+  | otherwise = undefined
 
 activate :: SensorID -> Scanner -> Coordinate -> Maybe SensorID
 activate sid (Scanner q1Line q2Line q3Line q4Line) coord =
@@ -119,21 +131,27 @@ activate sid (Scanner q1Line q2Line q3Line q4Line) coord =
     then Just sid
     else Nothing
 
- {-
-           y-
-           |
-          .|.
-         . | .
-        .  |  .
-       . Q3|Q4 .
-  (x-)-----S-----(x+)
-       . Q1|Q2 .
-        .  |  .
-         . | .
-          .|.
-           |                     
-           y+
- -}   
+{-
+          y-
+          |
+         .|.
+        . | .
+       .  |  .
+      . Q3|Q4 .
+ (x-)-----S-----(x+)
+      . Q1|Q2 .
+       .  |  .
+        . | .
+         .|.
+          |
+          y+
+-}
+
+{-
+
+y = mx + b
+
+-}
 
 makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
 makeScanner (sensorLoc, beaconLoc) = Scanner{..}
@@ -279,7 +297,3 @@ teleportAcrossSensor coord@(_, yCoord) sensorLoc scanner = do
   let crossQ = reflect currentQ
       crossBoundary = getLineFromQ crossQ scanner
   return $ deduceBoundaryPosition yCoord crossBoundary
-
--- y = mx + b
--- y - b = mx
--- x = (y - b) / m
