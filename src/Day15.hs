@@ -102,6 +102,12 @@ isBelowLine :: LineDefinition -> Coordinate -> Bool
 isBelowLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y <= m * x + b
 
+riseOverRun :: Coordinate -> Coordinate -> Slope
+riseOverRun
+  (XCoordinate x1, YCoordinate y1)
+  (XCoordinate x2, YCoordinate y2) =
+    Slope $ (y2 - y1) `div` (x2 - x1)
+
 activate :: SensorID -> Scanner -> Coordinate -> Maybe SensorID
 activate sid (Scanner q1Line q2Line q3Line q4Line) coord =
   if and
