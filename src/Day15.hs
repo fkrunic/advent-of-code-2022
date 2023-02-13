@@ -34,13 +34,15 @@ data LocationLayout = LocationLayout
   }
   deriving (Show, Eq)
 
+type RegionCapture = LineDefinition -> Coordinate -> Bool
+type Region = (LineDefinition, RegionCapture)
+
 data Scanner = Scanner
-  { q1Line :: LineDefinition
-  , q2Line :: LineDefinition
-  , q3Line :: LineDefinition
-  , q4Line :: LineDefinition
+  { q1Region :: Region
+  , q2Region :: Region
+  , q3Region :: Region
+  , q4Region :: Region
   }
-  deriving (Show, Eq, Ord)
 
 newtype ConcreteCells = ConcreteCells [Cell] deriving (Show, Eq)
 newtype BoundaryCells = BoundaryCells [Cell] deriving (Show, Eq)
@@ -55,12 +57,12 @@ type Cell = (Coordinate, CellType)
 type ScannerAssoc = Map Scanner SensorID
 type SensorLimits = Map SensorID SensorBoundary
 
-data Field = Field
-  { cellGrid :: Grid Cell
-  , scannerAssoc :: ScannerAssoc
-  , sensorLimits :: SensorLimits
-  }
-  deriving (Show, Eq)
+-- data Field = Field
+--   { cellGrid :: Grid Cell
+--   , scannerAssoc :: ScannerAssoc
+--   , sensorLimits :: SensorLimits
+--   }
+--   deriving (Show, Eq)
 
 data Quadrant = Q1 | Q2 | Q3 | Q4 deriving (Show, Eq, Ord)
 
@@ -94,11 +96,11 @@ getSensorBoundary
     westBoundary = shift sLoc (DeltaX $ negate $ fromIntegral d, DeltaY 0)
     eastBoundary = shift sLoc (DeltaX $ fromIntegral d, DeltaY 0)
 
-isAboveLine :: LineDefinition -> Coordinate -> Bool
+isAboveLine :: RegionCapture
 isAboveLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y >= m * x + b
 
-isBelowLine :: LineDefinition -> Coordinate -> Bool
+isBelowLine :: RegionCapture
 isBelowLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y <= m * x + b
 
@@ -114,71 +116,55 @@ deduceConstant :: Slope -> Coordinate -> Constant
 deduceConstant (Slope m) (XCoordinate bx, YCoordinate by) =
   Constant $ by - m * bx
 
-regionCapture :: Slope -> (LineDefinition -> Coordinate -> Bool)
+regionCapture :: Slope -> RegionCapture
 regionCapture (Slope s)
   | s >= 1 = isBelowLine
   | s <= (-1) = isAboveLine
   | otherwise = undefined
 
-activate :: SensorID -> Scanner -> Coordinate -> Maybe SensorID
-activate sid (Scanner q1Line q2Line q3Line q4Line) coord =
-  if and
-    [ isBelowLine q1Line coord
-    , isBelowLine q2Line coord
-    , isAboveLine q3Line coord
-    , isAboveLine q4Line coord
-    ]
-    then Just sid
-    else Nothing
+buildLineRegion :: Coordinate -> Coordinate -> (LineDefinition, RegionCapture)
+buildLineRegion boundary1 boundary2 = ((slope, constant), capture)
+ where
+  slope = riseOverRun boundary1 boundary2
+  constant = deduceConstant slope boundary1
+  capture = regionCapture slope
 
-{-
-          y-
-          |
-         .|.
-        . | .
-       .  |  .
-      . Q3|Q4 .
- (x-)-----S-----(x+)
-      . Q1|Q2 .
-       .  |  .
-        . | .
-         .|.
-          |
-          y+
--}
-
-{-
-
-y = mx + b
-
+{-           North
+               y-
+               |
+              .|.
+             . | .
+            .  |  .
+           . Q3|Q4 .
+ West (x-)-----S-----(x+) East
+           . Q1|Q2 .
+            .  |  .
+             . | .
+              .|.
+               |
+               y+
+             South
 -}
 
 makeScanner :: (SensorLocation, BeaconLocation) -> Scanner
 makeScanner (sensorLoc, beaconLoc) = Scanner{..}
  where
-  SensorLocation (XCoordinate _, YCoordinate sy) = sensorLoc
   sbd = getSensorBoundary sensorLoc beaconLoc
-  (XCoordinate wbx, YCoordinate _) = westBoundary sbd
-  (XCoordinate ebx, YCoordinate _) = eastBoundary sbd
+  q1Region = buildLineRegion (westBoundary sbd) (southBoundary sbd)
+  q2Region = buildLineRegion (southBoundary sbd) (eastBoundary sbd)
+  q3Region = buildLineRegion (westBoundary sbd) (northBoundary sbd)
+  q4Region = buildLineRegion (northBoundary sbd) (eastBoundary sbd)
 
-  -- y = sLoc@y, x = westBoundary@x
-  -- y = mx + b
-  -- y = x + b
-  -- sLoc@y = westBoundary@x + b
-  -- b = sLoc@y - westBoundary@x
-  -- (m=1, b=sLoc@y - westBoundary@x)
-  q1Line = (Slope 1, Constant $ sy - wbx)
-
-  -- y = sLoc@y, x = eastBoundary@x
-  -- y = mx + b
-  -- y = -x + b
-  q2Line = (Slope (-1), Constant $ sy + ebx)
-
-  -- y = sLoc@y, x = westBoundary@x
-  q3Line = (Slope (-1), Constant $ sy + wbx)
-
-  -- y = sLoc@y, x = eastBoundary@x
-  q4Line = (Slope 1, Constant $ sy - ebx)
+activate :: SensorID -> Scanner -> Coordinate -> Maybe SensorID
+activate sid (Scanner q1Region q2Region q3Region q4Region) coord =
+  if and
+    [ snd q1Region (fst q1Region) coord
+    , snd q2Region (fst q2Region) coord
+    , snd q3Region (fst q3Region) coord
+    , snd q4Region (fst q4Region) coord
+    ]
+    then Just sid
+    else Nothing
 
 activateAll :: [(SensorID, Scanner)] -> Coordinate -> Maybe SensorID
 activateAll [] _ = Nothing
@@ -263,14 +249,43 @@ reflect Q3 = Q4
 reflect Q4 = Q3
 
 getLineFromQ :: Quadrant -> Scanner -> LineDefinition
-getLineFromQ Q1 = q1Line
-getLineFromQ Q2 = q2Line
-getLineFromQ Q3 = q3Line
-getLineFromQ Q4 = q4Line
+getLineFromQ Q1 = fst . q1Region
+getLineFromQ Q2 = fst . q2Region
+getLineFromQ Q3 = fst . q3Region
+getLineFromQ Q4 = fst . q4Region
 
 deduceBoundaryPosition :: YCoordinate -> LineDefinition -> Coordinate
 deduceBoundaryPosition yCoord@(YCoordinate y) (Slope m, Constant b) =
   (XCoordinate $ (y - b) `div` m, yCoord)
+
+{-           North
+               y-
+               |
+              .|.
+             . | .
+            .  |  .
+           . Q3|Q4 .
+ West (x-)-----S-----(x+) East
+           . Q1|Q2 .
+            .  |  .
+             . | .
+              .|.
+               |
+               y+
+             South
+-}
+
+isWestOf :: XCoordinate -> Coordinate -> Bool
+isWestOf (XCoordinate mark) (XCoordinate x, _) = x <= mark
+
+isEastOf :: XCoordinate -> Coordinate -> Bool
+isEastOf (XCoordinate mark) (XCoordinate x, _) = x >= mark
+
+isNorthOf :: YCoordinate -> Coordinate -> Bool
+isNorthOf (YCoordinate mark) (_, YCoordinate y) = y <= mark
+
+isSouthOf :: YCoordinate -> Coordinate -> Bool
+isSouthOf (YCoordinate mark) (_, YCoordinate y) = y >= mark
 
 deduceCurrentQuadrant ::
   Coordinate ->
@@ -278,13 +293,13 @@ deduceCurrentQuadrant ::
   Scanner ->
   Maybe Quadrant
 deduceCurrentQuadrant
-  coord@(XCoordinate cx, YCoordinate cy)
-  (SensorLocation (XCoordinate sx, YCoordinate sy))
-  scanner
-    | isBelowLine (q1Line scanner) coord && cx <= sx && cy <= sy = Just Q1
-    | isBelowLine (q2Line scanner) coord && cx >= sx && cy <= sy = Just Q2
-    | isAboveLine (q3Line scanner) coord && cx <= sx && cy >= sy = Just Q3
-    | isAboveLine (q4Line scanner) coord && cx >= sx && cy >= sy = Just Q4
+  coord
+  (SensorLocation (sx, sy))
+  (Scanner q1Region q2Region q3Region q4Region)
+    | snd q1Region (fst q1Region) coord && isWestOf sx coord && isSouthOf sy coord = Just Q1
+    | snd q2Region (fst q2Region) coord && isEastOf sx coord && isSouthOf sy coord = Just Q2
+    | snd q3Region (fst q3Region) coord && isWestOf sx coord && isNorthOf sy coord = Just Q3
+    | snd q4Region (fst q4Region) coord && isEastOf sx coord && isNorthOf sy coord = Just Q4
     | otherwise = Nothing
 
 teleportAcrossSensor ::
