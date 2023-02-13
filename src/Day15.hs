@@ -4,11 +4,19 @@ import Data.Map.Strict qualified as M
 import Data.Text (Text)
 import Grids
 import Parsing
+import Text.Megaparsec
 import Text.Megaparsec.Char (space)
 
+newtype SensorID = SensorID Int deriving (Show, Eq, Ord)
 newtype SensorLocation = SensorLocation Coordinate deriving (Show, Eq, Ord)
 newtype BeaconLocation = BeaconLocation Coordinate deriving (Show, Eq, Ord)
 newtype MarkerLocation = MarkerLocation Coordinate deriving (Show, Eq, Ord)
+
+data SensorPair = SensorPair
+  { sensorID :: SensorID
+  , sensorPair :: (SensorLocation, BeaconLocation)
+  }
+  deriving (Show, Eq)
 
 data SensorBoundary = SensorBoundary
   { northBoundary :: Coordinate
@@ -47,6 +55,9 @@ pLine =
   (,)
     <$> (SensorLocation <$> (symbol "Sensor at" *> pCoord <* symbol ": "))
     <*> (BeaconLocation <$> (symbol "closest beacon is at" *> pCoord <* space))
+
+pSensors :: Parser [SensorPair]
+pSensors = zipWith (SensorPair . SensorID) [1 ..] <$> some pLine
 
 --------------------------------------------------------------------------------
 
