@@ -196,6 +196,71 @@ spec =
                 ]
         actual `shouldBe` expected
 
+    describe "Boundary Teleportations" $ do
+      it "A marker outside sensor range is not teleported" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point (-5) 0
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ ".....#...."
+                , "....###..."
+                , "...#####.."
+                , "..#######."
+                , "X####S####"
+                , "..#######."
+                , "...####B.."
+                , "....###..."
+                , ".....#...."
+                ]
+        renderField layout `shouldBe` expectedRender
+        teleportAcrossSensor mkLoc (fst pair) scanner `shouldBe` Nothing
+
+      it "A marker strictly contained in quadrant is teleported correctly" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point (-1) (-1)
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".##X####."
+                , "####S####"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+            teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
+            teleportedLayout =
+              LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
+            expectedTeleport =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".######X."
+                , "####S####"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+        renderField layout `shouldBe` expectedRender
+        renderField teleportedLayout `shouldBe` expectedTeleport
+
     describe "Sensor Reflections" $ do
       it "Can reflect a marker on the same line as beacon" $ do
         let sLoc = point 0 0

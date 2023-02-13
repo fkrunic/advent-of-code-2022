@@ -62,6 +62,8 @@ data Field = Field
   }
   deriving (Show, Eq)
 
+data Quadrant = Q1 | Q2 | Q3 | Q4 deriving (Show, Eq, Ord)
+
 --------------------------------------------------------------------------------
 
 pCoord :: Parser Coordinate
@@ -230,3 +232,49 @@ reflectAcrossSensor
 
 -- findEmptyTile :: Coordinate -> Boundaries -> Grid CellType -> Maybe Coordinate
 -- findEmptyTile current (Boundaries xMin xMax yMin yMax) grid =
+
+reflect :: Quadrant -> Quadrant
+reflect Q1 = Q2
+reflect Q2 = Q1
+reflect Q3 = Q4
+reflect Q4 = Q3
+
+getLineFromQ :: Quadrant -> Scanner -> LineDefinition
+getLineFromQ Q1 = q1Line
+getLineFromQ Q2 = q2Line
+getLineFromQ Q3 = q3Line
+getLineFromQ Q4 = q4Line
+
+deduceBoundaryPosition :: YCoordinate -> LineDefinition -> Coordinate
+deduceBoundaryPosition yCoord@(YCoordinate y) (Slope m, Constant b) =
+  (XCoordinate $ (y - b) `div` m, yCoord)
+
+deduceCurrentQuadrant ::
+  Coordinate ->
+  SensorLocation ->
+  Scanner ->
+  Maybe Quadrant
+deduceCurrentQuadrant
+  coord@(XCoordinate cx, YCoordinate cy)
+  (SensorLocation (XCoordinate sx, YCoordinate sy))
+  scanner
+    | isBelowLine (q1Line scanner) coord && cx <= sx && cy <= sy = Just Q1
+    | isBelowLine (q2Line scanner) coord && cx >= sx && cy <= sy = Just Q2
+    | isAboveLine (q3Line scanner) coord && cx <= sx && cy >= sy = Just Q3
+    | isAboveLine (q4Line scanner) coord && cx >= sx && cy >= sy = Just Q4
+    | otherwise = Nothing
+
+teleportAcrossSensor ::
+  Coordinate ->
+  SensorLocation ->
+  Scanner ->
+  Maybe Coordinate
+teleportAcrossSensor coord@(_, yCoord) sensorLoc scanner = do
+  currentQ <- deduceCurrentQuadrant coord sensorLoc scanner
+  let crossQ = reflect currentQ
+      crossBoundary = getLineFromQ crossQ scanner
+  return $ deduceBoundaryPosition yCoord crossBoundary
+
+-- y = mx + b
+-- y - b = mx
+-- x = (y - b) / m
