@@ -278,10 +278,14 @@ deduceCurrentQuadrant
   coord
   (SensorLocation (sx, sy))
   (Scanner q1Line q2Line q3Line q4Line)
-    | isBelowLine q1Line coord && isWestOf sx coord && isSouthOf sy coord = Just Q1
-    | isBelowLine q2Line coord && isEastOf sx coord && isSouthOf sy coord = Just Q2
-    | isAboveLine q3Line coord && isWestOf sx coord && isNorthOf sy coord = Just Q3
-    | isAboveLine q4Line coord && isEastOf sx coord && isNorthOf sy coord = Just Q4
+    | isBelowLine q1Line coord && isWestOf sx coord && isSouthOf sy coord =
+        Just Q1
+    | isBelowLine q2Line coord && isEastOf sx coord && isSouthOf sy coord =
+        Just Q2
+    | isAboveLine q3Line coord && isWestOf sx coord && isNorthOf sy coord =
+        Just Q3
+    | isAboveLine q4Line coord && isEastOf sx coord && isNorthOf sy coord =
+        Just Q4
     | otherwise = Nothing
 
 teleportAcrossSensor ::
