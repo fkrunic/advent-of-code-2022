@@ -259,11 +259,171 @@ spec =
                 , "....#...."
                 ]
 
-        pendingWith "Need to fix boundary position calculation"
         deduceCurrentQuadrant mkLoc (SensorLocation sLoc) scanner `shouldBe` Just Q3
-        -- deduceBoundaryPosition (snd mkLoc) (q2Line scanner) `shouldBe` point 3 (-1)        
         renderField layout `shouldBe` expectedRender
         renderField teleportedLayout `shouldBe` expectedTeleport
+
+      it "A marker on the north boundary stays the same after teleportation" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point 0 (-4)
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ "....X...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "####S####"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+            teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
+            teleportedLayout =
+              LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
+        renderField layout `shouldBe` expectedRender
+        renderField teleportedLayout `shouldBe` expectedRender
+
+      it "A marker on the south boundary stays the same after teleportation" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point 0 4
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "####S####"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....X...."
+                ]
+            teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
+            teleportedLayout =
+              LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
+        renderField layout `shouldBe` expectedRender
+        renderField teleportedLayout `shouldBe` expectedRender  
+
+      it "A marker on the east boundary stays the same after teleportation" $ do 
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point 4 0
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "####S###X"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+            teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
+            teleportedLayout =
+              LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
+        renderField layout `shouldBe` expectedRender
+        renderField teleportedLayout `shouldBe` expectedRender  
+
+      it "A marker on the west boundary is teleported to east boundary" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point (-4) 0
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "X###S####"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+            teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
+            teleportedLayout =
+              LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
+            expectedTeleport =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "####S###X"
+                , ".#######."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+
+        renderField layout `shouldBe` expectedRender
+        renderField teleportedLayout `shouldBe` expectedTeleport    
+
+      it "A marker in a cross-quadrant is just pushed to the boundary" $ do
+        let sLoc = point 0 0
+            bLoc = point 2 2
+            mkLoc = point 2 1
+            pair = (SensorLocation sLoc, BeaconLocation bLoc)
+            scanner = makeScanner pair
+            sPair = SensorPair (SensorID 1) pair
+            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+            expectedRender =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "####S####"
+                , ".#####X#."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+            teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
+            teleportedLayout =
+              LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
+            expectedTeleport =
+              T.intercalate
+                "\n"
+                [ "....#...."
+                , "...###..."
+                , "..#####.."
+                , ".#######."
+                , "####S####"
+                , ".######X."
+                , "..####B.."
+                , "...###..."
+                , "....#...."
+                ]
+        renderField layout `shouldBe` expectedRender
+        renderField teleportedLayout `shouldBe` expectedTeleport                         
 
     describe "Sensor Reflections" $ do
       it "Can reflect a marker on the same line as beacon" $ do
