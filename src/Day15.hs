@@ -34,9 +34,6 @@ data LocationLayout = LocationLayout
   }
   deriving (Show, Eq)
 
-type RegionCapture = LineDefinition -> Coordinate -> Bool
-type Region = (LineDefinition, RegionCapture)
-
 data Scanner = Scanner
   { q1Line :: LineDefinition
   , q2Line :: LineDefinition
@@ -96,11 +93,11 @@ getSensorBoundary
     westBoundary = shift sLoc (DeltaX $ negate $ fromIntegral d, DeltaY 0)
     eastBoundary = shift sLoc (DeltaX $ fromIntegral d, DeltaY 0)
 
-isAboveLine :: RegionCapture
+isAboveLine :: LineDefinition -> Coordinate -> Bool
 isAboveLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y >= m * x + b
 
-isBelowLine :: RegionCapture
+isBelowLine :: LineDefinition -> Coordinate -> Bool
 isBelowLine (Slope m, Constant b) (XCoordinate x, YCoordinate y) =
   y <= m * x + b
 
@@ -115,12 +112,6 @@ riseOverRun
 deduceConstant :: Slope -> Coordinate -> Constant
 deduceConstant (Slope m) (XCoordinate bx, YCoordinate by) =
   Constant $ by - m * bx
-
-regionCapture :: Slope -> RegionCapture
-regionCapture (Slope s)
-  | s >= 1 = isBelowLine
-  | s <= (-1) = isAboveLine
-  | otherwise = undefined
 
 buildLine :: Coordinate -> Coordinate -> LineDefinition
 buildLine boundary1 boundary2 = (slope, constant)
@@ -232,20 +223,6 @@ renderField layout = drawGrid' (drawCell (isJust . scanner)) grid
 
 tuningFrequency :: Coordinate -> Int
 tuningFrequency (XCoordinate x, YCoordinate y) = 4000000 * x + y
-
-reflectAcrossSensor :: SensorLocation -> Coordinate -> Coordinate
-reflectAcrossSensor
-  (SensorLocation (XCoordinate sx, _))
-  (XCoordinate cx, yCoord) = (XCoordinate x', yCoord)
-   where
-    dx = sx - cx
-    x' = cx + 2 * dx
-
-reflect :: Quadrant -> Quadrant
-reflect Q1 = Q2
-reflect Q2 = Q1
-reflect Q3 = Q4
-reflect Q4 = Q3
 
 teleportAcrossQ :: Quadrant -> Quadrant
 teleportAcrossQ Q1 = Q2
