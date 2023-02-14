@@ -1,6 +1,6 @@
 module Day15 where
 
-import Data.Map (Map)
+import Data.Map (Map, (!))
 import Data.Map.Strict qualified as M
 import Data.Maybe (isJust)
 import Data.Text (Text)
@@ -298,3 +298,37 @@ teleportAcrossSensor coord@(_, yCoord) sensorLoc scanner = do
   let crossQ = teleportAcrossQ currentQ
       crossBoundary = getLineFromQ crossQ scanner
   return $ deduceBoundaryPosition yCoord crossBoundary
+
+stepCoordinate :: Coordinate -> Boundaries -> Coordinate
+stepCoordinate (xCoord@(XCoordinate x), YCoordinate y) bounds
+  | xCoord > xMax = (xMin, YCoordinate (y + 1))
+  | otherwise = (XCoordinate (x + 1), YCoordinate y)
+ where
+  Boundaries xMin xMax _ _ = bounds
+
+findDistressBeacon ::
+  Map SensorID (SensorLocation, Scanner) ->
+  [(SensorID, Scanner)] ->
+  Boundaries ->
+  Coordinate ->
+  Coordinate
+findDistressBeacon sensorDetails sensorPairs bounds current =
+  case activateAll sensorPairs current of
+    Nothing -> current
+    Just sid ->
+      let (sensorLoc, scanner) = sensorDetails ! sid
+       in case teleportAcrossSensor current sensorLoc scanner of
+            Nothing ->
+              let msg =
+                    "Could not determine quadrant for SID "
+                      ++ show sid
+                      ++ " and coordinate "
+                      ++ show current
+               in error msg
+            Just teleported ->
+              let next@(nxLoc, nyLoc) = stepCoordinate teleported bounds
+               in if nxLoc >= xMax && nyLoc >= yMax
+                    then error "Exhausted search space"
+                    else findDistressBeacon sensorDetails sensorPairs bounds next
+ where
+  Boundaries _ xMax _ yMax = bounds
