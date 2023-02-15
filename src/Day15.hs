@@ -54,14 +54,12 @@ type Cell = (Coordinate, CellType)
 type ScannerAssoc = Map Scanner SensorID
 type SensorLimits = Map SensorID SensorBoundary
 
--- data Field = Field
---   { cellGrid :: Grid Cell
---   , scannerAssoc :: ScannerAssoc
---   , sensorLimits :: SensorLimits
---   }
---   deriving (Show, Eq)
-
 data Quadrant = Q1 | Q2 | Q3 | Q4 deriving (Show, Eq, Ord)
+
+data SearchError
+  = UnableToDetermineQuadrant SensorID Coordinate
+  | ExhaustedSearchSpace
+  deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 
@@ -305,11 +303,6 @@ stepCoordinate (xCoord@(XCoordinate x), YCoordinate y) bounds
   | otherwise = (XCoordinate (x + 1), YCoordinate y)
  where
   Boundaries xMin xMax _ _ = bounds
-
-data SearchError
-  = UnableToDetermineQuadrant SensorID Coordinate
-  | ExhaustedSearchSpace
-  deriving (Show, Eq)
 
 findDistressBeacon ::
   Map SensorID (SensorLocation, Scanner) ->
