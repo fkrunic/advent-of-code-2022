@@ -50,7 +50,8 @@ data Error
 type Fork = Either Error
 
 data Action
-  = OpenValve ValveID
+  = DoNothing
+  | OpenValve ValveID
   | MoveToValve ValveID
   deriving (Show, Eq)
 
@@ -113,6 +114,7 @@ moveToValve target tunnels state@(State loc _ time) = do
 applyAction :: Context -> Action -> State -> Fork State
 applyAction _ (OpenValve v) = openValve v
 applyAction ctx (MoveToValve v) = moveToValve v (tunnelMap ctx)
+applyAction _ DoNothing = Right
 
 flowEffect :: Context -> Action -> State -> Fork (State, FlowRate)
 flowEffect ctx action state = do
