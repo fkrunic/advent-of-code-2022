@@ -1,6 +1,6 @@
 module Day16 where
 
-import Control.Monad (mapM)
+import Control.Monad (mapM, when)
 import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Set (Set)
@@ -19,7 +19,7 @@ newtype TunnelValves = TunnelValves (Set ValveID) deriving (Show, Eq, Ord)
 data InputLine = InputLine
   { valveID :: ValveID
   , flowRate :: FlowRate
-  , tunnels :: Set ValveID
+  , tunnels :: OpenedValves
   }
   deriving (Show, Eq)
 
@@ -36,6 +36,7 @@ data State = State
 data CannotTraverseErr = CannotTraverseErr
   { fromValve :: ValveID
   , toValve :: ValveID
+  , availableValves :: TunnelValves
   }
   deriving (Show, Eq)
 
@@ -52,6 +53,9 @@ type Action = Either Error
 
 lookupFlow :: FlowMap -> ValveID -> Action FlowRate
 lookupFlow flows v = note (UnrecognizedValve v) (M.lookup v flows)
+
+lookupTunnels :: TunnelMap -> ValveID -> Action TunnelValves
+lookupTunnels tunnels v = note (UnrecognizedValve v) (M.lookup v tunnels)
 
 totalRelease :: FlowMap -> OpenedValves -> Action FlowRate
 totalRelease flows = fmap sum . mapM (lookupFlow flows) . S.toList . unpack
@@ -73,15 +77,22 @@ openValve valve state@(State _ (OpenedValves opened) time)
           , openedValves = OpenedValves $ S.insert valve opened
           }
 
--- moveToValve :: ValveID -> State -> Action State
--- moveToValve valve (State loc _ time)
---   | valve == loc = Left (AlreadyAtLocation valve)
---   |
---   if valve == loc
---     then Left (AlreadyAtLocation valve)
---     else
---       Right
---         state
---           { timeElapsed = time + Minutes 1
---           , location = valve
---           }
+moveToValve :: ValveID -> TunnelMap -> State -> Action State
+moveToValve target tunnels state@(State loc _ time) = do
+  when (target == loc) $ Left (AlreadyAtLocation target)
+  tv@(TunnelValves accessible) <- lookupTunnels tunnels target
+  if not (S.member target accessible)
+    then
+      Left $
+        CannotTraverse $
+          CannotTraverseErr
+            { fromValve = loc
+            , toValve = target
+            , availableValves = tv
+            }
+    else
+      Right $
+        state
+          { location = target
+          , timeElapsed = time + Minutes 1
+          }
