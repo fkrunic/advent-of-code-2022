@@ -1,11 +1,12 @@
 module Day16 where
 
 import Control.Monad (when)
-import Data.Map (Map)
+import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
+import Graphs
 import Utilities
 
 newtype ValveID = ValveID Text deriving (Show, Eq, Ord)
@@ -19,7 +20,7 @@ newtype TunnelValves = TunnelValves (Set ValveID) deriving (Show, Eq, Ord)
 data InputLine = InputLine
   { valveID :: ValveID
   , flowRate :: FlowRate
-  , tunnels :: OpenedValves
+  , tunnels :: TunnelValves
   }
   deriving (Show, Eq)
 
@@ -27,8 +28,8 @@ type FlowMap = Map ValveID FlowRate
 type TunnelMap = Map ValveID TunnelValves
 
 newtype PositiveFlowMap = PositiveFlowMap FlowMap deriving (Show, Eq, Ord)
-newtype CostMap = CostMap (Map (ValveID, ValveID) Minutes)
-  deriving (Show, Eq, Ord)
+newtype TravelMap = TravelMap (Map TunnelPath Minutes) deriving (Show, Eq)
+type MinuteMap = Map ValveID Minutes
 
 data State = State
   { location :: ValveID
@@ -44,11 +45,18 @@ data CannotTraverseErr = CannotTraverseErr
   }
   deriving (Show, Eq)
 
+data InfiniteMinutesErr = InfiniteMinutesErr
+  { distFromValve :: ValveID
+  , distToValve :: ValveID
+  }
+  deriving (Show, Eq)
+
 data Error
   = ValveAlreadyOpen ValveID
   | UnrecognizedValve ValveID
   | AlreadyAtLocation ValveID
   | CannotTraverse CannotTraverseErr
+  | InfiniteMinutes InfiniteMinutesErr
   deriving (Show, Eq)
 
 type Fork = Either Error
@@ -64,6 +72,12 @@ data Context = Context
   , tunnelMap :: TunnelMap
   }
   deriving (Show, Eq)
+
+data TunnelPath = TunnelPath
+  { startValve :: ValveID
+  , endValve :: ValveID
+  }
+  deriving (Show, Eq, Ord)
 
 --------------------------------------------------------------------------------
 
@@ -130,3 +144,18 @@ flowEffect ctx action state = do
 
 positiveFlow :: FlowMap -> PositiveFlowMap
 positiveFlow = PositiveFlowMap . M.filter (> FlowRate 0)
+
+minuteMap :: ValveID -> TunnelMap -> Fork MinuteMap
+minuteMap valve tunnels = M.fromList <$> minutes
+ where
+  source = Vertex valve
+  vertices = map Vertex $ M.keys tunnels
+  getEdges (Vertex v) =
+    M.fromList . map (\e -> (Vertex e, Finite 1)) . S.toList . unpackTV $
+      tunnels ! v
+  unpackTV (TunnelValves vs) = vs
+  distances = dijkstra source vertices getEdges
+  buildMinutes (Vertex neighbor, d) =
+    note (InfiniteMinutes (InfiniteMinutesErr valve neighbor)) $
+      unpackDistance d >>= Just . (neighbor,) . Minutes
+  minutes = mapM buildMinutes $ M.assocs distances
