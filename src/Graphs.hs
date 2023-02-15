@@ -87,18 +87,18 @@ popMinVertex = do
 
 algo ::
   Ord a =>
-  (Vertex a -> Vertex a -> Distance) ->
-  (Vertex a -> [Vertex a]) ->
+  (Vertex a -> Map (Vertex a) Distance) ->
   DijkstraAlgo a ()
-algo getDistance getNeighbors = do
+algo getEdges = do
   whileM_ (get <&> (not . M.null . q)) $ do
     u <- popMinVertex
     unvisited <- S.fromList . M.keys . q <$> get
-    let neighbors = getNeighbors u
-        unvisitedNeighbors = S.intersection (S.fromList neighbors) unvisited
+    let edges = getEdges u
+        neighbors = S.fromList $ M.keys edges
+        unvisitedNeighbors = S.intersection neighbors unvisited
     forM_ unvisitedNeighbors $ \v -> do
       dist' <- dist <$> get
-      let alt = addDistances (dist' ! u) (getDistance u v)
+      let alt = addDistances (dist' ! u) (edges ! v)
       when (alt < dist' ! v) $ do
         modifyDist $ M.adjust (const alt) v
         modifyPrev $ M.adjust (const u) v
@@ -107,11 +107,10 @@ dijkstra ::
   Ord a =>
   Vertex a ->
   [Vertex a] ->
-  (Vertex a -> Vertex a -> Distance) ->
-  (Vertex a -> [Vertex a]) ->
+  (Vertex a -> Map (Vertex a) Distance) ->
   DistanceMap a
-dijkstra source vertices getDistance getNeighbors =
-  dist $ execState (algo getDistance getNeighbors) setupAlgo
+dijkstra source vertices getEdges =
+  dist $ execState (algo getEdges) setupAlgo
  where
   setupAlgo = setup source vertices
 
@@ -119,11 +118,10 @@ dijkstraMultipleSources ::
   Ord a =>
   [Vertex a] ->
   [Vertex a] ->
-  (Vertex a -> Vertex a -> Distance) ->
-  (Vertex a -> [Vertex a]) ->
+  (Vertex a -> Map (Vertex a) Distance) ->
   DistanceMap a
-dijkstraMultipleSources sources vertices getDistance getNeighbors =
-  dist $ execState (algo getDistance getNeighbors) multiSetup
+dijkstraMultipleSources sources vertices getEdges =
+  dist $ execState (algo getEdges) multiSetup
  where
   multiSetup = setupForMultipleSources sources vertices
 

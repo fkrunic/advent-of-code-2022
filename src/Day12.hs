@@ -84,11 +84,9 @@ nextMoves (coordinate, cell) grid = possibleGPS
 
 --------------------------------------------------------------------------------
 
-getNeighbors :: Grid -> Vertex GridPoint -> [Vertex GridPoint]
-getNeighbors grid (Vertex gp) = map Vertex $ nextMoves gp grid
-
-getDistance :: Vertex GridPoint -> Vertex GridPoint -> Distance
-getDistance _ _ = Finite 1
+getEdges :: Grid -> Vertex GridPoint -> Map (Vertex GridPoint) Distance
+getEdges grid (Vertex gp) = 
+  M.fromList $ map (\edge -> (Vertex edge, Finite 1)) $ nextMoves gp grid
 
 vertices :: Grid -> [Vertex GridPoint]
 vertices = map Vertex . M.assocs

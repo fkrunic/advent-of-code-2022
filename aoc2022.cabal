@@ -51,6 +51,7 @@ library
       src
   default-extensions:
       ImportQualifiedPost
+      GeneralizedNewtypeDeriving
       OverloadedStrings
       RecordWildCards
       TupleSections
@@ -73,6 +74,7 @@ executable aoc2022-exe
       app
   default-extensions:
       ImportQualifiedPost
+      GeneralizedNewtypeDeriving
       OverloadedStrings
       RecordWildCards
       TupleSections
@@ -113,6 +115,7 @@ test-suite aoc2022-test
       test
   default-extensions:
       ImportQualifiedPost
+      GeneralizedNewtypeDeriving
       OverloadedStrings
       RecordWildCards
       TupleSections

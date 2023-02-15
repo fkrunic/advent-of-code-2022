@@ -13,8 +13,7 @@ import Day12 (
   Height (Height),
   XCoordinate (XCoordinate),
   YCoordinate (YCoordinate),
-  getDistance,
-  getNeighbors,
+  getEdges,
   nextMoves,
   pLine,
   toPoints,
@@ -96,7 +95,7 @@ part1Dijkstra t = targetDistance
   grid = toPoints $ parser t
   startVertex =
     Vertex $ head $ filter ((== StartCell) . fst . snd) $ M.assocs grid
-  dMap = dijkstra startVertex (vertices grid) getDistance (getNeighbors grid)
+  dMap = dijkstra startVertex (vertices grid) (getEdges grid)
   targetDistance =
     maybe (-1) fromIntegral $
       extractTargetDistance ((== EndCell) . fst . snd) dMap
@@ -110,8 +109,7 @@ part2Dijkstra t = targetDistance
     dijkstraMultipleSources
       sources
       (vertices grid)
-      getDistance
-      (getNeighbors grid)
+      (getEdges grid)
   targetDistance =
     maybe (-1) fromIntegral $
       extractTargetDistance ((== EndCell) . fst . snd) dMap
