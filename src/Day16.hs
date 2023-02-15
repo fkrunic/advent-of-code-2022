@@ -26,6 +26,10 @@ data InputLine = InputLine
 type FlowMap = Map ValveID FlowRate
 type TunnelMap = Map ValveID TunnelValves
 
+newtype PositiveFlowMap = PositiveFlowMap FlowMap deriving (Show, Eq, Ord)
+newtype CostMap = CostMap (Map (ValveID, ValveID) Minutes)
+  deriving (Show, Eq, Ord)
+
 data State = State
   { location :: ValveID
   , openedValves :: OpenedValves
@@ -121,3 +125,8 @@ flowEffect ctx action state = do
   priorFlow <- totalRelease (flowMap ctx) (openedValves state)
   updatedState <- applyAction ctx action state
   return (updatedState, priorFlow)
+
+--------------------------------------------------------------------------------
+
+positiveFlow :: FlowMap -> PositiveFlowMap
+positiveFlow = PositiveFlowMap . M.filter (> FlowRate 0)
