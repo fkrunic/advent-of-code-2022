@@ -306,29 +306,41 @@ stepCoordinate (xCoord@(XCoordinate x), YCoordinate y) bounds
  where
   Boundaries xMin xMax _ _ = bounds
 
+data SearchError
+  = UnableToDetermineQuadrant SensorID Coordinate
+  | ExhaustedSearchSpace
+  deriving (Show, Eq)
+
 findDistressBeacon ::
   Map SensorID (SensorLocation, Scanner) ->
   [(SensorID, Scanner)] ->
   Boundaries ->
   Coordinate ->
-  Coordinate
-findDistressBeacon sensorDetails sensorPairs bounds current =
-  case activateAll sensorPairs current of
-    Nothing -> current
+  Either SearchError Coordinate
+findDistressBeacon sensorDetails scanners bounds current =
+  case activateAll scanners current of
+    Nothing -> Right current
     Just sid ->
       let (sensorLoc, scanner) = sensorDetails ! sid
        in case teleportAcrossSensor current sensorLoc scanner of
-            Nothing ->
-              let msg =
-                    "Could not determine quadrant for SID "
-                      ++ show sid
-                      ++ " and coordinate "
-                      ++ show current
-               in error msg
+            Nothing -> Left $ UnableToDetermineQuadrant sid current
             Just teleported ->
               let next@(nxLoc, nyLoc) = stepCoordinate teleported bounds
                in if nxLoc >= xMax && nyLoc >= yMax
-                    then error "Exhausted search space"
-                    else findDistressBeacon sensorDetails sensorPairs bounds next
+                    then Left ExhaustedSearchSpace
+                    else findDistressBeacon sensorDetails scanners bounds next
  where
   Boundaries _ xMax _ yMax = bounds
+
+distress ::
+  [SensorPair] ->
+  Boundaries ->
+  Either SearchError Coordinate
+distress pairs bounds =
+  findDistressBeacon sensorDetails scanners bounds (point 0 0)
+ where
+  sensorDetails = M.fromList $ map buildDetail pairs
+  scanners = map labelScanners pairs
+  buildDetail sp =
+    (sensorID sp, (fst $ sensorPair sp, makeScanner (sensorPair sp)))
+  labelScanners sp = (sensorID sp, makeScanner (sensorPair sp))

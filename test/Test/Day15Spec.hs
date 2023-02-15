@@ -432,6 +432,27 @@ spec =
       it "Part 1 - Puzzle Input" $ do
         pendingWith "solving part 2"
 
+      it "Part 2 - Example Solution" $ do
+        let bounds = 
+              Boundaries 
+                (XCoordinate 0) 
+                (XCoordinate 20) 
+                (YCoordinate 0) 
+                (YCoordinate 20)
+        distress exampleSpread bounds `shouldBe` Right (point 14 11)
+
+      it "Part 2 - Puzzle Input" $ do
+        let bounds = 
+              Boundaries 
+                (XCoordinate 0) 
+                (XCoordinate 4000000) 
+                (YCoordinate 0) 
+                (YCoordinate 4000000)
+            distressCoord = distress (parser puzzleInput) bounds
+            freq = tuningFrequency <$> distressCoord
+        distressCoord `shouldBe` Right (point 3129625 2636475)
+        freq `shouldBe` Right 12518502636475
+
 -- part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
 
 part1Solution :: YCoordinate -> Text -> Int
