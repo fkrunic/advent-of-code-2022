@@ -1,6 +1,6 @@
 module Day16 where
 
-import Control.Monad (mapM, when)
+import Control.Monad (when)
 import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Set (Set)
@@ -47,17 +47,28 @@ data Error
   | CannotTraverse CannotTraverseErr
   deriving (Show, Eq)
 
-type Action = Either Error
+type Fork = Either Error
+
+data Action
+  = OpenValve ValveID
+  | MoveToValve ValveID
+  deriving (Show, Eq)
+
+data Context = Context
+  { flowMap :: FlowMap
+  , tunnelMap :: TunnelMap
+  }
+  deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 
-lookupFlow :: FlowMap -> ValveID -> Action FlowRate
+lookupFlow :: FlowMap -> ValveID -> Fork FlowRate
 lookupFlow flows v = note (UnrecognizedValve v) (M.lookup v flows)
 
-lookupTunnels :: TunnelMap -> ValveID -> Action TunnelValves
+lookupTunnels :: TunnelMap -> ValveID -> Fork TunnelValves
 lookupTunnels tunnels v = note (UnrecognizedValve v) (M.lookup v tunnels)
 
-totalRelease :: FlowMap -> OpenedValves -> Action FlowRate
+totalRelease :: FlowMap -> OpenedValves -> Fork FlowRate
 totalRelease flows = fmap sum . mapM (lookupFlow flows) . S.toList . unpack
  where
   unpack (OpenedValves vs) = vs
@@ -67,7 +78,7 @@ isTimeExpired = (>= Minutes 30) . timeElapsed
 
 --------------------------------------------------------------------------------
 
-openValve :: ValveID -> State -> Action State
+openValve :: ValveID -> State -> Fork State
 openValve valve state@(State _ (OpenedValves opened) time)
   | S.member valve opened = Left (ValveAlreadyOpen valve)
   | otherwise =
@@ -77,7 +88,7 @@ openValve valve state@(State _ (OpenedValves opened) time)
           , openedValves = OpenedValves $ S.insert valve opened
           }
 
-moveToValve :: ValveID -> TunnelMap -> State -> Action State
+moveToValve :: ValveID -> TunnelMap -> State -> Fork State
 moveToValve target tunnels state@(State loc _ time) = do
   when (target == loc) $ Left (AlreadyAtLocation target)
   tv@(TunnelValves accessible) <- lookupTunnels tunnels target
@@ -96,3 +107,15 @@ moveToValve target tunnels state@(State loc _ time) = do
           { location = target
           , timeElapsed = time + Minutes 1
           }
+
+--------------------------------------------------------------------------------
+
+applyAction :: Context -> Action -> State -> Fork State
+applyAction _ (OpenValve v) = openValve v
+applyAction ctx (MoveToValve v) = moveToValve v (tunnelMap ctx)
+
+flowEffect :: Context -> Action -> State -> Fork (State, FlowRate)
+flowEffect ctx action state = do
+  priorFlow <- totalRelease (flowMap ctx) (openedValves state)
+  updatedState <- applyAction ctx action state
+  return (updatedState, priorFlow)
