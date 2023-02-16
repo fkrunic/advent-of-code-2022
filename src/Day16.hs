@@ -1,6 +1,7 @@
 module Day16 where
 
 import Control.Monad (when)
+import Data.Foldable (foldrM)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Set (Set)
@@ -143,6 +144,14 @@ flowEffect ctx action state = do
   updatedState <- applyAction ctx action state
   return (updatedState, priorFlow)
 
+runActions :: Context -> State -> [Action] -> Fork [(State, FlowRate)]
+runActions ctx state =
+  foldrM collector [(state, FlowRate 0)] . reverse
+ where
+  collector action history =
+    let (prior, _) = head history
+     in flowEffect ctx action prior >>= Right . (: history)
+
 --------------------------------------------------------------------------------
 
 positiveFlow :: FlowMap -> PositiveFlowMap
@@ -188,27 +197,26 @@ pressure
 
 {-
 
-Searching rules: 
-  1. You can only double back if the remaining valves to open require you 
+Searching rules:
+  1. You can only double back if the remaining valves to open require you
       to visit a valve you have previously been to.
 
-  2. If you have multiple choices about which tunnel to choose, pick the 
-      tunnel leading to the valve with the highest pressure contribution. 
+  2. If you have multiple choices about which tunnel to choose, pick the
+      tunnel leading to the valve with the highest pressure contribution.
 
-  3. Once all the nodes have been visited, stop the search. 
+  3. Once all the nodes have been visited, stop the search.
 
 -}
 
 {-
 
-Observations about finding the optimal path: 
-  1. Where you start matters. For example, if you start at AA, you will 
-      have to double back to AA if you want to open JJ. On the other hand, 
-      if you started at JJ, you could visit each node once and likely get 
-      a higher pressure rate. 
+Observations about finding the optimal path:
+  1. Where you start matters. For example, if you start at AA, you will
+      have to double back to AA if you want to open JJ. On the other hand,
+      if you started at JJ, you could visit each node once and likely get
+      a higher pressure rate.
 
+  2. How nodes are conected matters. If you sever the graph in two, you
+      limit your flow rate.
 
-  2. How nodes are conected matters. If you sever the graph in two, you 
-      limit your flow rate. 
-      
 -}

@@ -37,6 +37,41 @@ spec =
               (FlowRate 13)
       released `shouldBe` Just (Pressure 364, MinutesRemaining (Minutes 28))
 
+    it "Total Release" $ do
+      let actions = 
+            [ MoveToValve (ValveID "DD")
+            , OpenValve (ValveID "DD")
+            , MoveToValve (ValveID "CC")
+            , MoveToValve (ValveID "BB")
+            , OpenValve (ValveID "BB")
+            , MoveToValve (ValveID "AA")
+            , MoveToValve (ValveID "II")
+            , MoveToValve (ValveID "JJ")
+            , OpenValve (ValveID "JJ")
+            , MoveToValve (ValveID "II")
+            , MoveToValve (ValveID "AA")
+            , MoveToValve (ValveID "DD")
+            , MoveToValve (ValveID "EE")
+            , MoveToValve (ValveID "FF")
+            , MoveToValve (ValveID "GG")
+            , MoveToValve (ValveID "HH")
+            , OpenValve (ValveID "HH")
+            , MoveToValve (ValveID "GG")
+            , MoveToValve (ValveID "FF")
+            , MoveToValve (ValveID "EE")
+            , OpenValve (ValveID "EE")
+            , MoveToValve (ValveID "DD")
+            , MoveToValve (ValveID "CC")
+            , OpenValve (ValveID "CC")
+            , DoNothing
+            , DoNothing
+            , DoNothing
+            , DoNothing
+            , DoNothing
+            , DoNothing
+            ]
+
+
 exampleInput :: Text
 exampleInput =
   T.intercalate
