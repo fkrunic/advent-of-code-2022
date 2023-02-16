@@ -31,6 +31,9 @@ newtype PositiveFlowMap = PositiveFlowMap FlowMap deriving (Show, Eq, Ord)
 newtype TravelMap = TravelMap (Map TunnelPath Minutes) deriving (Show, Eq)
 type MinuteMap = Map ValveID Minutes
 
+newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
+newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
+
 data State = State
   { location :: ValveID
   , openedValves :: OpenedValves
@@ -161,3 +164,51 @@ minuteMap valve tunnels = M.fromList <$> minutes
   minutes = mapM buildMinutes $ M.assocs distances
 
 --------------------------------------------------------------------------------
+
+pressure ::
+  TravelMinutes ->
+  MinutesRemaining ->
+  FlowRate ->
+  Maybe (Pressure, MinutesRemaining)
+pressure
+  (TravelMinutes (Minutes travel))
+  (MinutesRemaining (Minutes current))
+  (FlowRate flow) =
+    if remaining >= 1
+      then
+        Just
+          ( Pressure $ remaining * flow
+          , MinutesRemaining $ Minutes remaining
+          )
+      else Nothing
+   where
+    remaining = current - travel - 1
+
+--------------------------------------------------------------------------------
+
+{-
+
+Searching rules: 
+  1. You can only double back if the remaining valves to open require you 
+      to visit a valve you have previously been to.
+
+  2. If you have multiple choices about which tunnel to choose, pick the 
+      tunnel leading to the valve with the highest pressure contribution. 
+
+  3. Once all the nodes have been visited, stop the search. 
+
+-}
+
+{-
+
+Observations about finding the optimal path: 
+  1. Where you start matters. For example, if you start at AA, you will 
+      have to double back to AA if you want to open JJ. On the other hand, 
+      if you started at JJ, you could visit each node once and likely get 
+      a higher pressure rate. 
+
+
+  2. How nodes are conected matters. If you sever the graph in two, you 
+      limit your flow rate. 
+      
+-}
