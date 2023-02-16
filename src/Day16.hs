@@ -114,7 +114,7 @@ openValve valve state@(State _ (OpenedValves opened) time)
 moveToValve :: ValveID -> TunnelMap -> State -> Fork State
 moveToValve target tunnels state@(State loc _ time) = do
   when (target == loc) $ Left (AlreadyAtLocation target)
-  tv@(TunnelValves accessible) <- lookupTunnels tunnels target
+  tv@(TunnelValves accessible) <- lookupTunnels tunnels loc
   if not (S.member target accessible)
     then
       Left $
@@ -131,12 +131,16 @@ moveToValve target tunnels state@(State loc _ time) = do
           , timeElapsed = time + Minutes 1
           }
 
+doNothing :: State -> Fork State
+doNothing state@(State _ _ time) =
+  Right $ state{timeElapsed = time + Minutes 1}
+
 --------------------------------------------------------------------------------
 
 applyAction :: Context -> Action -> State -> Fork State
 applyAction _ (OpenValve v) = openValve v
 applyAction ctx (MoveToValve v) = moveToValve v (tunnelMap ctx)
-applyAction _ DoNothing = Right
+applyAction _ DoNothing = doNothing
 
 flowEffect :: Context -> Action -> State -> Fork (State, FlowRate)
 flowEffect ctx action state = do
@@ -146,7 +150,7 @@ flowEffect ctx action state = do
 
 runActions :: Context -> State -> [Action] -> Fork [(State, FlowRate)]
 runActions ctx state =
-  foldrM collector [(state, FlowRate 0)] . reverse
+  fmap reverse . foldrM collector [(state, FlowRate 0)] . reverse
  where
   collector action history =
     let (prior, _) = head history

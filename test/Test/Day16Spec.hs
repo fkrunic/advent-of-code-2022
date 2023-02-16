@@ -38,7 +38,33 @@ spec =
       released `shouldBe` Just (Pressure 364, MinutesRemaining (Minutes 28))
 
     it "Total Release" $ do
-      let actions = 
+      let flowMap =
+            M.fromList
+              [ (ValveID "AA", FlowRate 0)
+              , (ValveID "BB", FlowRate 13)
+              , (ValveID "CC", FlowRate 2)
+              , (ValveID "DD", FlowRate 20)
+              , (ValveID "EE", FlowRate 3)
+              , (ValveID "FF", FlowRate 0)
+              , (ValveID "GG", FlowRate 0)
+              , (ValveID "HH", FlowRate 22)
+              , (ValveID "II", FlowRate 0)
+              , (ValveID "JJ", FlowRate 21)
+              ]
+          tunnelMap =
+            M.fromList
+              [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
+              , (ValveID "BB", makeTVS ["CC", "AA"])
+              , (ValveID "CC", makeTVS ["DD", "BB"])
+              , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
+              , (ValveID "EE", makeTVS ["FF", "DD"])
+              , (ValveID "FF", makeTVS ["EE", "GG"])
+              , (ValveID "GG", makeTVS ["FF", "HH"])
+              , (ValveID "HH", makeTVS ["GG"])
+              , (ValveID "II", makeTVS ["AA", "JJ"])
+              , (ValveID "JJ", makeTVS ["II"])
+              ]
+          actions =
             [ MoveToValve (ValveID "DD")
             , OpenValve (ValveID "DD")
             , MoveToValve (ValveID "CC")
@@ -70,7 +96,44 @@ spec =
             , DoNothing
             , DoNothing
             ]
-
+          ctx = Context flowMap tunnelMap
+          expected =
+            [ (initialState, FlowRate 0)
+            , (State (ValveID "DD") (makeOVS []) (Minutes 1), FlowRate 0)
+            , (State (ValveID "DD") (makeOVS ["DD"]) (Minutes 2), FlowRate 0)
+            , (State (ValveID "CC") (makeOVS ["DD"]) (Minutes 3), FlowRate 20)
+            , (State (ValveID "BB") (makeOVS ["DD"]) (Minutes 4), FlowRate 20)
+            , (State (ValveID "BB") (makeOVS ["DD", "BB"]) (Minutes 5), FlowRate 20)
+            , (State (ValveID "AA") (makeOVS ["DD", "BB"]) (Minutes 6), FlowRate 33)
+            , (State (ValveID "II") (makeOVS ["DD", "BB"]) (Minutes 7), FlowRate 33)
+            , (State (ValveID "JJ") (makeOVS ["DD", "BB"]) (Minutes 8), FlowRate 33)
+            , (State (ValveID "JJ") (makeOVS ["DD", "BB", "JJ"]) (Minutes 9), FlowRate 33)
+            , (State (ValveID "II") (makeOVS ["DD", "BB", "JJ"]) (Minutes 10), FlowRate 54)
+            , (State (ValveID "AA") (makeOVS ["DD", "BB", "JJ"]) (Minutes 11), FlowRate 54)
+            , (State (ValveID "DD") (makeOVS ["DD", "BB", "JJ"]) (Minutes 12), FlowRate 54)
+            , (State (ValveID "EE") (makeOVS ["DD", "BB", "JJ"]) (Minutes 13), FlowRate 54)
+            , (State (ValveID "FF") (makeOVS ["DD", "BB", "JJ"]) (Minutes 14), FlowRate 54)
+            , (State (ValveID "GG") (makeOVS ["DD", "BB", "JJ"]) (Minutes 15), FlowRate 54)
+            , (State (ValveID "HH") (makeOVS ["DD", "BB", "JJ"]) (Minutes 16), FlowRate 54)
+            , (State (ValveID "HH") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 17), FlowRate 54)
+            , (State (ValveID "GG") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 18), FlowRate 76)
+            , (State (ValveID "FF") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 19), FlowRate 76)
+            , (State (ValveID "EE") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 20), FlowRate 76)
+            , (State (ValveID "EE") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 21), FlowRate 76)
+            , (State (ValveID "DD") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 22), FlowRate 79)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 23), FlowRate 79)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 24), FlowRate 79)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 25), FlowRate 81)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 26), FlowRate 81)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 27), FlowRate 81)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 28), FlowRate 81)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 29), FlowRate 81)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 30), FlowRate 81)
+            ]
+          makeTVS = TunnelValves . S.fromList . map ValveID
+          makeOVS = OpenedValves . S.fromList . map ValveID
+          initialState = State (ValveID "AA") (OpenedValves S.empty) (Minutes 0)
+      runActions ctx initialState actions `shouldBe` Right expected
 
 exampleInput :: Text
 exampleInput =
@@ -81,11 +144,11 @@ exampleInput =
     , "Valve CC has flow rate=2; tunnels lead to valves DD, BB"
     , "Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE"
     , "Valve EE has flow rate=3; tunnels lead to valves FF, DD"
-    , -- , "Valve FF has flow rate=0; tunnels lead to valves EE, GG"
-      -- , "Valve GG has flow rate=0; tunnels lead to valves FF, HH"
-      "Valve HH has flow rate=22; tunnel leads to valve GG"
-    , -- , "Valve II has flow rate=0; tunnels lead to valves AA, JJ"
-      "Valve JJ has flow rate=21; tunnel leads to valve II"
+    , "Valve FF has flow rate=0; tunnels lead to valves EE, GG"
+    , "Valve GG has flow rate=0; tunnels lead to valves FF, HH"
+    , "Valve HH has flow rate=22; tunnel leads to valve GG"
+    , "Valve II has flow rate=0; tunnels lead to valves AA, JJ"
+    , "Valve JJ has flow rate=21; tunnel leads to valve II"
     ]
 
 exampleTunnels :: TunnelMap
