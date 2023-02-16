@@ -4,13 +4,18 @@ module Graphs where
 
 import Control.Monad (forM_, when)
 import Control.Monad.Loops (whileM_)
-import Control.Monad.Trans.State.Strict
-    ( State, execState, get, modify )
+import Control.Monad.Trans.State.Strict (
+  State,
+  execState,
+  get,
+  modify,
+ )
 import Data.Bifunctor (first)
 import Data.Functor ((<&>))
 import Data.List (sortBy)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
+import Data.Maybe (fromJust, isJust)
 import Data.Set qualified as S
 import Data.Void (Void)
 
@@ -22,9 +27,12 @@ data Distance
 newtype Vertex a = Vertex a deriving (Show, Eq, Ord)
 type DistanceMap a = Map (Vertex a) Distance
 type VoidMap key = Map key Void
-type DijkstraAlgo a = State (DijkstraSetup a)
+
 type Edges a = Map (Vertex a, Vertex a) Distance
 type TrimmedGraph a = Map (Vertex a) (Vertex a)
+
+type DijkstraAlgo a = State (DijkstraSetup a)
+type ShortestPathAlgo a = State (ShortestPathSetup a)
 
 data DijkstraSetup a = DijkstraSetup
   { dist :: DistanceMap a
@@ -33,11 +41,20 @@ data DijkstraSetup a = DijkstraSetup
   }
   deriving (Show, Eq, Ord)
 
+data ShortestPathSetup a = ShortestPathSetup
+  { prevShortest :: TrimmedGraph a
+  , u :: Maybe (Vertex a)
+  , path :: [Vertex a]
+  }
+  deriving (Show, Eq)
+
 instance Ord Distance where
   Finite i <= Finite j = i <= j
   Finite _ <= Infinite = True
   Infinite <= Finite _ = False
   Infinite <= Infinite = True
+
+--------------------------------------------------------------------------------
 
 addDistances :: Distance -> Distance -> Distance
 addDistances (Finite i) (Finite j) = Finite (i + j)
@@ -142,3 +159,23 @@ extractTargetDistance p =
     . filter (p . fst)
     . map (first unpackVertex)
     . M.assocs
+
+--------------------------------------------------------------------------------
+
+modifyPath :: ([Vertex a] -> [Vertex a]) -> ShortestPathAlgo a ()
+modifyPath f = modify $ \s -> s{path = f (path s)}
+
+modifyU :: (Maybe (Vertex a) -> Maybe (Vertex a)) -> ShortestPathAlgo a ()
+modifyU f = modify $ \s -> s{u = f (u s)}
+
+shortestPathAlgo :: Ord a => Vertex a -> Vertex a -> ShortestPathAlgo a ()
+shortestPathAlgo source target = do
+  modifyPath (const [])
+  modifyU (const (Just target))
+  u' <- u <$> get
+  prev <- prevShortest <$> get
+  let p = u' >>= flip M.lookup prev
+  when (isJust p || u' == Just source) $ do
+    whileM_ (isJust . u <$> get) $ do
+      modifyPath (fromJust u' :)
+      modifyU (const p)

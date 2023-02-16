@@ -48,7 +48,7 @@ exampleTunnels :: TunnelMap
 exampleTunnels = 
   M.fromList
     [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
-    , (ValveID "BB", makeTVS ["CC", "AA"] )
+    , (ValveID "BB", makeTVS ["CC", "AA"])
     , (ValveID "CC", makeTVS ["DD", "BB"])
     , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
     , (ValveID "EE", makeTVS ["FF", "DD"])

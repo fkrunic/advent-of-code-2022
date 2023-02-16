@@ -159,3 +159,5 @@ minuteMap valve tunnels = M.fromList <$> minutes
     note (InfiniteMinutes (InfiniteMinutesErr valve neighbor)) $
       unpackDistance d >>= Just . (neighbor,) . Minutes
   minutes = mapM buildMinutes $ M.assocs distances
+
+--------------------------------------------------------------------------------
