@@ -25,6 +25,7 @@ dependencies:
 - ghc
 - megaparsec
 - monad-loops
+- random
 - text
 - transformers
 

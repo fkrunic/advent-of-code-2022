@@ -8,11 +8,14 @@ import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Graphs
+import System.Random
 import Utilities
 
 newtype ValveID = ValveID Text deriving (Show, Eq, Ord)
 newtype FlowRate = FlowRate Word deriving (Show, Eq, Ord, Num)
 newtype Pressure = Pressure Word deriving (Show, Eq, Ord, Num)
+newtype PressureIndex = PressureIndex Pressure deriving (Show, Eq, Ord)
+newtype PressureRange = PressureRange Pressure deriving (Show, Eq)
 newtype Minutes = Minutes Word deriving (Show, Eq, Ord, Num)
 
 newtype OpenedValves = OpenedValves (Set ValveID) deriving (Show, Eq, Ord)
@@ -29,6 +32,7 @@ type FlowMap = Map ValveID FlowRate
 type TunnelMap = Map ValveID TunnelValves
 type TravelMap = Map ValveID TravelMinutes
 type PressureMap = Map ValveID (Pressure, MinutesRemaining)
+type PressureIndexMap = Map PressureIndex ValveID
 
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
@@ -199,9 +203,35 @@ pressureMap
     M.mapWithKey (\valve tm -> pressure tm remaining (flows ! valve))
 
 cumsum :: Num a => a -> [a] -> [a]
-cumsum initial = 
+cumsum initial =
   tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
- 
+
+calculateRange :: PressureMap -> PressureRange
+calculateRange = PressureRange . sum . map fst . M.elems
+
+pressureIndex :: PressureMap -> PressureIndexMap
+pressureIndex pm = M.fromList $ zip indices positiveValves
+ where
+  positiveChoices = M.filter ((> Pressure 0) . fst) pm
+  positivePressures = map fst $ M.elems positiveChoices
+  indices = map PressureIndex $ cumsum (Pressure 0) positivePressures
+  positiveValves = M.keys positiveChoices
+
+chooseNextValve ::
+  RandomGen g =>
+  g ->
+  OpenedValves ->
+  PressureMap ->
+  Maybe (ValveID, g)
+chooseNextValve gen (OpenedValves opened) pm =
+  (,nextGen) . snd <$> M.lookupGT pIndex indexMap
+ where
+  choices = M.withoutKeys pm opened
+  indexMap = pressureIndex choices
+  PressureRange (Pressure pMax) = calculateRange choices
+  (indexChoice, nextGen) = uniformR (0, pMax) gen
+  pIndex = PressureIndex (Pressure indexChoice)
+
 --------------------------------------------------------------------------------
 
 {-
