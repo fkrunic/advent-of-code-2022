@@ -1,5 +1,6 @@
 module Test.Day16Spec (spec) where
 
+import Data.Either (fromRight)
 import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Set (Set)
@@ -15,19 +16,51 @@ spec =
     it "Minute Maps" $ do
       let expected =
             M.fromList $
-              [ (ValveID "AA", Minutes 0)
-              , (ValveID "BB", Minutes 1)
-              , (ValveID "CC", Minutes 2)
-              , (ValveID "DD", Minutes 1)
-              , (ValveID "EE", Minutes 2)
-              , (ValveID "FF", Minutes 3)
-              , (ValveID "GG", Minutes 4)
-              , (ValveID "HH", Minutes 5)
-              , (ValveID "II", Minutes 1)
-              , (ValveID "JJ", Minutes 2)
+              [ (ValveID "AA", TravelMinutes $ Minutes 0)
+              , (ValveID "BB", TravelMinutes $ Minutes 1)
+              , (ValveID "CC", TravelMinutes $ Minutes 2)
+              , (ValveID "DD", TravelMinutes $ Minutes 1)
+              , (ValveID "EE", TravelMinutes $ Minutes 2)
+              , (ValveID "FF", TravelMinutes $ Minutes 3)
+              , (ValveID "GG", TravelMinutes $ Minutes 4)
+              , (ValveID "HH", TravelMinutes $ Minutes 5)
+              , (ValveID "II", TravelMinutes $ Minutes 1)
+              , (ValveID "JJ", TravelMinutes $ Minutes 2)
               ]
-          actual = minuteMap (ValveID "AA") exampleTunnels
+          actual = travelMap (ValveID "AA") exampleTunnels
       actual `shouldBe` Right expected
+
+    it "Pressure Maps" $ do
+      let minutesRemaining = MinutesRemaining $ Minutes 30
+          flowMap =
+            M.fromList
+              [ (ValveID "AA", FlowRate 0)
+              , (ValveID "BB", FlowRate 13)
+              , (ValveID "CC", FlowRate 2)
+              , (ValveID "DD", FlowRate 20)
+              , (ValveID "EE", FlowRate 3)
+              , (ValveID "FF", FlowRate 0)
+              , (ValveID "GG", FlowRate 0)
+              , (ValveID "HH", FlowRate 22)
+              , (ValveID "II", FlowRate 0)
+              , (ValveID "JJ", FlowRate 21)
+              ]
+          travelM = fromRight M.empty $ travelMap (ValveID "AA") exampleTunnels
+          actual = pressureMap minutesRemaining flowMap travelM
+          expected =
+            M.fromList
+              [ (ValveID "AA", (Pressure 0, MinutesRemaining $ Minutes 29))
+              , (ValveID "BB", (Pressure 364, MinutesRemaining $ Minutes 28))
+              , (ValveID "CC", (Pressure 54, MinutesRemaining $ Minutes 27))
+              , (ValveID "DD", (Pressure 560, MinutesRemaining $ Minutes 28))
+              , (ValveID "EE", (Pressure 81, MinutesRemaining $ Minutes 27))
+              , (ValveID "FF", (Pressure 0, MinutesRemaining $ Minutes 26))
+              , (ValveID "GG", (Pressure 0, MinutesRemaining $ Minutes 25))
+              , (ValveID "HH", (Pressure 528, MinutesRemaining $ Minutes 24))
+              , (ValveID "II", (Pressure 0, MinutesRemaining $ Minutes 28))
+              , (ValveID "JJ", (Pressure 567, MinutesRemaining $ Minutes 27))
+              ]
+      actual `shouldBe` expected
 
     it "Pressure Tests" $ do
       let released =

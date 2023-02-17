@@ -27,10 +27,8 @@ data InputLine = InputLine
 
 type FlowMap = Map ValveID FlowRate
 type TunnelMap = Map ValveID TunnelValves
-
-newtype PositiveFlowMap = PositiveFlowMap FlowMap deriving (Show, Eq, Ord)
-newtype TravelMap = TravelMap (Map TunnelPath Minutes) deriving (Show, Eq)
-type MinuteMap = Map ValveID Minutes
+type TravelMap = Map ValveID TravelMinutes
+type PressureMap = Map ValveID (Pressure, MinutesRemaining)
 
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
@@ -158,11 +156,8 @@ runActions ctx state =
 
 --------------------------------------------------------------------------------
 
-positiveFlow :: FlowMap -> PositiveFlowMap
-positiveFlow = PositiveFlowMap . M.filter (> FlowRate 0)
-
-minuteMap :: ValveID -> TunnelMap -> Fork MinuteMap
-minuteMap valve tunnels = M.fromList <$> minutes
+travelMap :: ValveID -> TunnelMap -> Fork TravelMap
+travelMap valve tunnels = M.fromList <$> minutes
  where
   source = Vertex valve
   vertices = map Vertex $ M.keys tunnels
@@ -173,7 +168,7 @@ minuteMap valve tunnels = M.fromList <$> minutes
   distances = dijkstra source vertices getEdges
   buildMinutes (Vertex neighbor, d) =
     note (InfiniteMinutes (InfiniteMinutesErr valve neighbor)) $
-      unpackDistance d >>= Just . (neighbor,) . Minutes
+      unpackDistance d >>= Just . (neighbor,) . TravelMinutes . Minutes
   minutes = mapM buildMinutes $ M.assocs distances
 
 --------------------------------------------------------------------------------
@@ -188,10 +183,20 @@ pressure
   (MinutesRemaining (Minutes current))
   (FlowRate flow) =
     if remaining >= 1
-      then ( Pressure $ remaining * flow, MinutesRemaining $ Minutes remaining)
+      then (Pressure $ remaining * flow, MinutesRemaining $ Minutes remaining)
       else (Pressure 0, MinutesRemaining $ Minutes 0)
    where
     remaining = current - travel - 1
+
+pressureMap ::
+  MinutesRemaining ->
+  FlowMap ->
+  TravelMap ->
+  PressureMap
+pressureMap
+  remaining
+  flows =
+    M.mapWithKey (\valve tm -> pressure tm remaining (flows ! valve))
 
 --------------------------------------------------------------------------------
 
