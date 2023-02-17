@@ -182,18 +182,14 @@ pressure ::
   TravelMinutes ->
   MinutesRemaining ->
   FlowRate ->
-  Maybe (Pressure, MinutesRemaining)
+  (Pressure, MinutesRemaining)
 pressure
   (TravelMinutes (Minutes travel))
   (MinutesRemaining (Minutes current))
   (FlowRate flow) =
     if remaining >= 1
-      then
-        Just
-          ( Pressure $ remaining * flow
-          , MinutesRemaining $ Minutes remaining
-          )
-      else Nothing
+      then ( Pressure $ remaining * flow, MinutesRemaining $ Minutes remaining)
+      else (Pressure 0, MinutesRemaining $ Minutes 0)
    where
     remaining = current - travel - 1
 
@@ -222,5 +218,19 @@ Observations about finding the optimal path:
 
   2. How nodes are conected matters. If you sever the graph in two, you
       limit your flow rate.
+
+  3. You can have different sequences of actions that yield the optimal flow rate.
+    For example, instead of doing nothing at the end, you can move around the
+    graph and still end up with the same flow rate.
+
+  4. The valves are not turned on in a monotonic order based on their flow rate.
+
+  5. The valves are not turned on in a monotonic order based on their conditional
+    total pressure release starting at time `t`.
+
+  6. The time spacing in between valve openings is not the same.
+
+  7. Closed valves are sometimes skipped to open other ones, and then returned to
+      later to be opened. This is particularly true for valves with small flow rates.
 
 -}

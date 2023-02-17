@@ -35,7 +35,7 @@ spec =
               (TravelMinutes (Minutes 1))
               (MinutesRemaining (Minutes 30))
               (FlowRate 13)
-      released `shouldBe` Just (Pressure 364, MinutesRemaining (Minutes 28))
+      released `shouldBe` (Pressure 364, MinutesRemaining (Minutes 28))
 
     it "Total Release" $ do
       let flowMap =
@@ -101,14 +101,14 @@ spec =
             [ (initialState, FlowRate 0)
             , (State (ValveID "DD") (makeOVS []) (Minutes 1), FlowRate 0)
             , (State (ValveID "DD") (makeOVS ["DD"]) (Minutes 2), FlowRate 0)
-            , (State (ValveID "CC") (makeOVS ["DD"]) (Minutes 3), FlowRate 20)
+            , (State (ValveID "CC") (makeOVS ["DD"]) (Minutes 3), FlowRate 20) -- delta=20, 20*27=540
             , (State (ValveID "BB") (makeOVS ["DD"]) (Minutes 4), FlowRate 20)
             , (State (ValveID "BB") (makeOVS ["DD", "BB"]) (Minutes 5), FlowRate 20)
-            , (State (ValveID "AA") (makeOVS ["DD", "BB"]) (Minutes 6), FlowRate 33)
+            , (State (ValveID "AA") (makeOVS ["DD", "BB"]) (Minutes 6), FlowRate 33) -- delta=13, 13*23=299
             , (State (ValveID "II") (makeOVS ["DD", "BB"]) (Minutes 7), FlowRate 33)
             , (State (ValveID "JJ") (makeOVS ["DD", "BB"]) (Minutes 8), FlowRate 33)
             , (State (ValveID "JJ") (makeOVS ["DD", "BB", "JJ"]) (Minutes 9), FlowRate 33)
-            , (State (ValveID "II") (makeOVS ["DD", "BB", "JJ"]) (Minutes 10), FlowRate 54)
+            , (State (ValveID "II") (makeOVS ["DD", "BB", "JJ"]) (Minutes 10), FlowRate 54) -- delta=21, 21*20=210
             , (State (ValveID "AA") (makeOVS ["DD", "BB", "JJ"]) (Minutes 11), FlowRate 54)
             , (State (ValveID "DD") (makeOVS ["DD", "BB", "JJ"]) (Minutes 12), FlowRate 54)
             , (State (ValveID "EE") (makeOVS ["DD", "BB", "JJ"]) (Minutes 13), FlowRate 54)
@@ -116,14 +116,14 @@ spec =
             , (State (ValveID "GG") (makeOVS ["DD", "BB", "JJ"]) (Minutes 15), FlowRate 54)
             , (State (ValveID "HH") (makeOVS ["DD", "BB", "JJ"]) (Minutes 16), FlowRate 54)
             , (State (ValveID "HH") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 17), FlowRate 54)
-            , (State (ValveID "GG") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 18), FlowRate 76)
+            , (State (ValveID "GG") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 18), FlowRate 76) -- delta=22, 22*12=264
             , (State (ValveID "FF") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 19), FlowRate 76)
             , (State (ValveID "EE") (makeOVS ["DD", "BB", "JJ", "HH"]) (Minutes 20), FlowRate 76)
             , (State (ValveID "EE") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 21), FlowRate 76)
-            , (State (ValveID "DD") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 22), FlowRate 79)
+            , (State (ValveID "DD") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 22), FlowRate 79) -- delta=3, 3*8=24
             , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE"]) (Minutes 23), FlowRate 79)
             , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 24), FlowRate 79)
-            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 25), FlowRate 81)
+            , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 25), FlowRate 81) -- delta=2, 2*5=10
             , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 26), FlowRate 81)
             , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 27), FlowRate 81)
             , (State (ValveID "CC") (makeOVS ["DD", "BB", "JJ", "HH", "EE", "CC"]) (Minutes 28), FlowRate 81)
