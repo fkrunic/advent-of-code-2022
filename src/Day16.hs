@@ -198,6 +198,10 @@ pressureMap
   flows =
     M.mapWithKey (\valve tm -> pressure tm remaining (flows ! valve))
 
+cumsum :: Num a => a -> [a] -> [a]
+cumsum initial = 
+  tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
+ 
 --------------------------------------------------------------------------------
 
 {-

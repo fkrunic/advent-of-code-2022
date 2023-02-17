@@ -13,9 +13,40 @@ import Test.Hspec
 spec :: SpecWith ()
 spec =
   describe "Day 16 Tests" $ do
+    it "Cumulative Sums" $ do
+      let ps =
+            map
+              Pressure
+              [ 0
+              , 364
+              , 54
+              , 560
+              , 81
+              , 0
+              , 0
+              , 528
+              , 0
+              , 567
+              ]
+          expected =
+            map
+              Pressure
+              [ 0
+              , 364
+              , 418
+              , 978
+              , 1059
+              , 1059
+              , 1059
+              , 1587
+              , 1587
+              , 2154
+              ]
+      cumsum (Pressure 0) ps `shouldBe` expected
+
     it "Minute Maps" $ do
       let expected =
-            M.fromList $
+            M.fromList
               [ (ValveID "AA", TravelMinutes $ Minutes 0)
               , (ValveID "BB", TravelMinutes $ Minutes 1)
               , (ValveID "CC", TravelMinutes $ Minutes 2)
