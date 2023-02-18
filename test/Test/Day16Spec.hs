@@ -3,22 +3,48 @@ module Test.Day16Spec (spec) where
 import Control.Monad
 import Control.Monad.Trans.State.Strict
 import Data.Either (fromRight)
-import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Maybe (fromJust)
-import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day16
 import System.Random
 import Test.Hspec
-import Text.Megaparsec hiding (State)
+import Text.Megaparsec hiding (State, choice)
 import Text.Megaparsec.Char
 
 spec :: SpecWith ()
 spec =
   describe "Day 16 Tests" $ do
+    let flowMap =
+          M.fromList
+            [ (ValveID "AA", FlowRate 0)
+            , (ValveID "BB", FlowRate 13)
+            , (ValveID "CC", FlowRate 2)
+            , (ValveID "DD", FlowRate 20)
+            , (ValveID "EE", FlowRate 3)
+            , (ValveID "FF", FlowRate 0)
+            , (ValveID "GG", FlowRate 0)
+            , (ValveID "HH", FlowRate 22)
+            , (ValveID "II", FlowRate 0)
+            , (ValveID "JJ", FlowRate 21)
+            ]
+        tunnelMap =
+          M.fromList
+            [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
+            , (ValveID "BB", makeTVS ["CC", "AA"])
+            , (ValveID "CC", makeTVS ["DD", "BB"])
+            , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
+            , (ValveID "EE", makeTVS ["FF", "DD"])
+            , (ValveID "FF", makeTVS ["EE", "GG"])
+            , (ValveID "GG", makeTVS ["FF", "HH"])
+            , (ValveID "HH", makeTVS ["GG"])
+            , (ValveID "II", makeTVS ["AA", "JJ"])
+            , (ValveID "JJ", makeTVS ["II"])
+            ]
+        makeTVS = TunnelValves . S.fromList . map ValveID
+
     it "Parses Example Input" $ do
       let expected =
             [ InputLine (ValveID "AA") (FlowRate 0) (makeTVS ["DD", "II", "BB"])
@@ -35,7 +61,6 @@ spec =
           actual =
             fromRight [] $
               runParser (some (pLine <* optional newline)) "" exampleInput
-          makeTVS = TunnelValves . S.fromList . map ValveID
       actual `shouldBe` expected
 
     it "Cumulative Sums" $ do
@@ -83,25 +108,12 @@ spec =
               , (ValveID "II", TravelMinutes $ Minutes 1)
               , (ValveID "JJ", TravelMinutes $ Minutes 2)
               ]
-          actual = travelMap (ValveID "AA") exampleTunnels
+          actual = travelMap (ValveID "AA") tunnelMap
       actual `shouldBe` Right expected
 
     it "Pressure Maps" $ do
       let minutesRemaining = MinutesRemaining $ Minutes 30
-          flowMap =
-            M.fromList
-              [ (ValveID "AA", FlowRate 0)
-              , (ValveID "BB", FlowRate 13)
-              , (ValveID "CC", FlowRate 2)
-              , (ValveID "DD", FlowRate 20)
-              , (ValveID "EE", FlowRate 3)
-              , (ValveID "FF", FlowRate 0)
-              , (ValveID "GG", FlowRate 0)
-              , (ValveID "HH", FlowRate 22)
-              , (ValveID "II", FlowRate 0)
-              , (ValveID "JJ", FlowRate 21)
-              ]
-          travelM = fromRight M.empty $ travelMap (ValveID "AA") exampleTunnels
+          travelM = fromRight M.empty $ travelMap (ValveID "AA") tunnelMap
           actual = pressureMap minutesRemaining flowMap travelM
           expected =
             M.fromList
@@ -134,12 +146,12 @@ spec =
               M.singleton
                 (ValveID "A")
                 (Pressure 1, MinutesRemaining $ Minutes 1)
-            choice = chooseNextValve rand opened pressures
+            choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
             indices =
               M.singleton
                 (PressureIndex 1)
                 (ValveID "A")
-        pressureIndex pressures `shouldBe` indices
+        pressureIndex flowMap tunnelMap opened pressures `shouldBe` indices
         fst <$> choice `shouldBe` Just (ValveID "A")
 
       it "No positive valves" $ do
@@ -149,7 +161,7 @@ spec =
               M.singleton
                 (ValveID "A")
                 (Pressure 0, MinutesRemaining $ Minutes 1)
-            choice = chooseNextValve rand opened pressures
+            choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
         choice `shouldBe` Nothing
 
       it "Only one positive valve and the rest zero" $ do
@@ -164,7 +176,7 @@ spec =
                 , (ValveID "E", (Pressure 0, MinutesRemaining $ Minutes 1))
                 , (ValveID "F", (Pressure 0, MinutesRemaining $ Minutes 1))
                 ]
-            choice = chooseNextValve rand opened pressures
+            choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
         fst <$> choice `shouldBe` Just (ValveID "C")
 
       it "Only choosing positive valves" $ do
@@ -182,7 +194,7 @@ spec =
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 100] $ \_ -> do
                 g <- get
-                case chooseNextValve g opened pressures of
+                case chooseNextValve pressureIndex flowMap tunnelMap g opened pressures of
                   Nothing -> return Nothing
                   Just (valve, g') -> do
                     put g'
@@ -205,7 +217,7 @@ spec =
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 10000] $ \_ -> do
                 g <- get
-                case chooseNextValve g opened pressures of
+                case chooseNextValve pressureIndex flowMap tunnelMap g opened pressures of
                   Nothing -> return Nothing
                   Just (valve, g') -> do
                     put g'
@@ -216,41 +228,15 @@ spec =
         numChoiceC `shouldBe` 9906
 
       it "Can choose a route" $ do
-        let flowMap =
-              M.fromList
-                [ (ValveID "AA", FlowRate 0)
-                , (ValveID "BB", FlowRate 13)
-                , (ValveID "CC", FlowRate 2)
-                , (ValveID "DD", FlowRate 20)
-                , (ValveID "EE", FlowRate 3)
-                , (ValveID "FF", FlowRate 0)
-                , (ValveID "GG", FlowRate 0)
-                , (ValveID "HH", FlowRate 22)
-                , (ValveID "II", FlowRate 0)
-                , (ValveID "JJ", FlowRate 21)
-                ]
-            tunnelMap =
-              M.fromList
-                [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
-                , (ValveID "BB", makeTVS ["CC", "AA"])
-                , (ValveID "CC", makeTVS ["DD", "BB"])
-                , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
-                , (ValveID "EE", makeTVS ["FF", "DD"])
-                , (ValveID "FF", makeTVS ["EE", "GG"])
-                , (ValveID "GG", makeTVS ["FF", "HH"])
-                , (ValveID "HH", makeTVS ["GG"])
-                , (ValveID "II", makeTVS ["AA", "JJ"])
-                , (ValveID "JJ", makeTVS ["II"])
-                ]
-            makeTVS = TunnelValves . S.fromList . map ValveID
-            actualV1 =
+        let actualV1 =
               chooseRoute
+                pressureIndex
+                flowMap
+                tunnelMap
                 (mkStdGen 42)
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
                 (OpenedValves S.empty)
-                flowMap
-                tunnelMap
             expectedV1 =
               [ (ValveID "DD", Pressure 560, MinutesRemaining (Minutes 28))
               , (ValveID "HH", Pressure 506, MinutesRemaining (Minutes 23))
@@ -261,12 +247,13 @@ spec =
               ]
             actualV2 =
               chooseRoute
+                pressureIndex
+                flowMap
+                tunnelMap
                 (mkStdGen 14)
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
                 (OpenedValves S.empty)
-                flowMap
-                tunnelMap
             expectedV2 =
               [ (ValveID "HH", Pressure 528, MinutesRemaining (Minutes 24))
               , (ValveID "DD", Pressure 380, MinutesRemaining (Minutes 19))
@@ -279,41 +266,15 @@ spec =
         actualV2 `shouldBe` Right expectedV2
 
       it "Can find the best route" $ do
-        let flowMap =
-              M.fromList
-                [ (ValveID "AA", FlowRate 0)
-                , (ValveID "BB", FlowRate 13)
-                , (ValveID "CC", FlowRate 2)
-                , (ValveID "DD", FlowRate 20)
-                , (ValveID "EE", FlowRate 3)
-                , (ValveID "FF", FlowRate 0)
-                , (ValveID "GG", FlowRate 0)
-                , (ValveID "HH", FlowRate 22)
-                , (ValveID "II", FlowRate 0)
-                , (ValveID "JJ", FlowRate 21)
-                ]
-            tunnelMap =
-              M.fromList
-                [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
-                , (ValveID "BB", makeTVS ["CC", "AA"])
-                , (ValveID "CC", makeTVS ["DD", "BB"])
-                , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
-                , (ValveID "EE", makeTVS ["FF", "DD"])
-                , (ValveID "FF", makeTVS ["EE", "GG"])
-                , (ValveID "GG", makeTVS ["FF", "HH"])
-                , (ValveID "HH", makeTVS ["GG"])
-                , (ValveID "II", makeTVS ["AA", "JJ"])
-                , (ValveID "JJ", makeTVS ["II"])
-                ]
-            makeTVS = TunnelValves . S.fromList . map ValveID
-            actual =
+        let actual =
               bestRoute
                 (NumberOfTrials 1000)
+                pressureIndex
+                flowMap
+                tunnelMap
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
                 (OpenedValves S.empty)
-                flowMap
-                tunnelMap
             expected = Pressure 1651
         actual `shouldBe` Right expected
 
@@ -328,45 +289,23 @@ spec =
           pendingWith "Still broken"
           let actual = part1Solution puzzleInput
               expected = Right $ Pressure 1
-          actual `shouldBe` expected          
-
-          -- let actual = part1Dbg puzzleInput
-          --     expected = Right []
-          -- actual `shouldBe` expected
-
-        -- it "Puzzle Input Pressure Map" $ do
-        --   let actual = part1Dbg puzzleInput
-        --       expected = M.empty
-        --   actual `shouldBe` Right expected
-
-
-part1Dbg :: Text -> Fork PressureMap
-part1Dbg t =
-  pressureMap
-    (MinutesRemaining $ Minutes 30)
-    flowMap
-    travel
- where
-  parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
-  inputLines = parser t
-  flowMap = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
-  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
-  travel = fromRight M.empty $ travelMap (ValveID "AA") tunnelMap
+          actual `shouldBe` expected
 
 part1Solution :: Text -> Fork Pressure
 part1Solution t =
   bestRoute
     (NumberOfTrials 50000)
+    pressureIndex
+    flowMap
+    tunnelMap
     (ValveID "AA")
     (MinutesRemaining $ Minutes 30)
     (OpenedValves S.empty)
-    flowMap
-    tunnelMap
  where
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flowMap = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
-  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines  
+  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
 
 exampleInput :: Text
 exampleInput =
@@ -384,26 +323,10 @@ exampleInput =
     , "Valve JJ has flow rate=21; tunnel leads to valve II"
     ]
 
-exampleTunnels :: TunnelMap
-exampleTunnels =
-  M.fromList
-    [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
-    , (ValveID "BB", makeTVS ["CC", "AA"])
-    , (ValveID "CC", makeTVS ["DD", "BB"])
-    , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
-    , (ValveID "EE", makeTVS ["FF", "DD"])
-    , (ValveID "FF", makeTVS ["EE", "GG"])
-    , (ValveID "GG", makeTVS ["FF", "HH"])
-    , (ValveID "HH", makeTVS ["GG"])
-    , (ValveID "II", makeTVS ["AA", "JJ"])
-    , (ValveID "JJ", makeTVS ["II"])
-    ]
- where
-  makeTVS = TunnelValves . S.fromList . map ValveID
-
 puzzleInput :: Text
-puzzleInput = 
-  T.intercalate "\n"
+puzzleInput =
+  T.intercalate
+    "\n"
     [ "Valve AA has flow rate=0; tunnels lead to valves RZ, QQ, FH, IM, VJ"
     , "Valve FE has flow rate=0; tunnels lead to valves TM, TR"
     , "Valve QZ has flow rate=19; tunnels lead to valves HH, OY"
@@ -459,5 +382,5 @@ puzzleInput =
     , "Valve VI has flow rate=0; tunnels lead to valves ZL, GG"
     , "Valve CU has flow rate=22; tunnels lead to valves PZ, OH, TH"
     , "Valve WN has flow rate=0; tunnels lead to valves TU, HH"
-    , "Valve FF has flow rate=13; tunnels lead to valves VS, RY, AH, TS, GH"      
-    ]  
+    , "Valve FF has flow rate=13; tunnels lead to valves VS, RY, AH, TS, GH"
+    ]

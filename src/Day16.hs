@@ -1,8 +1,6 @@
 module Day16 where
 
-import Control.Monad (forM, when)
-import Data.Either (fromRight)
-import Data.Foldable (foldrM)
+import Control.Monad (forM)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Set (Set)
@@ -65,6 +63,13 @@ data Error
   deriving (Show, Eq)
 
 type Fork = Either Error
+
+type IndexBuilder =
+  FlowMap ->
+  TunnelMap ->
+  OpenedValves ->
+  PressureMap ->
+  PressureIndexMap
 
 --------------------------------------------------------------------------------
 
@@ -142,8 +147,8 @@ cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
   tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
 
-pressureIndex :: PressureMap -> PressureIndexMap
-pressureIndex pm = M.fromList $ zip indices positiveValves
+pressureIndex :: IndexBuilder
+pressureIndex _ _ _ pm = M.fromList $ zip indices positiveValves
  where
   positiveChoices = M.filter ((> Pressure 0) . fst) pm
   indexValues = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
@@ -152,32 +157,36 @@ pressureIndex pm = M.fromList $ zip indices positiveValves
 
 chooseNextValve ::
   RandomGen g =>
+  IndexBuilder ->
+  FlowMap ->
+  TunnelMap ->
   g ->
   OpenedValves ->
   PressureMap ->
   Maybe (ValveID, g)
-chooseNextValve gen (OpenedValves opened) pm =
+chooseNextValve builder flows tunnels gen opened@(OpenedValves ovs) pm =
   (,nextGen) . snd <$> M.lookupGE pIndex indexMap
  where
-  choices = M.withoutKeys pm opened
-  indexMap = pressureIndex choices
+  choices = M.withoutKeys pm ovs
+  indexMap = builder flows tunnels opened choices
   PressureIndex pMax = maximum $ PressureIndex 1 : M.keys indexMap
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex indexChoice
 
 chooseRoute ::
   RandomGen g =>
+  IndexBuilder ->
+  FlowMap ->
+  TunnelMap ->
   g ->
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
-  FlowMap ->
-  TunnelMap ->
   Fork [(ValveID, Pressure, MinutesRemaining)]
-chooseRoute rand currentValve remainingTime opened flows tunnels = do
+chooseRoute builder flows tunnels rand currentValve remainingTime opened = do
   travel <- travelMap currentValve tunnels
   pm <- pressureMap remainingTime flows travel
-  case chooseNextValve rand opened pm of
+  case chooseNextValve builder flows tunnels rand opened pm of
     Nothing -> Right []
     Just (nextValve, nextRand) -> do
       (ps, nextRemaining) <-
@@ -186,12 +195,13 @@ chooseRoute rand currentValve remainingTime opened flows tunnels = do
       let nextOpened = OpenedValves $ S.insert nextValve ovs
       rest <-
         chooseRoute
+          builder
+          flows
+          tunnels
           nextRand
           nextValve
           nextRemaining
           nextOpened
-          flows
-          tunnels
       return $ (nextValve, ps, nextRemaining) : rest
  where
   OpenedValves ovs = opened
@@ -201,27 +211,30 @@ totalReleased = sum . map (\(_, p, _) -> p)
 
 bestRoute ::
   NumberOfTrials ->
+  IndexBuilder ->
+  FlowMap ->
+  TunnelMap ->
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
-  FlowMap ->
-  TunnelMap ->
   Fork Pressure
 bestRoute
   (NumberOfTrials trials)
+  builder
+  flows
+  tunnels
   currentValve
   remainingTime
-  opened
-  flows
-  tunnels =
+  opened =
     fmap maximum $ forM [1 .. trials] $ \seed ->
       totalReleased
         <$> chooseRoute
+          builder
+          flows
+          tunnels
           (mkStdGen $ fromIntegral seed)
           currentValve
           remainingTime
           opened
-          flows
-          tunnels
 
 --------------------------------------------------------------------------------
