@@ -128,7 +128,7 @@ spec =
               , (ValveID "II", (Pressure 0, MinutesRemaining $ Minutes 28))
               , (ValveID "JJ", (Pressure 567, MinutesRemaining $ Minutes 27))
               ]
-      actual `shouldBe` Right expected
+      actual `shouldBe` expected
 
     it "Pressure Tests" $ do
       let released =

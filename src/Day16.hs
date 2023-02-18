@@ -126,12 +126,14 @@ pressureMap ::
   MinutesRemaining ->
   FlowMap ->
   TravelMap ->
-  Fork PressureMap
-pressureMap remaining flows = fmap M.fromList . mapM getPressure . M.assocs
+  PressureMap
+pressureMap remaining flows = M.fromList . map getPressure . M.assocs
  where
   getPressure (valve, tm) =
-    note (UnrecognizedValve valve) $
-      M.lookup valve flows >>= Just . (valve,) . pressure tm remaining
+    (valve,) $ pressure tm remaining $ flows ! valve
+
+-- note (UnrecognizedValve valve) $
+-- M.lookup valve flows >>= Just . (valve,) . pressure tm remaining
 
 cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
@@ -175,7 +177,7 @@ chooseRoute ::
   Fork [(ValveID, Pressure, MinutesRemaining)]
 chooseRoute builder flows tunnels rand currentValve remainingTime opened = do
   travel <- travelMap currentValve tunnels
-  pm <- pressureMap remainingTime flows travel
+  let pm = pressureMap remainingTime flows travel
   case chooseNextValve builder flows tunnels rand opened pm of
     Nothing -> Right []
     Just (nextValve, nextRand) -> do
