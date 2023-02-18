@@ -356,6 +356,45 @@ spec =
         actualV1 `shouldBe` Right expectedV1
         actualV2 `shouldBe` Right expectedV2
 
+      it "Can find the best route" $ do
+        let flowMap =
+              M.fromList
+                [ (ValveID "AA", FlowRate 0)
+                , (ValveID "BB", FlowRate 13)
+                , (ValveID "CC", FlowRate 2)
+                , (ValveID "DD", FlowRate 20)
+                , (ValveID "EE", FlowRate 3)
+                , (ValveID "FF", FlowRate 0)
+                , (ValveID "GG", FlowRate 0)
+                , (ValveID "HH", FlowRate 22)
+                , (ValveID "II", FlowRate 0)
+                , (ValveID "JJ", FlowRate 21)
+                ]
+            tunnelMap =
+              M.fromList
+                [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
+                , (ValveID "BB", makeTVS ["CC", "AA"])
+                , (ValveID "CC", makeTVS ["DD", "BB"])
+                , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
+                , (ValveID "EE", makeTVS ["FF", "DD"])
+                , (ValveID "FF", makeTVS ["EE", "GG"])
+                , (ValveID "GG", makeTVS ["FF", "HH"])
+                , (ValveID "HH", makeTVS ["GG"])
+                , (ValveID "II", makeTVS ["AA", "JJ"])
+                , (ValveID "JJ", makeTVS ["II"])
+                ]
+            makeTVS = TunnelValves . S.fromList . map ValveID
+            actual =
+              bestRoute
+                (NumberOfTrials 1000)
+                (ValveID "AA")
+                (MinutesRemaining $ Minutes 30)
+                (OpenedValves S.empty)
+                flowMap
+                tunnelMap
+            expected = Pressure 1651
+        actual `shouldBe` Right expected
+
 exampleInput :: Text
 exampleInput =
   T.intercalate

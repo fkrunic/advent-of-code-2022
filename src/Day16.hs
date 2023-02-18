@@ -1,6 +1,6 @@
 module Day16 where
 
-import Control.Monad (when)
+import Control.Monad (forM, when)
 import Data.Either (fromRight)
 import Data.Foldable (foldrM)
 import Data.Map (Map, (!))
@@ -18,6 +18,7 @@ newtype Pressure = Pressure Word deriving (Show, Eq, Ord, Num)
 newtype PressureIndex = PressureIndex Pressure deriving (Show, Eq, Ord)
 newtype PressureRange = PressureRange Pressure deriving (Show, Eq)
 newtype Minutes = Minutes Word deriving (Show, Eq, Ord, Num)
+newtype NumberOfTrials = NumberOfTrials Word deriving (Show, Eq)
 
 newtype OpenedValves = OpenedValves (Set ValveID) deriving (Show, Eq, Ord)
 newtype TunnelValves = TunnelValves (Set ValveID) deriving (Show, Eq, Ord)
@@ -264,6 +265,34 @@ chooseRoute rand currentValve remainingTime opened flows tunnels = do
       return $ (nextValve, ps, nextRemaining) : rest
  where
   OpenedValves ovs = opened
+
+totalReleased :: [(ValveID, Pressure, MinutesRemaining)] -> Pressure
+totalReleased = sum . map (\(_, p, _) -> p)
+
+bestRoute ::
+  NumberOfTrials ->
+  ValveID ->
+  MinutesRemaining ->
+  OpenedValves ->
+  FlowMap ->
+  TunnelMap ->
+  Fork Pressure
+bestRoute
+  (NumberOfTrials trials)
+  currentValve
+  remainingTime
+  opened
+  flows
+  tunnels =
+    fmap maximum $ forM [1 .. trials] $ \seed ->
+      totalReleased
+        <$> chooseRoute
+          (mkStdGen $ fromIntegral seed)
+          currentValve
+          remainingTime
+          opened
+          flows
+          tunnels
 
 --------------------------------------------------------------------------------
 
