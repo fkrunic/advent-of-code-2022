@@ -43,13 +43,6 @@ type PressureIndexMap = Map PressureIndex ValveID
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 
-data State = State
-  { location :: ValveID
-  , openedValves :: OpenedValves
-  , timeElapsed :: Minutes
-  }
-  deriving (Show, Eq)
-
 data CannotTraverseErr = CannotTraverseErr
   { fromValve :: ValveID
   , toValve :: ValveID
@@ -72,24 +65,6 @@ data Error
   deriving (Show, Eq)
 
 type Fork = Either Error
-
-data Action
-  = DoNothing
-  | OpenValve ValveID
-  | MoveToValve ValveID
-  deriving (Show, Eq)
-
-data Context = Context
-  { flowMap :: FlowMap
-  , tunnelMap :: TunnelMap
-  }
-  deriving (Show, Eq)
-
-data TunnelPath = TunnelPath
-  { startValve :: ValveID
-  , endValve :: ValveID
-  }
-  deriving (Show, Eq, Ord)
 
 --------------------------------------------------------------------------------
 
