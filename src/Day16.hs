@@ -224,12 +224,12 @@ chooseNextValve ::
   PressureMap ->
   Maybe (ValveID, g)
 chooseNextValve gen (OpenedValves opened) pm =
-  (,nextGen) . snd <$> M.lookupGT pIndex indexMap
+  (,nextGen) . snd <$> M.lookupGE pIndex indexMap
  where
   choices = M.withoutKeys pm opened
   indexMap = pressureIndex choices
   PressureRange (Pressure pMax) = calculateRange choices
-  (indexChoice, nextGen) = uniformR (0, pMax) gen
+  (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex (Pressure indexChoice)
 
 --------------------------------------------------------------------------------

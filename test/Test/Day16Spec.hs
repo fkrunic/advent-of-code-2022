@@ -1,13 +1,17 @@
 module Test.Day16Spec (spec) where
 
+import Control.Monad
+import Control.Monad.Trans.State.Strict
 import Data.Either (fromRight)
 import Data.Map (Map)
 import Data.Map qualified as M
+import Data.Maybe (fromJust)
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
 import Day16
+import System.Random
 import Test.Hspec
 
 spec :: SpecWith ()
@@ -198,6 +202,97 @@ spec =
           makeOVS = OpenedValves . S.fromList . map ValveID
           initialState = State (ValveID "AA") (OpenedValves S.empty) (Minutes 0)
       runActions ctx initialState actions `shouldBe` Right expected
+
+    describe "Choosing Valves" $ do
+      it "One positive valve" $ do
+        let rand = mkStdGen 42
+            opened = OpenedValves S.empty
+            pressures =
+              M.singleton
+                (ValveID "A")
+                (Pressure 1, MinutesRemaining $ Minutes 1)
+            choice = chooseNextValve rand opened pressures
+            indices =
+              M.singleton
+                (PressureIndex (Pressure 1))
+                (ValveID "A")
+        calculateRange pressures `shouldBe` PressureRange (Pressure 1)
+        pressureIndex pressures `shouldBe` indices
+        fst <$> choice `shouldBe` Just (ValveID "A")
+
+      it "No positive valves" $ do
+        let rand = mkStdGen 42
+            opened = OpenedValves S.empty
+            pressures =
+              M.singleton
+                (ValveID "A")
+                (Pressure 0, MinutesRemaining $ Minutes 1)
+            choice = chooseNextValve rand opened pressures
+        choice `shouldBe` Nothing
+
+      it "Only one positive valve and the rest zero" $ do
+        let rand = mkStdGen 42
+            opened = OpenedValves S.empty
+            pressures =
+              M.fromList
+                [ (ValveID "A", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "B", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "C", (Pressure 1, MinutesRemaining $ Minutes 1))
+                , (ValveID "D", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "E", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "F", (Pressure 0, MinutesRemaining $ Minutes 1))
+                ]
+            choice = chooseNextValve rand opened pressures
+        fst <$> choice `shouldBe` Just (ValveID "C")
+
+      it "Only choosing positive valves" $ do
+        let opened = OpenedValves S.empty
+            pressures =
+              M.fromList
+                [ (ValveID "A", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "B", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "C", (Pressure 10, MinutesRemaining $ Minutes 1))
+                , (ValveID "D", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "E", (Pressure 10, MinutesRemaining $ Minutes 1))
+                , (ValveID "F", (Pressure 3, MinutesRemaining $ Minutes 1))
+                ]
+
+            choices = sequence $ flip evalState (mkStdGen 42) $ do
+              forM [1 :: Int .. 100] $ \_ -> do
+                g <- get
+                case chooseNextValve g opened pressures of
+                  Nothing -> return Nothing
+                  Just (valve, g') -> do
+                    put g'
+                    return (Just valve)
+            expectedValves = S.fromList $ map ValveID ["C", "E", "F"]
+            actual = S.fromList <$> choices
+        actual `shouldBe` Just expectedValves
+
+      it "Only choosing positive valves in proportional ratios" $ do
+        let opened = OpenedValves S.empty
+            pressures =
+              M.fromList
+                [ (ValveID "A", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "B", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "C", (Pressure 100, MinutesRemaining $ Minutes 1))
+                , (ValveID "D", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "E", (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "F", (Pressure 1, MinutesRemaining $ Minutes 1))
+                ]
+
+            choices = sequence $ flip evalState (mkStdGen 42) $ do
+              forM [1 :: Int .. 10000] $ \_ -> do
+                g <- get
+                case chooseNextValve g opened pressures of
+                  Nothing -> return Nothing
+                  Just (valve, g') -> do
+                    put g'
+                    return (Just valve)
+            numChoiceC = length . filter (== ValveID "C") $ fromJust choices
+            numChoiceF = length . filter (== ValveID "F") $ fromJust choices
+        numChoiceF `shouldBe` 94
+        numChoiceC `shouldBe` 9906
 
 exampleInput :: Text
 exampleInput =
