@@ -240,15 +240,13 @@ cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
   tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
 
-calculateRange :: PressureMap -> PressureRange
-calculateRange = PressureRange . sum . map fst . M.elems
-
 pressureIndex :: PressureMap -> PressureIndexMap
 pressureIndex pm = M.fromList $ zip indices positiveValves
  where
   positiveChoices = M.filter ((> Pressure 0) . fst) pm
-  positivePressures = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
-  indices = map PressureIndex $ cumsum 0 positivePressures
+  indexValues = map (\(Pressure p, MinutesRemaining (Minutes m)) -> p) $ 
+    M.elems positiveChoices
+  indices = map PressureIndex $ cumsum 0 indexValues
   positiveValves = M.keys positiveChoices
 
 chooseNextValve ::
@@ -262,7 +260,7 @@ chooseNextValve gen (OpenedValves opened) pm =
  where
   choices = M.withoutKeys pm opened
   indexMap = pressureIndex choices
-  PressureRange (Pressure pMax) = calculateRange choices
+  PressureIndex pMax = maximum $ PressureIndex 1 : M.keys indexMap
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex indexChoice
 

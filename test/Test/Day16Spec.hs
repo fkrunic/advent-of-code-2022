@@ -237,7 +237,6 @@ spec =
               M.singleton
                 (PressureIndex 1)
                 (ValveID "A")
-        calculateRange pressures `shouldBe` PressureRange (Pressure 1)
         pressureIndex pressures `shouldBe` indices
         fst <$> choice `shouldBe` Just (ValveID "A")
 
@@ -418,7 +417,7 @@ spec =
 
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
-          pendingWith "long sim"
+          -- pendingWith "long sim"
           let actual = part1Solution exampleInput
               expected = Right $ Pressure 1651
           actual `shouldBe` expected
