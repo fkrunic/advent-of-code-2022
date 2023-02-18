@@ -33,6 +33,7 @@ default-extensions:
 - ImportQualifiedPost
 - GeneralizedNewtypeDeriving
 - OverloadedStrings
+- RankNTypes
 - RecordWildCards
 - TupleSections
 

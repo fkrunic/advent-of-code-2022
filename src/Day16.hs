@@ -42,10 +42,9 @@ type PressureIndexMap = Map PressureIndex ValveID
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 
-type IndexBuilder =
-  PressureMap ->
-  ValveID ->
-  PressureIndex
+type IndexBuilder = PressureMap -> ValveID -> PressureIndex
+type Selector g =
+  RandomGen g => g -> Map ValveID PressureIndex -> Maybe (ValveID, g)
 
 data Env = Env
   { flowMap :: FlowMap
@@ -139,30 +138,30 @@ cumsum initial =
 
 chooseNextValve ::
   RandomGen g =>
-  Env ->
   g ->
   OpenedValves ->
   PressureMap ->
   Maybe (ValveID, g)
-chooseNextValve _ gen (OpenedValves ovs) pm =
-  (,nextGen) . snd <$> M.lookupGE pIndex reverseMap
+chooseNextValve gen (OpenedValves ovs) pm =
+  uniformIndexSelector gen indexValues
  where
   nonOpenedValves = M.withoutKeys pm ovs
   indexValues = M.mapWithKey (\valve _ -> simpleIndex pm valve) nonOpenedValves
-  positiveIndices = M.filter (> PressureIndex 0) indexValues
-  cumulativeIndices = cumsum (PressureIndex 0) $ M.elems positiveIndices
-  reverseMap = M.fromList $ zip cumulativeIndices (M.keys positiveIndices)
-  PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
-  (indexChoice, nextGen) = uniformR (1, pMax) gen
-  pIndex = PressureIndex indexChoice
+
+-- positiveIndices = M.filter (> PressureIndex 0) indexValues
+-- cumulativeIndices = cumsum (PressureIndex 0) $ M.elems positiveIndices
+-- reverseMap = M.fromList $ zip cumulativeIndices (M.keys positiveIndices)
+-- PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
+-- (indexChoice, nextGen) = uniformR (1, pMax) gen
+-- pIndex = PressureIndex indexChoice
 
 simulate :: RandomGen g => g -> VolcanoSim [(ValveID, Pressure, MinutesRemaining)]
 simulate rand = do
   State remainingTime opened@(OpenedValves ovs) current <- get
-  env@(Env flows tunnels _) <- ask
+  Env flows tunnels _ <- ask
   let travel = travelMap current tunnels
       pm = pressureMap remainingTime flows travel
-  case chooseNextValve env rand opened pm of
+  case chooseNextValve rand opened pm of
     Nothing -> pure []
     Just (nextValve, nextRand) ->
       case pm ! nextValve of
@@ -187,10 +186,22 @@ bestRoute env state (NumberOfTrials trials) =
 
 --------------------------------------------------------------------------------
 
-simpleIndex :: PressureMap -> ValveID -> PressureIndex
+simpleIndex :: IndexBuilder
 simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
  where
   convert (Pressure p) = PressureIndex p
+
+uniformIndexSelector :: Selector g
+uniformIndexSelector gen indexMap =
+  (,nextGen) . snd
+    <$> M.lookupGE pIndex reverseMap
+ where
+  positiveIndices = M.filter (> PressureIndex 0) indexMap
+  cumulativeIndices = cumsum (PressureIndex 0) $ M.elems positiveIndices
+  reverseMap = M.fromList $ zip cumulativeIndices (M.keys positiveIndices)
+  PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
+  (indexChoice, nextGen) = uniformR (1, pMax) gen
+  pIndex = PressureIndex indexChoice
 
 --   M.fromList $ zip indices positiveValves
 --  where

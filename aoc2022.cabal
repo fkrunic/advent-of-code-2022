@@ -53,6 +53,7 @@ library
       ImportQualifiedPost
       GeneralizedNewtypeDeriving
       OverloadedStrings
+      RankNTypes
       RecordWildCards
       TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
@@ -77,6 +78,7 @@ executable aoc2022-exe
       ImportQualifiedPost
       GeneralizedNewtypeDeriving
       OverloadedStrings
+      RankNTypes
       RecordWildCards
       TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
@@ -119,6 +121,7 @@ test-suite aoc2022-test
       ImportQualifiedPost
       GeneralizedNewtypeDeriving
       OverloadedStrings
+      RankNTypes
       RecordWildCards
       TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
