@@ -194,15 +194,15 @@ totalReleased :: [(ValveID, Pressure, MinutesRemaining)] -> Pressure
 totalReleased = sum . map (\(_, p, _) -> p)
 
 bestRoute ::
-  NumberOfTrials ->
   Env -> 
+  NumberOfTrials ->
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
   Pressure
 bestRoute
-  (NumberOfTrials trials)
   env
+  (NumberOfTrials trials)
   currentValve
   remainingTime
   opened = maximum $ map (totalReleased . executeTrial) [1 .. trials]

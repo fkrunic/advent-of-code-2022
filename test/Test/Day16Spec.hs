@@ -237,8 +237,8 @@ spec =
       it "Can find the best route" $ do
         let actual =
               bestRoute
-                (NumberOfTrials 1000)
                 env
+                (NumberOfTrials 1000)
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
                 (OpenedValves S.empty)
@@ -260,8 +260,8 @@ spec =
 part1Solution :: Text -> Pressure
 part1Solution t =
   bestRoute
-    (NumberOfTrials 10000)
     env
+    (NumberOfTrials 10000)
     (ValveID "AA")
     (MinutesRemaining $ Minutes 30)
     (OpenedValves S.empty)
