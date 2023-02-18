@@ -47,6 +47,18 @@ type IndexBuilder =
   PressureMap ->
   PressureIndexMap
 
+data Env = Env
+  { flowMap :: FlowMap
+  , tunnelMap :: TunnelMap
+  , indexBuilder :: IndexBuilder
+  }
+
+data State = State
+  { minutesRemaining :: MinutesRemaining
+  , openedValves :: OpenedValves
+  }
+  deriving (Show, Eq)
+
 --------------------------------------------------------------------------------
 
 pValveID :: Parser ValveID
@@ -135,14 +147,12 @@ pressureIndex _ _ _ pm = M.fromList $ zip indices positiveValves
 
 chooseNextValve ::
   RandomGen g =>
-  IndexBuilder ->
-  FlowMap ->
-  TunnelMap ->
+  Env ->
   g ->
   OpenedValves ->
   PressureMap ->
   Maybe (ValveID, g)
-chooseNextValve builder flows tunnels gen opened@(OpenedValves ovs) pm =
+chooseNextValve (Env flows tunnels builder) gen opened@(OpenedValves ovs) pm =
   (,nextGen) . snd <$> M.lookupGE pIndex indexMap
  where
   choices = M.withoutKeys pm ovs
@@ -153,18 +163,16 @@ chooseNextValve builder flows tunnels gen opened@(OpenedValves ovs) pm =
 
 chooseRoute ::
   RandomGen g =>
-  IndexBuilder ->
-  FlowMap ->
-  TunnelMap ->
+  Env ->
   g ->
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
   [(ValveID, Pressure, MinutesRemaining)]
-chooseRoute builder flows tunnels rand currentValve remainingTime opened = do
+chooseRoute env@(Env flows tunnels _) rand currentValve remainingTime opened = do
   let travel = travelMap currentValve tunnels
   let pm = pressureMap remainingTime flows travel
-  case chooseNextValve builder flows tunnels rand opened pm of
+  case chooseNextValve env rand opened pm of
     Nothing -> []
     Just (nextValve, nextRand) ->
       case pm ! nextValve of
@@ -173,9 +181,7 @@ chooseRoute builder flows tunnels rand currentValve remainingTime opened = do
           let nextOpened = OpenedValves $ S.insert nextValve ovs
            in let rest =
                     chooseRoute
-                      builder
-                      flows
-                      tunnels
+                      env
                       nextRand
                       nextValve
                       nextRemaining
@@ -189,27 +195,21 @@ totalReleased = sum . map (\(_, p, _) -> p)
 
 bestRoute ::
   NumberOfTrials ->
-  IndexBuilder ->
-  FlowMap ->
-  TunnelMap ->
+  Env -> 
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
   Pressure
 bestRoute
   (NumberOfTrials trials)
-  builder
-  flows
-  tunnels
+  env
   currentValve
   remainingTime
   opened = maximum $ map (totalReleased . executeTrial) [1 .. trials]
    where
     executeTrial seed =
       chooseRoute
-        builder
-        flows
-        tunnels
+        env
         (mkStdGen $ fromIntegral seed)
         currentValve
         remainingTime

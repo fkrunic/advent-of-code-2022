@@ -17,34 +17,6 @@ import Text.Megaparsec.Char
 spec :: SpecWith ()
 spec =
   describe "Day 16 Tests" $ do
-    let flowMap =
-          M.fromList
-            [ (ValveID "AA", FlowRate 0)
-            , (ValveID "BB", FlowRate 13)
-            , (ValveID "CC", FlowRate 2)
-            , (ValveID "DD", FlowRate 20)
-            , (ValveID "EE", FlowRate 3)
-            , (ValveID "FF", FlowRate 0)
-            , (ValveID "GG", FlowRate 0)
-            , (ValveID "HH", FlowRate 22)
-            , (ValveID "II", FlowRate 0)
-            , (ValveID "JJ", FlowRate 21)
-            ]
-        tunnelMap =
-          M.fromList
-            [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
-            , (ValveID "BB", makeTVS ["CC", "AA"])
-            , (ValveID "CC", makeTVS ["DD", "BB"])
-            , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
-            , (ValveID "EE", makeTVS ["FF", "DD"])
-            , (ValveID "FF", makeTVS ["EE", "GG"])
-            , (ValveID "GG", makeTVS ["FF", "HH"])
-            , (ValveID "HH", makeTVS ["GG"])
-            , (ValveID "II", makeTVS ["AA", "JJ"])
-            , (ValveID "JJ", makeTVS ["II"])
-            ]
-        makeTVS = TunnelValves . S.fromList . map ValveID
-
     it "Parses Example Input" $ do
       let expected =
             [ InputLine (ValveID "AA") (FlowRate 0) (makeTVS ["DD", "II", "BB"])
@@ -108,13 +80,13 @@ spec =
               , (ValveID "II", Just $ TravelMinutes $ Minutes 1)
               , (ValveID "JJ", Just $ TravelMinutes $ Minutes 2)
               ]
-          actual = travelMap (ValveID "AA") tunnelMap
+          actual = travelMap (ValveID "AA") (tunnelMap env)
       actual `shouldBe` expected
 
     it "Pressure Maps" $ do
       let minutesRemaining = MinutesRemaining $ Minutes 30
-          travelM = travelMap (ValveID "AA") tunnelMap
-          actual = pressureMap minutesRemaining flowMap travelM
+          travelM = travelMap (ValveID "AA") (tunnelMap env)
+          actual = pressureMap minutesRemaining (flowMap env) travelM
           expected =
             M.fromList
               [ (ValveID "AA", Just (Pressure 0, MinutesRemaining $ Minutes 29))
@@ -146,12 +118,13 @@ spec =
               M.singleton
                 (ValveID "A")
                 (Just (Pressure 1, MinutesRemaining $ Minutes 1))
-            choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
+            choice = chooseNextValve env rand opened pressures
             indices =
               M.singleton
                 (PressureIndex 1)
                 (ValveID "A")
-        pressureIndex flowMap tunnelMap opened pressures `shouldBe` indices
+            actual = pressureIndex (flowMap env) (tunnelMap env) opened pressures
+        actual `shouldBe` indices
         fst <$> choice `shouldBe` Just (ValveID "A")
 
       it "No positive valves" $ do
@@ -161,7 +134,7 @@ spec =
               M.singleton
                 (ValveID "A")
                 (Just (Pressure 0, MinutesRemaining $ Minutes 1))
-            choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
+            choice = chooseNextValve env rand opened pressures
         choice `shouldBe` Nothing
 
       it "Only one positive valve and the rest zero" $ do
@@ -176,7 +149,7 @@ spec =
                 , (ValveID "E", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 , (ValveID "F", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 ]
-            choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
+            choice = chooseNextValve env rand opened pressures
         fst <$> choice `shouldBe` Just (ValveID "C")
 
       it "Only choosing positive valves" $ do
@@ -194,7 +167,7 @@ spec =
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 100] $ \_ -> do
                 g <- get
-                case chooseNextValve pressureIndex flowMap tunnelMap g opened pressures of
+                case chooseNextValve env g opened pressures of
                   Nothing -> return Nothing
                   Just (valve, g') -> do
                     put g'
@@ -217,7 +190,7 @@ spec =
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 10000] $ \_ -> do
                 g <- get
-                case chooseNextValve pressureIndex flowMap tunnelMap g opened pressures of
+                case chooseNextValve env g opened pressures of
                   Nothing -> return Nothing
                   Just (valve, g') -> do
                     put g'
@@ -230,9 +203,7 @@ spec =
       it "Can choose a route" $ do
         let actualV1 =
               chooseRoute
-                pressureIndex
-                flowMap
-                tunnelMap
+                env
                 (mkStdGen 42)
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
@@ -247,9 +218,7 @@ spec =
               ]
             actualV2 =
               chooseRoute
-                pressureIndex
-                flowMap
-                tunnelMap
+                env
                 (mkStdGen 14)
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
@@ -269,9 +238,7 @@ spec =
         let actual =
               bestRoute
                 (NumberOfTrials 1000)
-                pressureIndex
-                flowMap
-                tunnelMap
+                env
                 (ValveID "AA")
                 (MinutesRemaining $ Minutes 30)
                 (OpenedValves S.empty)
@@ -294,9 +261,7 @@ part1Solution :: Text -> Pressure
 part1Solution t =
   bestRoute
     (NumberOfTrials 10000)
-    pressureIndex
-    flowMap
-    tunnelMap
+    env
     (ValveID "AA")
     (MinutesRemaining $ Minutes 30)
     (OpenedValves S.empty)
@@ -305,6 +270,39 @@ part1Solution t =
   inputLines = parser t
   flowMap = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
   tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
+
+makeTVS :: [Text] -> TunnelValves
+makeTVS = TunnelValves . S.fromList . map ValveID
+
+env :: Env
+env = Env flowMap tunnelMap pressureIndex
+ where
+  flowMap =
+    M.fromList
+      [ (ValveID "AA", FlowRate 0)
+      , (ValveID "BB", FlowRate 13)
+      , (ValveID "CC", FlowRate 2)
+      , (ValveID "DD", FlowRate 20)
+      , (ValveID "EE", FlowRate 3)
+      , (ValveID "FF", FlowRate 0)
+      , (ValveID "GG", FlowRate 0)
+      , (ValveID "HH", FlowRate 22)
+      , (ValveID "II", FlowRate 0)
+      , (ValveID "JJ", FlowRate 21)
+      ]
+  tunnelMap =
+    M.fromList
+      [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
+      , (ValveID "BB", makeTVS ["CC", "AA"])
+      , (ValveID "CC", makeTVS ["DD", "BB"])
+      , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
+      , (ValveID "EE", makeTVS ["FF", "DD"])
+      , (ValveID "FF", makeTVS ["EE", "GG"])
+      , (ValveID "GG", makeTVS ["FF", "HH"])
+      , (ValveID "HH", makeTVS ["GG"])
+      , (ValveID "II", makeTVS ["AA", "JJ"])
+      , (ValveID "JJ", makeTVS ["II"])
+      ]
 
 exampleInput :: Text
 exampleInput =
