@@ -1,8 +1,8 @@
 module Test.Day16Spec (spec) where
 
 import Control.Monad
+import Control.Monad.Trans.RWS.CPS hiding (get, put)
 import Control.Monad.Trans.State.Strict hiding (State)
-import Control.Monad.Trans.RWS.CPS hiding (put, get)
 import Data.Either (fromRight)
 import Data.Map qualified as M
 import Data.Maybe (fromJust)
@@ -235,22 +235,24 @@ spec =
           actual `shouldBe` expected
 
 part1Solution :: Text -> Pressure
-part1Solution t = bestRoute env initialState (NumberOfTrials 10000)
+part1Solution t =
+  bestRoute (Env flows tunnels simpleIndex) initialState (NumberOfTrials 10000)
  where
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
-  flowMap = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
-  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
+  flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
+  tunnels = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
 
 makeTVS :: [Text] -> TunnelValves
 makeTVS = TunnelValves . S.fromList . map ValveID
 
 initialState :: State
-initialState = State
-  { minutesRemaining = MinutesRemaining (Minutes 30)
-  , openedValves = OpenedValves S.empty
-  , currentValve = ValveID "AA"
-  }
+initialState =
+  State
+    { minutesRemaining = MinutesRemaining (Minutes 30)
+    , openedValves = OpenedValves S.empty
+    , currentValve = ValveID "AA"
+    }
 
 env :: Env
 env = Env flowMap tunnelMap simpleIndex
