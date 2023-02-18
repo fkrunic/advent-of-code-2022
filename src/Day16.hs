@@ -98,7 +98,7 @@ pValveID = ValveID . T.pack <$> (symbol "Valve " *> some upperChar)
 
 pFlowRate :: Parser FlowRate
 pFlowRate =
-  FlowRate . fromIntegral
+  FlowRate
     <$> (symbol " has flow rate=" *> integer <* symbol ";")
 
 plurals :: Text -> Parser ()

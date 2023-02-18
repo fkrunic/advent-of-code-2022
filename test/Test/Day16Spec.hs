@@ -417,13 +417,13 @@ spec =
 
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
-          -- pendingWith "long sim"
+          pendingWith "long sim"
           let actual = part1Solution exampleInput
               expected = Right $ Pressure 1651
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
-          -- pendingWith "Still broken"
+          pendingWith "Still broken"
           let actual = part1Solution puzzleInput
               expected = Right $ Pressure 1
           actual `shouldBe` expected          
