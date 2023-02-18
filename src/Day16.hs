@@ -40,12 +40,6 @@ type PressureIndexMap = Map PressureIndex ValveID
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 
-data InfiniteMinutesErr = InfiniteMinutesErr
-  { distFromValve :: ValveID
-  , distToValve :: ValveID
-  }
-  deriving (Show, Eq)
-
 type IndexBuilder =
   FlowMap ->
   TunnelMap ->
