@@ -145,23 +145,24 @@ cumsum initial =
 chooseNextValve ::
   RandomGen g =>
   g ->
+  IndexBuilder -> 
   Selector ->
   OpenedValves ->
   PressureMap ->
   Maybe (ValveID, g)
-chooseNextValve gen selector (OpenedValves ovs) pm =
+chooseNextValve gen builder selector (OpenedValves ovs) pm =
   selector gen indexValues
  where
   nonOpenedValves = M.withoutKeys pm ovs
-  indexValues = M.mapWithKey (\valve _ -> simpleIndex pm valve) nonOpenedValves
+  indexValues = M.mapWithKey (\valve _ -> builder pm valve) nonOpenedValves
 
 simulate :: RandomGen g => g -> VolcanoSim [(ValveID, Pressure, MinutesRemaining)]
 simulate rand = do
   State remainingTime opened@(OpenedValves ovs) current <- get
-  Env flows tunnels _ selector <- ask
+  Env flows tunnels builder selector <- ask
   let travel = travelMap current tunnels
       pm = pressureMap remainingTime flows travel
-  case chooseNextValve rand selector opened pm of
+  case chooseNextValve rand builder selector opened pm of
     Nothing -> pure []
     Just (nextValve, nextRand) ->
       case pm ! nextValve of
