@@ -244,7 +244,7 @@ pressureIndex :: PressureMap -> PressureIndexMap
 pressureIndex pm = M.fromList $ zip indices positiveValves
  where
   positiveChoices = M.filter ((> Pressure 0) . fst) pm
-  indexValues = map (\(Pressure p, MinutesRemaining (Minutes m)) -> p) $ 
+  indexValues = map (\(Pressure p, MinutesRemaining (Minutes m)) -> p * m) $ 
     M.elems positiveChoices
   indices = map PressureIndex $ cumsum 0 indexValues
   positiveValves = M.keys positiveChoices

@@ -423,7 +423,7 @@ spec =
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
-          pendingWith "Still broken"
+          -- pendingWith "Still broken"
           let actual = part1Solution puzzleInput
               expected = Right $ Pressure 1
           actual `shouldBe` expected          
@@ -454,7 +454,7 @@ part1Dbg t =
 part1Solution :: Text -> Fork Pressure
 part1Solution t =
   bestRoute
-    (NumberOfTrials 10000)
+    (NumberOfTrials 50000)
     (ValveID "AA")
     (MinutesRemaining $ Minutes 30)
     (OpenedValves S.empty)
