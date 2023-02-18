@@ -95,7 +95,7 @@ spec =
               , (ValveID "II", (Pressure 0, MinutesRemaining $ Minutes 28))
               , (ValveID "JJ", (Pressure 567, MinutesRemaining $ Minutes 27))
               ]
-      actual `shouldBe` expected
+      actual `shouldBe` Right expected
 
     it "Pressure Tests" $ do
       let released =
@@ -280,7 +280,6 @@ spec =
                 , (ValveID "E", (Pressure 0, MinutesRemaining $ Minutes 1))
                 , (ValveID "F", (Pressure 1, MinutesRemaining $ Minutes 1))
                 ]
-
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 10000] $ \_ -> do
                 g <- get

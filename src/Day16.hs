@@ -1,6 +1,7 @@
 module Day16 where
 
 import Control.Monad (when)
+import Data.Either (fromRight)
 import Data.Foldable (foldrM)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
@@ -196,11 +197,14 @@ pressureMap ::
   MinutesRemaining ->
   FlowMap ->
   TravelMap ->
-  PressureMap
-pressureMap
-  remaining
-  flows =
-    M.mapWithKey (\valve tm -> pressure tm remaining (flows ! valve))
+  Fork PressureMap
+pressureMap remaining flows = fmap M.fromList . mapM getPressure . M.assocs
+ where
+  getPressure (valve, tm) =
+    note (UnrecognizedValve valve) $
+      M.lookup valve flows >>= Just . (valve,) . pressure tm remaining
+
+-- M.mapWithKey (\valve tm -> pressure tm remaining (flows ! valve))
 
 cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
@@ -231,6 +235,30 @@ chooseNextValve gen (OpenedValves opened) pm =
   PressureRange (Pressure pMax) = calculateRange choices
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex (Pressure indexChoice)
+
+-- chooseRoute ::
+--   RandomGen g =>
+--   g ->
+--   ValveID ->
+--   MinutesRemaining ->
+--   OpenedValves ->
+--   FlowMap ->
+--   TunnelMap ->
+--   Fork [(ValveID, Pressure, MinutesRemaining)]
+-- chooseRoute currentValve rand remainingTime opened flows tunnels = do
+
+--   case chooseNextValve rand opened pm of
+--     Nothing -> []
+--     Just (valve, nextRand) ->
+--       let travel = travelMap valve tunnels
+--         in (p, mr) = pm ! valve
+--       in let nextOpened = OpenedValves $ S.insert valve ovs
+--         in (valve, p, mr) : chooseRoute nextRand mr nextOpened flows tunnels
+
+--   where
+--     travel = fromRight $ travelMap currentValve tunnels
+--     pm = pressureMap remainingTime flows travel
+--     OpenedValves ovs = opened
 
 --------------------------------------------------------------------------------
 
