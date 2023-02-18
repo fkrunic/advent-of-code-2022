@@ -41,13 +41,6 @@ type PressureIndexMap = Map PressureIndex ValveID
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 
-data CannotTraverseErr = CannotTraverseErr
-  { fromValve :: ValveID
-  , toValve :: ValveID
-  , availableValves :: TunnelValves
-  }
-  deriving (Show, Eq)
-
 data InfiniteMinutesErr = InfiniteMinutesErr
   { distFromValve :: ValveID
   , distToValve :: ValveID
@@ -58,7 +51,6 @@ data Error
   = ValveAlreadyOpen ValveID
   | UnrecognizedValve ValveID
   | AlreadyAtLocation ValveID
-  | CannotTraverse CannotTraverseErr
   | InfiniteMinutes InfiniteMinutesErr
   deriving (Show, Eq)
 
