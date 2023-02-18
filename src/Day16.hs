@@ -8,8 +8,12 @@ import Data.Map qualified as M
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
+import Data.Text qualified as T
 import Graphs
+import Parsing
 import System.Random
+import Text.Megaparsec hiding (State)
+import Text.Megaparsec.Char
 import Utilities
 
 newtype ValveID = ValveID Text deriving (Show, Eq, Ord)
@@ -86,6 +90,32 @@ data TunnelPath = TunnelPath
   , endValve :: ValveID
   }
   deriving (Show, Eq, Ord)
+
+--------------------------------------------------------------------------------
+
+pValveID :: Parser ValveID
+pValveID = ValveID . T.pack <$> (symbol "Valve " *> some upperChar)
+
+pFlowRate :: Parser FlowRate
+pFlowRate =
+  FlowRate . fromIntegral
+    <$> (symbol " has flow rate=" *> integer <* symbol ";")
+
+plurals :: Text -> Parser ()
+plurals t = symbol t *> optional (char 's') *> space
+
+pTunnelValves :: Parser TunnelValves
+pTunnelValves =
+  TunnelValves . S.fromList . map (ValveID . T.pack)
+    <$> ( plurals "tunnel"
+            *> plurals "lead"
+            *> symbol "to"
+            *> plurals "valve"
+            *> some (some upperChar <* optional (symbol ","))
+        )
+
+pLine :: Parser InputLine
+pLine = InputLine <$> pValveID <*> pFlowRate <*> pTunnelValves
 
 --------------------------------------------------------------------------------
 
