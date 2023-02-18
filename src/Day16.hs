@@ -169,10 +169,10 @@ chooseRoute ::
   MinutesRemaining ->
   OpenedValves ->
   [(ValveID, Pressure, MinutesRemaining)]
-chooseRoute env@(Env flows tunnels _) rand currentValve remainingTime opened = do
+chooseRoute env@(Env flows tunnels _) rand currentValve remainingTime opened =
   let travel = travelMap currentValve tunnels
-  let pm = pressureMap remainingTime flows travel
-  case chooseNextValve env rand opened pm of
+  in let pm = pressureMap remainingTime flows travel
+  in case chooseNextValve env rand opened pm of
     Nothing -> []
     Just (nextValve, nextRand) ->
       case pm ! nextValve of
