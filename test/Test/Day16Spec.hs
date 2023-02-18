@@ -293,6 +293,69 @@ spec =
         numChoiceF `shouldBe` 94
         numChoiceC `shouldBe` 9906
 
+      it "Can choose a route" $ do
+        let flowMap =
+              M.fromList
+                [ (ValveID "AA", FlowRate 0)
+                , (ValveID "BB", FlowRate 13)
+                , (ValveID "CC", FlowRate 2)
+                , (ValveID "DD", FlowRate 20)
+                , (ValveID "EE", FlowRate 3)
+                , (ValveID "FF", FlowRate 0)
+                , (ValveID "GG", FlowRate 0)
+                , (ValveID "HH", FlowRate 22)
+                , (ValveID "II", FlowRate 0)
+                , (ValveID "JJ", FlowRate 21)
+                ]
+            tunnelMap =
+              M.fromList
+                [ (ValveID "AA", makeTVS ["DD", "II", "BB"])
+                , (ValveID "BB", makeTVS ["CC", "AA"])
+                , (ValveID "CC", makeTVS ["DD", "BB"])
+                , (ValveID "DD", makeTVS ["CC", "AA", "EE"])
+                , (ValveID "EE", makeTVS ["FF", "DD"])
+                , (ValveID "FF", makeTVS ["EE", "GG"])
+                , (ValveID "GG", makeTVS ["FF", "HH"])
+                , (ValveID "HH", makeTVS ["GG"])
+                , (ValveID "II", makeTVS ["AA", "JJ"])
+                , (ValveID "JJ", makeTVS ["II"])
+                ]
+            makeTVS = TunnelValves . S.fromList . map ValveID
+            actualV1 =
+              chooseRoute
+                (mkStdGen 42)
+                (ValveID "AA")
+                (MinutesRemaining $ Minutes 30)
+                (OpenedValves S.empty)
+                flowMap
+                tunnelMap
+            expectedV1 =
+              [ (ValveID "DD", Pressure 560, MinutesRemaining (Minutes 28))
+              , (ValveID "HH", Pressure 506, MinutesRemaining (Minutes 23))
+              , (ValveID "BB", Pressure 208, MinutesRemaining (Minutes 16))
+              , (ValveID "JJ", Pressure 252, MinutesRemaining (Minutes 12))
+              , (ValveID "EE", Pressure 21, MinutesRemaining (Minutes 7))
+              , (ValveID "CC", Pressure 8, MinutesRemaining (Minutes 4))
+              ]
+            actualV2 =
+              chooseRoute
+                (mkStdGen 14)
+                (ValveID "AA")
+                (MinutesRemaining $ Minutes 30)
+                (OpenedValves S.empty)
+                flowMap
+                tunnelMap
+            expectedV2 =
+              [ (ValveID "HH", Pressure 528, MinutesRemaining (Minutes 24))
+              , (ValveID "DD", Pressure 380, MinutesRemaining (Minutes 19))
+              , (ValveID "JJ", Pressure 315, MinutesRemaining (Minutes 15))
+              , (ValveID "BB", Pressure 143, MinutesRemaining (Minutes 11))
+              , (ValveID "EE", Pressure 21, MinutesRemaining (Minutes 7))
+              , (ValveID "CC", Pressure 8, MinutesRemaining (Minutes 4))
+              ]
+        actualV1 `shouldBe` Right expectedV1
+        actualV2 `shouldBe` Right expectedV2
+
 exampleInput :: Text
 exampleInput =
   T.intercalate
