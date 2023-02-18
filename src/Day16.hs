@@ -1,5 +1,6 @@
 module Day16 where
 
+import Control.Monad.Trans.RWS.CPS hiding (state)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Maybe (fromJust, isJust)
@@ -7,6 +8,7 @@ import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Void (Void)
 import Graphs
 import Parsing
 import System.Random
@@ -56,8 +58,11 @@ data Env = Env
 data State = State
   { minutesRemaining :: MinutesRemaining
   , openedValves :: OpenedValves
+  , currentValve :: ValveID
   }
   deriving (Show, Eq)
+
+type VolcanoSim = RWS Env () State
 
 --------------------------------------------------------------------------------
 
@@ -161,58 +166,33 @@ chooseNextValve (Env flows tunnels builder) gen opened@(OpenedValves ovs) pm =
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex indexChoice
 
-chooseRoute ::
-  RandomGen g =>
-  Env ->
-  g ->
-  ValveID ->
-  MinutesRemaining ->
-  OpenedValves ->
-  [(ValveID, Pressure, MinutesRemaining)]
-chooseRoute env@(Env flows tunnels _) rand currentValve remainingTime opened =
-  let travel = travelMap currentValve tunnels
-  in let pm = pressureMap remainingTime flows travel
-  in case chooseNextValve env rand opened pm of
-    Nothing -> []
+simulate :: RandomGen g => g -> VolcanoSim [(ValveID, Pressure, MinutesRemaining)]
+simulate rand = do
+  State remainingTime opened@(OpenedValves ovs) current <- get
+  env@(Env flows tunnels _) <- ask
+  let travel = travelMap current tunnels
+      pm = pressureMap remainingTime flows travel
+  case chooseNextValve env rand opened pm of
+    Nothing -> pure []
     Just (nextValve, nextRand) ->
       case pm ! nextValve of
         Nothing -> error $ "Cannot pick empty pressure valve " ++ show nextValve
-        Just (ps, nextRemaining) ->
+        Just (ps, nextRemaining) -> do
           let nextOpened = OpenedValves $ S.insert nextValve ovs
-           in let rest =
-                    chooseRoute
-                      env
-                      nextRand
-                      nextValve
-                      nextRemaining
-                      nextOpened
-               in (nextValve, ps, nextRemaining) : rest
- where
-  OpenedValves ovs = opened
+          modify $ \s -> s{openedValves = nextOpened}
+          modify $ \s -> s{currentValve = nextValve}
+          modify $ \s -> s{minutesRemaining = nextRemaining}
+          rest <- simulate nextRand
+          return $ (nextValve, ps, nextRemaining) : rest
 
 totalReleased :: [(ValveID, Pressure, MinutesRemaining)] -> Pressure
 totalReleased = sum . map (\(_, p, _) -> p)
 
-bestRoute ::
-  Env -> 
-  NumberOfTrials ->
-  ValveID ->
-  MinutesRemaining ->
-  OpenedValves ->
-  Pressure
-bestRoute
-  env
-  (NumberOfTrials trials)
-  currentValve
-  remainingTime
-  opened = maximum $ map (totalReleased . executeTrial) [1 .. trials]
+bestRoute :: Env -> State -> NumberOfTrials -> Pressure
+bestRoute env state (NumberOfTrials trials) =
+  maximum $ map (totalReleased . fst . executeTrial) [1 .. trials]
    where
-    executeTrial seed =
-      chooseRoute
-        env
-        (mkStdGen $ fromIntegral seed)
-        currentValve
-        remainingTime
-        opened
-
+    executeTrial seed = 
+      evalRWS (simulate (mkStdGen $ fromIntegral seed)) env state
+  
 --------------------------------------------------------------------------------

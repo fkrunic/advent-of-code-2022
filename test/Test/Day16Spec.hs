@@ -1,7 +1,8 @@
 module Test.Day16Spec (spec) where
 
 import Control.Monad
-import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.State.Strict hiding (State)
+import Control.Monad.Trans.RWS.CPS hiding (put, get)
 import Data.Either (fromRight)
 import Data.Map qualified as M
 import Data.Maybe (fromJust)
@@ -201,13 +202,7 @@ spec =
         numChoiceC `shouldBe` 9906
 
       it "Can choose a route" $ do
-        let actualV1 =
-              chooseRoute
-                env
-                (mkStdGen 42)
-                (ValveID "AA")
-                (MinutesRemaining $ Minutes 30)
-                (OpenedValves S.empty)
+        let actualV1 = fst $ evalRWS (simulate (mkStdGen 42)) env initialState
             expectedV1 =
               [ (ValveID "DD", Pressure 560, MinutesRemaining (Minutes 28))
               , (ValveID "HH", Pressure 506, MinutesRemaining (Minutes 23))
@@ -216,13 +211,7 @@ spec =
               , (ValveID "EE", Pressure 21, MinutesRemaining (Minutes 7))
               , (ValveID "CC", Pressure 8, MinutesRemaining (Minutes 4))
               ]
-            actualV2 =
-              chooseRoute
-                env
-                (mkStdGen 14)
-                (ValveID "AA")
-                (MinutesRemaining $ Minutes 30)
-                (OpenedValves S.empty)
+            actualV2 = fst $ evalRWS (simulate (mkStdGen 14)) env initialState
             expectedV2 =
               [ (ValveID "HH", Pressure 528, MinutesRemaining (Minutes 24))
               , (ValveID "DD", Pressure 380, MinutesRemaining (Minutes 19))
@@ -235,13 +224,7 @@ spec =
         actualV2 `shouldBe` expectedV2
 
       it "Can find the best route" $ do
-        let actual =
-              bestRoute
-                env
-                (NumberOfTrials 1000)
-                (ValveID "AA")
-                (MinutesRemaining $ Minutes 30)
-                (OpenedValves S.empty)
+        let actual = bestRoute env initialState (NumberOfTrials 1000)
             expected = Pressure 1651
         actual `shouldBe` expected
 
@@ -258,13 +241,7 @@ spec =
           actual `shouldBe` expected
 
 part1Solution :: Text -> Pressure
-part1Solution t =
-  bestRoute
-    env
-    (NumberOfTrials 10000)
-    (ValveID "AA")
-    (MinutesRemaining $ Minutes 30)
-    (OpenedValves S.empty)
+part1Solution t = bestRoute env initialState (NumberOfTrials 10000)
  where
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
@@ -273,6 +250,13 @@ part1Solution t =
 
 makeTVS :: [Text] -> TunnelValves
 makeTVS = TunnelValves . S.fromList . map ValveID
+
+initialState :: State
+initialState = State
+  { minutesRemaining = MinutesRemaining (Minutes 30)
+  , openedValves = OpenedValves S.empty
+  , currentValve = ValveID "AA"
+  }
 
 env :: Env
 env = Env flowMap tunnelMap pressureIndex
