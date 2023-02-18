@@ -204,8 +204,8 @@ travelMap valve tunnels = M.fromList <$> minutes
   distances = dijkstra source vertices getEdges
   buildMinutes (Vertex neighbor, d) =
     note (InfiniteMinutes (InfiniteMinutesErr valve neighbor)) $
-      unpackDistance d >>= 
-        Just . (neighbor,) . TravelMinutes . Minutes . fromIntegral
+      unpackDistance d
+        >>= Just . (neighbor,) . TravelMinutes . Minutes . fromIntegral
   minutes = mapM buildMinutes $ M.assocs distances
 
 --------------------------------------------------------------------------------
@@ -240,12 +240,25 @@ cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
   tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
 
+averagePressureOnOtherValves :: ValveID -> PressureMap -> Int
+averagePressureOnOtherValves pivot pm =
+  totalPressure `div` (totalMinutes + 1)
+ where
+  pivoted = M.delete pivot pm
+  Pressure totalPressure = sum . map fst $ M.elems pivoted
+  Minutes totalMinutes = sum . map (unpack . snd) $ M.elems pivoted
+  unpack (MinutesRemaining w) = w
+
 pressureIndex :: PressureMap -> PressureIndexMap
 pressureIndex pm = M.fromList $ zip indices positiveValves
  where
   positiveChoices = M.filter ((> Pressure 0) . fst) pm
-  indexValues = map (\(Pressure p, MinutesRemaining (Minutes m)) -> p * m) $ 
-    M.elems positiveChoices
+  indexValues =
+    map
+      ( \(valve, (Pressure p, _)) ->
+          (averagePressureOnOtherValves valve positiveChoices + p) `div` 2
+      )
+      $ M.assocs positiveChoices
   indices = map PressureIndex $ cumsum 0 indexValues
   positiveValves = M.keys positiveChoices
 
