@@ -280,7 +280,6 @@ spec =
 
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
-          pendingWith "long sim"
           let actual = part1Solution exampleInput
               expected = Right $ Pressure 1651
           actual `shouldBe` expected
@@ -294,7 +293,7 @@ spec =
 part1Solution :: Text -> Fork Pressure
 part1Solution t =
   bestRoute
-    (NumberOfTrials 50000)
+    (NumberOfTrials 10000)
     pressureIndex
     flowMap
     tunnelMap
