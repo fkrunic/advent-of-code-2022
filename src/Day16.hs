@@ -48,8 +48,7 @@ data InfiniteMinutesErr = InfiniteMinutesErr
   deriving (Show, Eq)
 
 data Error
-  = UnrecognizedValve ValveID
-  | InfiniteMinutes InfiniteMinutesErr
+  = InfiniteMinutes InfiniteMinutesErr
   deriving (Show, Eq)
 
 type Fork = Either Error
@@ -132,9 +131,6 @@ pressureMap remaining flows = M.fromList . map getPressure . M.assocs
   getPressure (valve, tm) =
     (valve,) $ pressure tm remaining $ flows ! valve
 
--- note (UnrecognizedValve valve) $
--- M.lookup valve flows >>= Just . (valve,) . pressure tm remaining
-
 cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
   tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
@@ -181,10 +177,8 @@ chooseRoute builder flows tunnels rand currentValve remainingTime opened = do
   case chooseNextValve builder flows tunnels rand opened pm of
     Nothing -> Right []
     Just (nextValve, nextRand) -> do
-      (ps, nextRemaining) <-
-        note (UnrecognizedValve nextValve) $
-          M.lookup nextValve pm
-      let nextOpened = OpenedValves $ S.insert nextValve ovs
+      let (ps, nextRemaining) = pm ! nextValve
+          nextOpened = OpenedValves $ S.insert nextValve ovs
       rest <-
         chooseRoute
           builder
