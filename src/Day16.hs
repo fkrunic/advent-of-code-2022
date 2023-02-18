@@ -17,11 +17,11 @@ import Text.Megaparsec.Char
 import Utilities
 
 newtype ValveID = ValveID Text deriving (Show, Eq, Ord)
-newtype FlowRate = FlowRate Word deriving (Show, Eq, Ord, Num)
-newtype Pressure = Pressure Word deriving (Show, Eq, Ord, Num)
-newtype PressureIndex = PressureIndex Pressure deriving (Show, Eq, Ord)
+newtype FlowRate = FlowRate Int deriving (Show, Eq, Ord, Num)
+newtype Pressure = Pressure Int deriving (Show, Eq, Ord, Num)
+newtype PressureIndex = PressureIndex Int deriving (Show, Eq, Ord)
 newtype PressureRange = PressureRange Pressure deriving (Show, Eq)
-newtype Minutes = Minutes Word deriving (Show, Eq, Ord, Num)
+newtype Minutes = Minutes Int deriving (Show, Eq, Ord, Num)
 newtype NumberOfTrials = NumberOfTrials Word deriving (Show, Eq)
 
 newtype OpenedValves = OpenedValves (Set ValveID) deriving (Show, Eq, Ord)
@@ -204,7 +204,8 @@ travelMap valve tunnels = M.fromList <$> minutes
   distances = dijkstra source vertices getEdges
   buildMinutes (Vertex neighbor, d) =
     note (InfiniteMinutes (InfiniteMinutesErr valve neighbor)) $
-      unpackDistance d >>= Just . (neighbor,) . TravelMinutes . Minutes
+      unpackDistance d >>= 
+        Just . (neighbor,) . TravelMinutes . Minutes . fromIntegral
   minutes = mapM buildMinutes $ M.assocs distances
 
 --------------------------------------------------------------------------------
@@ -246,8 +247,8 @@ pressureIndex :: PressureMap -> PressureIndexMap
 pressureIndex pm = M.fromList $ zip indices positiveValves
  where
   positiveChoices = M.filter ((> Pressure 0) . fst) pm
-  positivePressures = map fst $ M.elems positiveChoices
-  indices = map PressureIndex $ cumsum (Pressure 0) positivePressures
+  positivePressures = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
+  indices = map PressureIndex $ cumsum 0 positivePressures
   positiveValves = M.keys positiveChoices
 
 chooseNextValve ::
@@ -263,7 +264,7 @@ chooseNextValve gen (OpenedValves opened) pm =
   indexMap = pressureIndex choices
   PressureRange (Pressure pMax) = calculateRange choices
   (indexChoice, nextGen) = uniformR (1, pMax) gen
-  pIndex = PressureIndex (Pressure indexChoice)
+  pIndex = PressureIndex indexChoice
 
 chooseRoute ::
   RandomGen g =>

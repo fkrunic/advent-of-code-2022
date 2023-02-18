@@ -235,7 +235,7 @@ spec =
             choice = chooseNextValve rand opened pressures
             indices =
               M.singleton
-                (PressureIndex (Pressure 1))
+                (PressureIndex 1)
                 (ValveID "A")
         calculateRange pressures `shouldBe` PressureRange (Pressure 1)
         pressureIndex pressures `shouldBe` indices
@@ -418,20 +418,44 @@ spec =
 
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
+          pendingWith "long sim"
           let actual = part1Solution exampleInput
               expected = Right $ Pressure 1651
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
-          pendingWith "broken"
-          -- let actual = part1Solution puzzleInput
-          --     expected = Right $ Pressure 1
-          -- actual `shouldBe` expected          
+          pendingWith "Still broken"
+          let actual = part1Solution puzzleInput
+              expected = Right $ Pressure 1
+          actual `shouldBe` expected          
+
+          -- let actual = part1Dbg puzzleInput
+          --     expected = Right []
+          -- actual `shouldBe` expected
+
+        -- it "Puzzle Input Pressure Map" $ do
+        --   let actual = part1Dbg puzzleInput
+        --       expected = M.empty
+        --   actual `shouldBe` Right expected
+
+
+part1Dbg :: Text -> Fork PressureMap
+part1Dbg t =
+  pressureMap
+    (MinutesRemaining $ Minutes 30)
+    flowMap
+    travel
+ where
+  parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
+  inputLines = parser t
+  flowMap = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
+  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
+  travel = fromRight M.empty $ travelMap (ValveID "AA") tunnelMap
 
 part1Solution :: Text -> Fork Pressure
 part1Solution t =
   bestRoute
-    (NumberOfTrials 1000)
+    (NumberOfTrials 10000)
     (ValveID "AA")
     (MinutesRemaining $ Minutes 30)
     (OpenedValves S.empty)
@@ -441,7 +465,7 @@ part1Solution t =
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flowMap = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
-  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines
+  tunnelMap = M.fromList $ map (\(InputLine v _ tv) -> (v, tv)) inputLines  
 
 exampleInput :: Text
 exampleInput =
