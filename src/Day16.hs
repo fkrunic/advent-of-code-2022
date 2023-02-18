@@ -48,8 +48,7 @@ data InfiniteMinutesErr = InfiniteMinutesErr
   deriving (Show, Eq)
 
 data Error
-  = ValveAlreadyOpen ValveID
-  | UnrecognizedValve ValveID
+  = UnrecognizedValve ValveID
   | InfiniteMinutes InfiniteMinutesErr
   deriving (Show, Eq)
 
