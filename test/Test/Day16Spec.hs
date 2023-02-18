@@ -97,36 +97,36 @@ spec =
     it "Minute Maps" $ do
       let expected =
             M.fromList
-              [ (ValveID "AA", TravelMinutes $ Minutes 0)
-              , (ValveID "BB", TravelMinutes $ Minutes 1)
-              , (ValveID "CC", TravelMinutes $ Minutes 2)
-              , (ValveID "DD", TravelMinutes $ Minutes 1)
-              , (ValveID "EE", TravelMinutes $ Minutes 2)
-              , (ValveID "FF", TravelMinutes $ Minutes 3)
-              , (ValveID "GG", TravelMinutes $ Minutes 4)
-              , (ValveID "HH", TravelMinutes $ Minutes 5)
-              , (ValveID "II", TravelMinutes $ Minutes 1)
-              , (ValveID "JJ", TravelMinutes $ Minutes 2)
+              [ (ValveID "AA", Just $ TravelMinutes $ Minutes 0)
+              , (ValveID "BB", Just $ TravelMinutes $ Minutes 1)
+              , (ValveID "CC", Just $ TravelMinutes $ Minutes 2)
+              , (ValveID "DD", Just $ TravelMinutes $ Minutes 1)
+              , (ValveID "EE", Just $ TravelMinutes $ Minutes 2)
+              , (ValveID "FF", Just $ TravelMinutes $ Minutes 3)
+              , (ValveID "GG", Just $ TravelMinutes $ Minutes 4)
+              , (ValveID "HH", Just $ TravelMinutes $ Minutes 5)
+              , (ValveID "II", Just $ TravelMinutes $ Minutes 1)
+              , (ValveID "JJ", Just $ TravelMinutes $ Minutes 2)
               ]
           actual = travelMap (ValveID "AA") tunnelMap
-      actual `shouldBe` Right expected
+      actual `shouldBe` expected
 
     it "Pressure Maps" $ do
       let minutesRemaining = MinutesRemaining $ Minutes 30
-          travelM = fromRight M.empty $ travelMap (ValveID "AA") tunnelMap
+          travelM = travelMap (ValveID "AA") tunnelMap
           actual = pressureMap minutesRemaining flowMap travelM
           expected =
             M.fromList
-              [ (ValveID "AA", (Pressure 0, MinutesRemaining $ Minutes 29))
-              , (ValveID "BB", (Pressure 364, MinutesRemaining $ Minutes 28))
-              , (ValveID "CC", (Pressure 54, MinutesRemaining $ Minutes 27))
-              , (ValveID "DD", (Pressure 560, MinutesRemaining $ Minutes 28))
-              , (ValveID "EE", (Pressure 81, MinutesRemaining $ Minutes 27))
-              , (ValveID "FF", (Pressure 0, MinutesRemaining $ Minutes 26))
-              , (ValveID "GG", (Pressure 0, MinutesRemaining $ Minutes 25))
-              , (ValveID "HH", (Pressure 528, MinutesRemaining $ Minutes 24))
-              , (ValveID "II", (Pressure 0, MinutesRemaining $ Minutes 28))
-              , (ValveID "JJ", (Pressure 567, MinutesRemaining $ Minutes 27))
+              [ (ValveID "AA", Just (Pressure 0, MinutesRemaining $ Minutes 29))
+              , (ValveID "BB", Just (Pressure 364, MinutesRemaining $ Minutes 28))
+              , (ValveID "CC", Just (Pressure 54, MinutesRemaining $ Minutes 27))
+              , (ValveID "DD", Just (Pressure 560, MinutesRemaining $ Minutes 28))
+              , (ValveID "EE", Just (Pressure 81, MinutesRemaining $ Minutes 27))
+              , (ValveID "FF", Just (Pressure 0, MinutesRemaining $ Minutes 26))
+              , (ValveID "GG", Just (Pressure 0, MinutesRemaining $ Minutes 25))
+              , (ValveID "HH", Just (Pressure 528, MinutesRemaining $ Minutes 24))
+              , (ValveID "II", Just (Pressure 0, MinutesRemaining $ Minutes 28))
+              , (ValveID "JJ", Just (Pressure 567, MinutesRemaining $ Minutes 27))
               ]
       actual `shouldBe` expected
 
@@ -145,7 +145,7 @@ spec =
             pressures =
               M.singleton
                 (ValveID "A")
-                (Pressure 1, MinutesRemaining $ Minutes 1)
+                (Just (Pressure 1, MinutesRemaining $ Minutes 1))
             choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
             indices =
               M.singleton
@@ -160,7 +160,7 @@ spec =
             pressures =
               M.singleton
                 (ValveID "A")
-                (Pressure 0, MinutesRemaining $ Minutes 1)
+                (Just (Pressure 0, MinutesRemaining $ Minutes 1))
             choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
         choice `shouldBe` Nothing
 
@@ -169,12 +169,12 @@ spec =
             opened = OpenedValves S.empty
             pressures =
               M.fromList
-                [ (ValveID "A", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "B", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "C", (Pressure 1, MinutesRemaining $ Minutes 1))
-                , (ValveID "D", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "E", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "F", (Pressure 0, MinutesRemaining $ Minutes 1))
+                [ (ValveID "A", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "B", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "C", Just (Pressure 1, MinutesRemaining $ Minutes 1))
+                , (ValveID "D", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "E", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "F", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 ]
             choice = chooseNextValve pressureIndex flowMap tunnelMap rand opened pressures
         fst <$> choice `shouldBe` Just (ValveID "C")
@@ -183,12 +183,12 @@ spec =
         let opened = OpenedValves S.empty
             pressures =
               M.fromList
-                [ (ValveID "A", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "B", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "C", (Pressure 10, MinutesRemaining $ Minutes 1))
-                , (ValveID "D", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "E", (Pressure 10, MinutesRemaining $ Minutes 1))
-                , (ValveID "F", (Pressure 3, MinutesRemaining $ Minutes 1))
+                [ (ValveID "A", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "B", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "C", Just (Pressure 10, MinutesRemaining $ Minutes 1))
+                , (ValveID "D", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "E", Just (Pressure 10, MinutesRemaining $ Minutes 1))
+                , (ValveID "F", Just (Pressure 3, MinutesRemaining $ Minutes 1))
                 ]
 
             choices = sequence $ flip evalState (mkStdGen 42) $ do
@@ -207,12 +207,12 @@ spec =
         let opened = OpenedValves S.empty
             pressures =
               M.fromList
-                [ (ValveID "A", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "B", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "C", (Pressure 100, MinutesRemaining $ Minutes 1))
-                , (ValveID "D", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "E", (Pressure 0, MinutesRemaining $ Minutes 1))
-                , (ValveID "F", (Pressure 1, MinutesRemaining $ Minutes 1))
+                [ (ValveID "A", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "B", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "C", Just (Pressure 100, MinutesRemaining $ Minutes 1))
+                , (ValveID "D", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "E", Just (Pressure 0, MinutesRemaining $ Minutes 1))
+                , (ValveID "F", Just (Pressure 1, MinutesRemaining $ Minutes 1))
                 ]
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 10000] $ \_ -> do
@@ -262,8 +262,8 @@ spec =
               , (ValveID "EE", Pressure 21, MinutesRemaining (Minutes 7))
               , (ValveID "CC", Pressure 8, MinutesRemaining (Minutes 4))
               ]
-        actualV1 `shouldBe` Right expectedV1
-        actualV2 `shouldBe` Right expectedV2
+        actualV1 `shouldBe` expectedV1
+        actualV2 `shouldBe` expectedV2
 
       it "Can find the best route" $ do
         let actual =
@@ -276,21 +276,21 @@ spec =
                 (MinutesRemaining $ Minutes 30)
                 (OpenedValves S.empty)
             expected = Pressure 1651
-        actual `shouldBe` Right expected
+        actual `shouldBe` expected
 
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
           let actual = part1Solution exampleInput
-              expected = Right $ Pressure 1651
+              expected = Pressure 1651
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
           pendingWith "Still broken"
           let actual = part1Solution puzzleInput
-              expected = Right $ Pressure 1
+              expected = Pressure 1
           actual `shouldBe` expected
 
-part1Solution :: Text -> Fork Pressure
+part1Solution :: Text -> Pressure
 part1Solution t =
   bestRoute
     (NumberOfTrials 10000)

@@ -1,8 +1,8 @@
 module Day16 where
 
-import Control.Monad (forM)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
+import Data.Maybe (fromJust, isJust)
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
@@ -12,7 +12,6 @@ import Parsing
 import System.Random
 import Text.Megaparsec hiding (State)
 import Text.Megaparsec.Char
-import Utilities
 
 newtype ValveID = ValveID Text deriving (Show, Eq, Ord)
 newtype FlowRate = FlowRate Int deriving (Show, Eq, Ord, Num)
@@ -34,8 +33,8 @@ data InputLine = InputLine
 
 type FlowMap = Map ValveID FlowRate
 type TunnelMap = Map ValveID TunnelValves
-type TravelMap = Map ValveID TravelMinutes
-type PressureMap = Map ValveID (Pressure, MinutesRemaining)
+type TravelMap = Map ValveID (Maybe TravelMinutes)
+type PressureMap = Map ValveID (Maybe (Pressure, MinutesRemaining))
 type PressureIndexMap = Map PressureIndex ValveID
 
 newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
@@ -46,12 +45,6 @@ data InfiniteMinutesErr = InfiniteMinutesErr
   , distToValve :: ValveID
   }
   deriving (Show, Eq)
-
-data Error
-  = InfiniteMinutes InfiniteMinutesErr
-  deriving (Show, Eq)
-
-type Fork = Either Error
 
 type IndexBuilder =
   FlowMap ->
@@ -88,8 +81,8 @@ pLine = InputLine <$> pValveID <*> pFlowRate <*> pTunnelValves
 
 --------------------------------------------------------------------------------
 
-travelMap :: ValveID -> TunnelMap -> Fork TravelMap
-travelMap valve tunnels = M.fromList <$> minutes
+travelMap :: ValveID -> TunnelMap -> TravelMap
+travelMap valve tunnels = M.fromList minutes
  where
   source = Vertex valve
   vertices = map Vertex $ M.keys tunnels
@@ -98,11 +91,11 @@ travelMap valve tunnels = M.fromList <$> minutes
       tunnels ! v
   unpackTV (TunnelValves vs) = vs
   distances = dijkstra source vertices getEdges
-  buildMinutes (Vertex neighbor, d) =
-    note (InfiniteMinutes (InfiniteMinutesErr valve neighbor)) $
-      unpackDistance d
-        >>= Just . (neighbor,) . TravelMinutes . Minutes . fromIntegral
-  minutes = mapM buildMinutes $ M.assocs distances
+  convertDistance d =
+    unpackDistance d
+      >>= Just . TravelMinutes . Minutes . fromIntegral
+  buildMinutes (Vertex neighbor, d) = (neighbor, convertDistance d)
+  minutes = map buildMinutes $ M.assocs distances
 
 --------------------------------------------------------------------------------
 
@@ -126,10 +119,10 @@ pressureMap ::
   FlowMap ->
   TravelMap ->
   PressureMap
-pressureMap remaining flows = M.fromList . map getPressure . M.assocs
+pressureMap remaining flows = M.mapWithKey getPressure
  where
-  getPressure (valve, tm) =
-    (valve,) $ pressure tm remaining $ flows ! valve
+  getPressure valve maybeTM =
+    maybeTM >>= \tm -> Just $ pressure tm remaining $ flows ! valve
 
 cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
@@ -138,7 +131,10 @@ cumsum initial =
 pressureIndex :: IndexBuilder
 pressureIndex _ _ _ pm = M.fromList $ zip indices positiveValves
  where
-  positiveChoices = M.filter ((> Pressure 0) . fst) pm
+  positiveChoices =
+    M.filter ((> Pressure 0) . fst) $
+      M.map fromJust $
+        M.filter isJust pm
   indexValues = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
   indices = map PressureIndex $ cumsum 0 indexValues
   positiveValves = M.keys positiveChoices
@@ -170,25 +166,27 @@ chooseRoute ::
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
-  Fork [(ValveID, Pressure, MinutesRemaining)]
+  [(ValveID, Pressure, MinutesRemaining)]
 chooseRoute builder flows tunnels rand currentValve remainingTime opened = do
-  travel <- travelMap currentValve tunnels
+  let travel = travelMap currentValve tunnels
   let pm = pressureMap remainingTime flows travel
   case chooseNextValve builder flows tunnels rand opened pm of
-    Nothing -> Right []
-    Just (nextValve, nextRand) -> do
-      let (ps, nextRemaining) = pm ! nextValve
-          nextOpened = OpenedValves $ S.insert nextValve ovs
-      rest <-
-        chooseRoute
-          builder
-          flows
-          tunnels
-          nextRand
-          nextValve
-          nextRemaining
-          nextOpened
-      return $ (nextValve, ps, nextRemaining) : rest
+    Nothing -> []
+    Just (nextValve, nextRand) ->
+      case pm ! nextValve of
+        Nothing -> error $ "Cannot pick empty pressure valve " ++ show nextValve
+        Just (ps, nextRemaining) ->
+          let nextOpened = OpenedValves $ S.insert nextValve ovs
+           in let rest =
+                    chooseRoute
+                      builder
+                      flows
+                      tunnels
+                      nextRand
+                      nextValve
+                      nextRemaining
+                      nextOpened
+               in (nextValve, ps, nextRemaining) : rest
  where
   OpenedValves ovs = opened
 
@@ -203,7 +201,7 @@ bestRoute ::
   ValveID ->
   MinutesRemaining ->
   OpenedValves ->
-  Fork Pressure
+  Pressure
 bestRoute
   (NumberOfTrials trials)
   builder
@@ -211,16 +209,16 @@ bestRoute
   tunnels
   currentValve
   remainingTime
-  opened =
-    fmap maximum $ forM [1 .. trials] $ \seed ->
-      totalReleased
-        <$> chooseRoute
-          builder
-          flows
-          tunnels
-          (mkStdGen $ fromIntegral seed)
-          currentValve
-          remainingTime
-          opened
+  opened = maximum $ map (totalReleased . executeTrial) [1 .. trials]
+   where
+    executeTrial seed =
+      chooseRoute
+        builder
+        flows
+        tunnels
+        (mkStdGen $ fromIntegral seed)
+        currentValve
+        remainingTime
+        opened
 
 --------------------------------------------------------------------------------
