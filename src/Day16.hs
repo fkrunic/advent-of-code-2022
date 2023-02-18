@@ -3,7 +3,7 @@ module Day16 where
 import Control.Monad.Trans.RWS.CPS hiding (state)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
-import Data.Maybe (fromJust, isJust)
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
@@ -18,7 +18,7 @@ import Text.Megaparsec.Char
 newtype ValveID = ValveID Text deriving (Show, Eq, Ord)
 newtype FlowRate = FlowRate Int deriving (Show, Eq, Ord, Num)
 newtype Pressure = Pressure Int deriving (Show, Eq, Ord, Num)
-newtype PressureIndex = PressureIndex Int deriving (Show, Eq, Ord)
+newtype PressureIndex = PressureIndex Int deriving (Show, Eq, Ord, Num)
 newtype PressureRange = PressureRange Pressure deriving (Show, Eq)
 newtype Minutes = Minutes Int deriving (Show, Eq, Ord, Num)
 newtype NumberOfTrials = NumberOfTrials Word deriving (Show, Eq)
@@ -43,11 +43,9 @@ newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 
 type IndexBuilder =
-  FlowMap ->
-  TunnelMap ->
-  OpenedValves ->
   PressureMap ->
-  PressureIndexMap
+  ValveID ->
+  PressureIndex
 
 data Env = Env
   { flowMap :: FlowMap
@@ -139,17 +137,6 @@ cumsum :: Num a => a -> [a] -> [a]
 cumsum initial =
   tail . reverse . foldr (\e acc -> head acc + e : acc) [initial] . reverse
 
-pressureIndex :: IndexBuilder
-pressureIndex _ _ _ pm = M.fromList $ zip indices positiveValves
- where
-  positiveChoices =
-    M.filter ((> Pressure 0) . fst) $
-      M.map fromJust $
-        M.filter isJust pm
-  indexValues = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
-  indices = map PressureIndex $ cumsum 0 indexValues
-  positiveValves = M.keys positiveChoices
-
 chooseNextValve ::
   RandomGen g =>
   Env ->
@@ -157,12 +144,15 @@ chooseNextValve ::
   OpenedValves ->
   PressureMap ->
   Maybe (ValveID, g)
-chooseNextValve (Env flows tunnels builder) gen opened@(OpenedValves ovs) pm =
-  (,nextGen) . snd <$> M.lookupGE pIndex indexMap
+chooseNextValve _ gen (OpenedValves ovs) pm =
+  (,nextGen) . snd <$> M.lookupGE pIndex reverseMap
  where
-  choices = M.withoutKeys pm ovs
-  indexMap = builder flows tunnels opened choices
-  PressureIndex pMax = maximum $ PressureIndex 1 : M.keys indexMap
+  nonOpenedValves = M.withoutKeys pm ovs
+  indexValues = M.mapWithKey (\valve _ -> simpleIndex pm valve) nonOpenedValves
+  positiveIndices = M.filter (> PressureIndex 0) indexValues
+  cumulativeIndices = cumsum (PressureIndex 0) $ M.elems positiveIndices
+  reverseMap = M.fromList $ zip cumulativeIndices (M.keys positiveIndices)
+  PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex indexChoice
 
@@ -191,8 +181,23 @@ totalReleased = sum . map (\(_, p, _) -> p)
 bestRoute :: Env -> State -> NumberOfTrials -> Pressure
 bestRoute env state (NumberOfTrials trials) =
   maximum $ map (totalReleased . fst . executeTrial) [1 .. trials]
-   where
-    executeTrial seed = 
-      evalRWS (simulate (mkStdGen $ fromIntegral seed)) env state
-  
+ where
+  executeTrial seed =
+    evalRWS (simulate (mkStdGen $ fromIntegral seed)) env state
+
 --------------------------------------------------------------------------------
+
+simpleIndex :: PressureMap -> ValveID -> PressureIndex
+simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
+ where
+  convert (Pressure p) = PressureIndex p
+
+--   M.fromList $ zip indices positiveValves
+--  where
+--   positiveChoices =
+--     M.filter ((> Pressure 0) . fst) $
+--       M.map fromJust $
+--         M.filter isJust pm
+--   indexValues = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
+--   indices = map PressureIndex $ cumsum 0 indexValues
+--   positiveValves = M.keys positiveChoices

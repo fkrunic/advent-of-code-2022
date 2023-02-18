@@ -120,12 +120,6 @@ spec =
                 (ValveID "A")
                 (Just (Pressure 1, MinutesRemaining $ Minutes 1))
             choice = chooseNextValve env rand opened pressures
-            indices =
-              M.singleton
-                (PressureIndex 1)
-                (ValveID "A")
-            actual = pressureIndex (flowMap env) (tunnelMap env) opened pressures
-        actual `shouldBe` indices
         fst <$> choice `shouldBe` Just (ValveID "A")
 
       it "No positive valves" $ do
@@ -259,7 +253,7 @@ initialState = State
   }
 
 env :: Env
-env = Env flowMap tunnelMap pressureIndex
+env = Env flowMap tunnelMap simpleIndex
  where
   flowMap =
     M.fromList
