@@ -119,7 +119,7 @@ spec =
               M.singleton
                 (ValveID "A")
                 (Just (Pressure 1, MinutesRemaining $ Minutes 1))
-            choice = chooseNextValve rand opened pressures
+            choice = chooseNextValve rand uniformIndexSelector opened pressures
         fst <$> choice `shouldBe` Just (ValveID "A")
 
       it "No positive valves" $ do
@@ -129,7 +129,7 @@ spec =
               M.singleton
                 (ValveID "A")
                 (Just (Pressure 0, MinutesRemaining $ Minutes 1))
-            choice = chooseNextValve rand opened pressures
+            choice = chooseNextValve rand uniformIndexSelector opened pressures
         choice `shouldBe` Nothing
 
       it "Only one positive valve and the rest zero" $ do
@@ -144,7 +144,7 @@ spec =
                 , (ValveID "E", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 , (ValveID "F", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 ]
-            choice = chooseNextValve rand opened pressures
+            choice = chooseNextValve rand uniformIndexSelector opened pressures
         fst <$> choice `shouldBe` Just (ValveID "C")
 
       it "Only choosing positive valves" $ do
@@ -162,7 +162,7 @@ spec =
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 100] $ \_ -> do
                 g <- get
-                case chooseNextValve g opened pressures of
+                case chooseNextValve g uniformIndexSelector opened pressures of
                   Nothing -> return Nothing
                   Just (valve, g') -> do
                     put g'
@@ -185,7 +185,7 @@ spec =
             choices = sequence $ flip evalState (mkStdGen 42) $ do
               forM [1 :: Int .. 10000] $ \_ -> do
                 g <- get
-                case chooseNextValve g opened pressures of
+                case chooseNextValve g uniformIndexSelector opened pressures of
                   Nothing -> return Nothing
                   Just (valve, g') -> do
                     put g'
@@ -236,8 +236,9 @@ spec =
 
 part1Solution :: Text -> Pressure
 part1Solution t =
-  bestRoute (Env flows tunnels simpleIndex) initialState (NumberOfTrials 10000)
+  bestRoute solutionEnv initialState (NumberOfTrials 10000)
  where
+  solutionEnv = Env flows tunnels simpleIndex uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
@@ -255,7 +256,7 @@ initialState =
     }
 
 env :: Env
-env = Env flowMap tunnelMap simpleIndex
+env = Env flowMap tunnelMap simpleIndex uniformIndexSelector
  where
   flowMap =
     M.fromList

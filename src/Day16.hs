@@ -43,13 +43,19 @@ newtype TravelMinutes = TravelMinutes Minutes deriving (Show, Eq)
 newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 
 type IndexBuilder = PressureMap -> ValveID -> PressureIndex
-type Selector g =
-  RandomGen g => g -> Map ValveID PressureIndex -> Maybe (ValveID, g)
+
+type Selector =
+  forall g. 
+  RandomGen g => 
+  g -> 
+  Map ValveID PressureIndex -> 
+  Maybe (ValveID, g)
 
 data Env = Env
   { flowMap :: FlowMap
   , tunnelMap :: TunnelMap
   , indexBuilder :: IndexBuilder
+  , valveSelector :: Selector
   }
 
 data State = State
@@ -139,29 +145,23 @@ cumsum initial =
 chooseNextValve ::
   RandomGen g =>
   g ->
+  Selector ->
   OpenedValves ->
   PressureMap ->
   Maybe (ValveID, g)
-chooseNextValve gen (OpenedValves ovs) pm =
-  uniformIndexSelector gen indexValues
+chooseNextValve gen selector (OpenedValves ovs) pm =
+  selector gen indexValues
  where
   nonOpenedValves = M.withoutKeys pm ovs
   indexValues = M.mapWithKey (\valve _ -> simpleIndex pm valve) nonOpenedValves
 
--- positiveIndices = M.filter (> PressureIndex 0) indexValues
--- cumulativeIndices = cumsum (PressureIndex 0) $ M.elems positiveIndices
--- reverseMap = M.fromList $ zip cumulativeIndices (M.keys positiveIndices)
--- PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
--- (indexChoice, nextGen) = uniformR (1, pMax) gen
--- pIndex = PressureIndex indexChoice
-
 simulate :: RandomGen g => g -> VolcanoSim [(ValveID, Pressure, MinutesRemaining)]
 simulate rand = do
   State remainingTime opened@(OpenedValves ovs) current <- get
-  Env flows tunnels _ <- ask
+  Env flows tunnels _ selector <- ask
   let travel = travelMap current tunnels
       pm = pressureMap remainingTime flows travel
-  case chooseNextValve rand opened pm of
+  case chooseNextValve rand selector opened pm of
     Nothing -> pure []
     Just (nextValve, nextRand) ->
       case pm ! nextValve of
@@ -191,7 +191,7 @@ simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
  where
   convert (Pressure p) = PressureIndex p
 
-uniformIndexSelector :: Selector g
+uniformIndexSelector :: Selector
 uniformIndexSelector gen indexMap =
   (,nextGen) . snd
     <$> M.lookupGE pIndex reverseMap
@@ -202,13 +202,3 @@ uniformIndexSelector gen indexMap =
   PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex indexChoice
-
---   M.fromList $ zip indices positiveValves
---  where
---   positiveChoices =
---     M.filter ((> Pressure 0) . fst) $
---       M.map fromJust $
---         M.filter isJust pm
---   indexValues = map (\(Pressure p, _) -> p) $ M.elems positiveChoices
---   indices = map PressureIndex $ cumsum 0 indexValues
---   positiveValves = M.keys positiveChoices
