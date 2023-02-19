@@ -112,7 +112,7 @@ optimalRoute flows travel = map fst $ filter ((> 0) . snd) rankedValves
   rankedValves = sortBy (\(_, e1) (_, e2) -> compare e2 e1) efficiencies
 
 trip :: ValveID -> FlowMap -> TunnelMap -> [(ValveID, Pressure, MinutesRemaining)]
-trip startV flows tunnels = 
+trip startV flows tunnels =
   tail $ reverse $ foldr builder [initialState] (reverse route)
  where
   initialState = (startV, Pressure 0, MinutesRemaining $ Minutes 30)
@@ -226,6 +226,11 @@ simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
  where
   convert (Pressure p) = PressureIndex p
 
+combinedIndex :: IndexBuilder 
+combinedIndex pm valve = maybe (PressureIndex 0) combine (pm ! valve)
+  where
+    combine (Pressure p, MinutesRemaining (Minutes m)) = PressureIndex (p * m)
+
 constantIndex :: IndexBuilder
 constantIndex pm valve =
   case pm ! valve of
@@ -250,8 +255,17 @@ mixedIndex mr pm valve = 0 * simpleIndex pm valve + 10 * releaseIndex mr pm valv
 -- Pressure 500, Minutes remaining 20
 -- Pressure 500, Minutes remaining 29
 
--- flowEfficiencyIndex :: MinutesRemaining -> IndexBuilder
--- flowEfficiencyIndex (MinutesRemaining (Minutes base))
+flowEfficiencyIndex :: MinutesRemaining -> IndexBuilder
+flowEfficiencyIndex (MinutesRemaining (Minutes base)) pm valve =
+  case pm ! valve of
+    Nothing -> PressureIndex 0
+    Just (Pressure p, MinutesRemaining (Minutes m)) ->
+      let flowRate = p `div` (m + 1)
+       in let efficiency = convertD flowRate / convertD (base - m + 1)
+           in PressureIndex $ round $ 1000 * efficiency
+ where
+  convertD :: Int -> Double
+  convertD = fromInteger . fromIntegral
 
 exclusionIndex :: FlowMap -> IndexBuilder
 exclusionIndex flows pm valve =

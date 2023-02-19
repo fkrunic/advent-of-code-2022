@@ -255,10 +255,11 @@ spec =
           actual `shouldBe` expected
 
 part1Solution :: Text -> Pressure
-part1Solution t = tripReleased $ trip (ValveID "AA") flows tunnels
-  -- bestRoute solutionEnv initialState (NumberOfTrials 100000)
+part1Solution t = 
+  -- tripReleased $ trip (ValveID "AA") flows tunnels
+  bestRoute solutionEnv initialState (NumberOfTrials 100000)
  where
-  -- solutionEnv = Env flows tunnels (releaseIndex (minutesRemaining initialState)) uniformIndexSelector
+  solutionEnv = Env flows tunnels combinedIndex uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
