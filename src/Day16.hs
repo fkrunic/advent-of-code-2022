@@ -4,7 +4,7 @@ import Control.Monad.Trans.RWS.CPS hiding (state)
 import Data.List (sortBy)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
-import Data.Maybe (fromMaybe, fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
@@ -98,18 +98,34 @@ pLine = InputLine <$> pValveID <*> pFlowRate <*> pTunnelValves
 
 optimalRoute :: FlowMap -> TravelMap -> [ValveID]
 optimalRoute flows travel = map fst $ filter ((> 0) . snd) rankedValves
-  where
-    doubleF :: FlowRate -> Double
-    doubleF (FlowRate f) = fromInteger $ fromIntegral f
+ where
+  doubleF :: FlowRate -> Double
+  doubleF (FlowRate f) = fromInteger $ fromIntegral f
 
-    doubleM :: TravelMinutes -> Double
-    doubleM (TravelMinutes (Minutes m)) = fromInteger $ fromIntegral m
+  doubleM :: TravelMinutes -> Double
+  doubleM (TravelMinutes (Minutes m)) = fromInteger $ fromIntegral m
 
-    valves = M.keys flows
-    efficiencies =
-      map (\v -> (v, doubleF (flows ! v) / doubleM (fromJust $ travel ! v))) valves
+  valves = M.keys flows
+  efficiencies =
+    map (\v -> (v, doubleF (flows ! v) / doubleM (fromJust $ travel ! v))) valves
 
-    rankedValves = sortBy (\(_, e1) (_, e2) -> compare e2 e1) efficiencies
+  rankedValves = sortBy (\(_, e1) (_, e2) -> compare e2 e1) efficiencies
+
+trip :: ValveID -> FlowMap -> TunnelMap -> [(ValveID, Pressure, MinutesRemaining)]
+trip startV flows tunnels = 
+  tail $ reverse $ foldr builder [initialState] (reverse route)
+ where
+  initialState = (startV, Pressure 0, MinutesRemaining $ Minutes 30)
+  route = optimalRoute flows (travelMap startV tunnels)
+  builder nextValve history = (nextValve, p, updatedRemaining) : history
+   where
+    (priorValve, _, remaining) = head history
+    fromPriorToNextTravel = travelMap priorValve tunnels
+    commute = fromJust $ fromPriorToNextTravel ! nextValve
+    (p, updatedRemaining) = pressure commute remaining (flows ! nextValve)
+
+tripReleased :: [(ValveID, Pressure, MinutesRemaining)] -> Pressure
+tripReleased = sum . map (\(_, p, _) -> p)
 
 --------------------------------------------------------------------------------
 
@@ -211,29 +227,28 @@ simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
   convert (Pressure p) = PressureIndex p
 
 constantIndex :: IndexBuilder
-constantIndex pm valve = 
+constantIndex pm valve =
   case pm ! valve of
-    Nothing -> PressureIndex 0 
-    Just (Pressure p, _) -> 
+    Nothing -> PressureIndex 0
+    Just (Pressure p, _) ->
       if p == 0
-        then PressureIndex 0 
+        then PressureIndex 0
         else PressureIndex 10
 
 releaseIndex :: MinutesRemaining -> IndexBuilder
-releaseIndex (MinutesRemaining (Minutes base)) pm valve = 
-  case pm ! valve of 
+releaseIndex (MinutesRemaining (Minutes base)) pm valve =
+  case pm ! valve of
     Nothing -> PressureIndex 0
-    Just (Pressure p, MinutesRemaining (Minutes m)) -> 
+    Just (Pressure p, MinutesRemaining (Minutes m)) ->
       if p == 0
         then PressureIndex 0
         else PressureIndex $ p `div` (base - m)
 
-
 mixedIndex :: MinutesRemaining -> IndexBuilder
-mixedIndex mr pm valve = 0 * simpleIndex pm valve + 10 * releaseIndex mr pm valve        
+mixedIndex mr pm valve = 0 * simpleIndex pm valve + 10 * releaseIndex mr pm valve
 
-          -- Pressure 500, Minutes remaining 20
-          -- Pressure 500, Minutes remaining 29
+-- Pressure 500, Minutes remaining 20
+-- Pressure 500, Minutes remaining 29
 
 -- flowEfficiencyIndex :: MinutesRemaining -> IndexBuilder
 -- flowEfficiencyIndex (MinutesRemaining (Minutes base))
@@ -242,7 +257,7 @@ exclusionIndex :: FlowMap -> IndexBuilder
 exclusionIndex flows pm valve =
   case pm ! valve of
     Nothing -> PressureIndex 0
-    Just (Pressure p, mr) -> 
+    Just (Pressure p, mr) ->
       if p == 0
         then PressureIndex 0
         else PressureIndex $ p + averageAltFlow * unpackMR mr

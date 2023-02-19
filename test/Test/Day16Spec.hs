@@ -228,24 +228,37 @@ spec =
             expected = map ValveID ["DD", "BB", "JJ", "HH", "EE", "CC"]
         actual `shouldBe` expected
 
+      it "Can calculate the correct trip" $ do
+        let actual = trip (ValveID "AA") (flowMap env) (tunnelMap env)
+            expected = 
+              [ (ValveID "DD",Pressure 560,MinutesRemaining (Minutes 28))
+              , (ValveID "BB",Pressure 325,MinutesRemaining (Minutes 25))
+              , (ValveID "JJ",Pressure 441,MinutesRemaining (Minutes 21))
+              , (ValveID "HH",Pressure 286,MinutesRemaining (Minutes 13))
+              , (ValveID "EE",Pressure 27,MinutesRemaining (Minutes 9))
+              , (ValveID "CC",Pressure 12,MinutesRemaining (Minutes 6))
+              ]
+        actual `shouldBe` expected
+        tripReleased actual `shouldBe` 1651
+
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
-          pendingWith "no longer needed"
+          -- pendingWith "no longer needed"
           let actual = part1Solution exampleInput
               expected = Pressure 1651
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
-          pendingWith "Still broken"
+          -- pendingWith "Still broken"
           let actual = part1Solution puzzleInput
               expected = Pressure 1
           actual `shouldBe` expected
 
 part1Solution :: Text -> Pressure
-part1Solution t =
-  bestRoute solutionEnv initialState (NumberOfTrials 100000)
+part1Solution t = tripReleased $ trip (ValveID "AA") flows tunnels
+  -- bestRoute solutionEnv initialState (NumberOfTrials 100000)
  where
-  solutionEnv = Env flows tunnels (releaseIndex (minutesRemaining initialState)) uniformIndexSelector
+  -- solutionEnv = Env flows tunnels (releaseIndex (minutesRemaining initialState)) uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
