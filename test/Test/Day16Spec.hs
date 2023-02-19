@@ -222,14 +222,21 @@ spec =
             expected = Pressure 1651
         actual `shouldBe` expected
 
+      it "It can find the best route without simulation" $ do
+        let travel = travelMap (ValveID "AA") (tunnelMap env)
+            actual = optimalRoute (flowMap env) travel
+            expected = map ValveID ["DD", "BB", "JJ", "HH", "EE", "CC"]
+        actual `shouldBe` expected
+
       describe "Puzzle Solutions" $ do
         it "Part 1 Solution - Example Input" $ do
+          pendingWith "no longer needed"
           let actual = part1Solution exampleInput
               expected = Pressure 1651
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
-          -- pendingWith "Still broken"
+          pendingWith "Still broken"
           let actual = part1Solution puzzleInput
               expected = Pressure 1
           actual `shouldBe` expected

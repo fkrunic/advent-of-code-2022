@@ -1,9 +1,10 @@
 module Day16 where
 
 import Control.Monad.Trans.RWS.CPS hiding (state)
+import Data.List (sortBy)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
@@ -92,6 +93,23 @@ pTunnelValves =
 
 pLine :: Parser InputLine
 pLine = InputLine <$> pValveID <*> pFlowRate <*> pTunnelValves
+
+--------------------------------------------------------------------------------
+
+optimalRoute :: FlowMap -> TravelMap -> [ValveID]
+optimalRoute flows travel = map fst $ filter ((> 0) . snd) rankedValves
+  where
+    doubleF :: FlowRate -> Double
+    doubleF (FlowRate f) = fromInteger $ fromIntegral f
+
+    doubleM :: TravelMinutes -> Double
+    doubleM (TravelMinutes (Minutes m)) = fromInteger $ fromIntegral m
+
+    valves = M.keys flows
+    efficiencies =
+      map (\v -> (v, doubleF (flows ! v) / doubleM (fromJust $ travel ! v))) valves
+
+    rankedValves = sortBy (\(_, e1) (_, e2) -> compare e2 e1) efficiencies
 
 --------------------------------------------------------------------------------
 
@@ -217,8 +235,8 @@ mixedIndex mr pm valve = 0 * simpleIndex pm valve + 10 * releaseIndex mr pm valv
           -- Pressure 500, Minutes remaining 20
           -- Pressure 500, Minutes remaining 29
 
-flowEfficiencyIndex :: MinutesRemaining -> IndexBuilder
-flowEfficiencyIndex (MinutesRemaining (Minutes base))
+-- flowEfficiencyIndex :: MinutesRemaining -> IndexBuilder
+-- flowEfficiencyIndex (MinutesRemaining (Minutes base))
 
 exclusionIndex :: FlowMap -> IndexBuilder
 exclusionIndex flows pm valve =
