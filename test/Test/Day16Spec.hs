@@ -229,16 +229,16 @@ spec =
           actual `shouldBe` expected
 
         it "Part 1 Solution - Puzzle Input" $ do
-          pendingWith "Still broken"
+          -- pendingWith "Still broken"
           let actual = part1Solution puzzleInput
               expected = Pressure 1
           actual `shouldBe` expected
 
 part1Solution :: Text -> Pressure
 part1Solution t =
-  bestRoute solutionEnv initialState (NumberOfTrials 10000)
+  bestRoute solutionEnv initialState (NumberOfTrials 50000)
  where
-  solutionEnv = Env flows tunnels simpleIndex uniformIndexSelector
+  solutionEnv = Env flows tunnels (exclusionIndex flows) uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines

@@ -45,10 +45,10 @@ newtype MinutesRemaining = MinutesRemaining Minutes deriving (Show, Eq)
 type IndexBuilder = PressureMap -> ValveID -> PressureIndex
 
 type Selector =
-  forall g. 
-  RandomGen g => 
-  g -> 
-  Map ValveID PressureIndex -> 
+  forall g.
+  RandomGen g =>
+  g ->
+  Map ValveID PressureIndex ->
   Maybe (ValveID, g)
 
 data Env = Env
@@ -145,7 +145,7 @@ cumsum initial =
 chooseNextValve ::
   RandomGen g =>
   g ->
-  IndexBuilder -> 
+  IndexBuilder ->
   Selector ->
   OpenedValves ->
   PressureMap ->
@@ -191,6 +191,20 @@ simpleIndex :: IndexBuilder
 simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
  where
   convert (Pressure p) = PressureIndex p
+
+exclusionIndex :: FlowMap -> IndexBuilder
+exclusionIndex flows pm valve =
+  case pm ! valve of
+    Nothing -> PressureIndex 0
+    Just (Pressure p, mr) -> PressureIndex $ p + averageAltFlow * unpackMR mr
+ where
+  otherValves = S.fromList $ filter (/= valve) $ M.keys pm
+  otherFlows = M.withoutKeys flows otherValves
+  flowTotal = sum $ map unpackFR $ M.elems otherFlows
+  flowCount = length $ M.elems otherFlows
+  averageAltFlow = flowTotal `div` flowCount
+  unpackMR (MinutesRemaining (Minutes m)) = m
+  unpackFR (FlowRate f) = f
 
 uniformIndexSelector :: Selector
 uniformIndexSelector gen indexMap =
