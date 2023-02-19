@@ -192,6 +192,9 @@ simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
  where
   convert (Pressure p) = PressureIndex p
 
+constantIndex :: IndexBuilder
+constantIndex _ _ = PressureIndex 10
+
 exclusionIndex :: FlowMap -> IndexBuilder
 exclusionIndex flows pm valve =
   case pm ! valve of
