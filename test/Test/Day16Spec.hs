@@ -238,7 +238,7 @@ part1Solution :: Text -> Pressure
 part1Solution t =
   bestRoute solutionEnv initialState (NumberOfTrials 10000)
  where
-  solutionEnv = Env flows tunnels simpleIndex uniformIndexSelector
+  solutionEnv = Env flows tunnels constantIndex uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
