@@ -201,11 +201,33 @@ constantIndex pm valve =
         then PressureIndex 0 
         else PressureIndex 10
 
+releaseIndex :: MinutesRemaining -> IndexBuilder
+releaseIndex (MinutesRemaining (Minutes base)) pm valve = 
+  case pm ! valve of 
+    Nothing -> PressureIndex 0
+    Just (Pressure p, MinutesRemaining (Minutes m)) -> 
+      if p == 0
+        then PressureIndex 0
+        else PressureIndex $ p `div` (base - m)
+
+
+mixedIndex :: MinutesRemaining -> IndexBuilder
+mixedIndex mr pm valve = 0 * simpleIndex pm valve + 10 * releaseIndex mr pm valve        
+
+          -- Pressure 500, Minutes remaining 20
+          -- Pressure 500, Minutes remaining 29
+
+flowEfficiencyIndex :: MinutesRemaining -> IndexBuilder
+flowEfficiencyIndex (MinutesRemaining (Minutes base))
+
 exclusionIndex :: FlowMap -> IndexBuilder
 exclusionIndex flows pm valve =
   case pm ! valve of
     Nothing -> PressureIndex 0
-    Just (Pressure p, mr) -> PressureIndex $ p + averageAltFlow * unpackMR mr
+    Just (Pressure p, mr) -> 
+      if p == 0
+        then PressureIndex 0
+        else PressureIndex $ p + averageAltFlow * unpackMR mr
  where
   otherValves = S.fromList $ filter (/= valve) $ M.keys pm
   otherFlows = M.withoutKeys flows otherValves

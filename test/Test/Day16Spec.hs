@@ -236,9 +236,9 @@ spec =
 
 part1Solution :: Text -> Pressure
 part1Solution t =
-  bestRoute solutionEnv initialState (NumberOfTrials 10000)
+  bestRoute solutionEnv initialState (NumberOfTrials 100000)
  where
-  solutionEnv = Env flows tunnels constantIndex uniformIndexSelector
+  solutionEnv = Env flows tunnels (releaseIndex (minutesRemaining initialState)) uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines
