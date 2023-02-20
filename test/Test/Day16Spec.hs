@@ -230,13 +230,13 @@ spec =
 
       it "Can calculate the correct trip" $ do
         let actual = trip (ValveID "AA") (flowMap env) (tunnelMap env)
-            expected = 
-              [ (ValveID "DD",Pressure 560,MinutesRemaining (Minutes 28))
-              , (ValveID "BB",Pressure 325,MinutesRemaining (Minutes 25))
-              , (ValveID "JJ",Pressure 441,MinutesRemaining (Minutes 21))
-              , (ValveID "HH",Pressure 286,MinutesRemaining (Minutes 13))
-              , (ValveID "EE",Pressure 27,MinutesRemaining (Minutes 9))
-              , (ValveID "CC",Pressure 12,MinutesRemaining (Minutes 6))
+            expected =
+              [ (ValveID "DD", Pressure 560, MinutesRemaining (Minutes 28))
+              , (ValveID "BB", Pressure 325, MinutesRemaining (Minutes 25))
+              , (ValveID "JJ", Pressure 441, MinutesRemaining (Minutes 21))
+              , (ValveID "HH", Pressure 286, MinutesRemaining (Minutes 13))
+              , (ValveID "EE", Pressure 27, MinutesRemaining (Minutes 9))
+              , (ValveID "CC", Pressure 12, MinutesRemaining (Minutes 6))
               ]
         actual `shouldBe` expected
         tripReleased actual `shouldBe` 1651
@@ -254,11 +254,20 @@ spec =
               expected = Pressure 1
           actual `shouldBe` expected
 
+        -- it "Direct Solution - Example Input" $ do
+        --   let actual = part1Solution exampleInput
+        --       expected = Pressure 1651
+        --   actual `shouldBe` expected
+
 part1Solution :: Text -> Pressure
-part1Solution t = 
-  -- tripReleased $ trip (ValveID "AA") flows tunnels
-  bestRoute solutionEnv initialState (NumberOfTrials 100000)
+part1Solution t =
+  findMaxPressure flows tunnels initialRoute (Pressure 0)
  where
+  initialRoute = [ Route
+                      [(ValveID "AA", MinutesRemaining $ Minutes 30)]
+                      (MinutesRemaining $ Minutes 30)
+                      (OpenedValves S.empty)
+                  ]
   solutionEnv = Env flows tunnels combinedIndex uniformIndexSelector
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t

@@ -35,6 +35,7 @@ default-extensions:
 - OverloadedStrings
 - RankNTypes
 - RecordWildCards
+- ScopedTypeVariables
 - TupleSections
 
 ghc-options:

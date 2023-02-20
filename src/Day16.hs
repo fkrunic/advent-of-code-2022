@@ -4,13 +4,13 @@ import Control.Monad.Trans.RWS.CPS hiding (state)
 import Data.List (sortBy)
 import Data.Map (Map, (!))
 import Data.Map qualified as M
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (catMaybes, fromJust, fromMaybe, isJust, mapMaybe)
 import Data.Set (Set)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Graphs
+import Graphs hiding (path)
 import Parsing
 import System.Random
 import Text.Megaparsec hiding (State)
@@ -226,10 +226,10 @@ simpleIndex pm valve = maybe (PressureIndex 0) (convert . fst) (pm ! valve)
  where
   convert (Pressure p) = PressureIndex p
 
-combinedIndex :: IndexBuilder 
+combinedIndex :: IndexBuilder
 combinedIndex pm valve = maybe (PressureIndex 0) combine (pm ! valve)
-  where
-    combine (Pressure p, MinutesRemaining (Minutes m)) = PressureIndex (p * m)
+ where
+  combine (Pressure p, MinutesRemaining (Minutes m)) = PressureIndex (p * m)
 
 constantIndex :: IndexBuilder
 constantIndex pm valve =
@@ -295,3 +295,55 @@ uniformIndexSelector gen indexMap =
   PressureIndex pMax = maximum $ PressureIndex 1 : M.keys reverseMap
   (indexChoice, nextGen) = uniformR (1, pMax) gen
   pIndex = PressureIndex indexChoice
+
+--------------------------------------------------------------------------------
+
+data Route = Route
+  { path :: [(ValveID, MinutesRemaining)]
+  , remaining :: MinutesRemaining
+  , opened :: OpenedValves
+  }
+  deriving (Show, Eq)
+
+routePressure :: FlowMap -> Route -> Pressure
+routePressure flows route = foldr addPressure (Pressure 0) (path route)
+ where
+  addPressure (valve, MinutesRemaining (Minutes m)) total =
+    case flows ! valve of
+      FlowRate f -> Pressure (f * m) + total
+
+addValveToRoute :: Route -> (ValveID, TravelMinutes) -> Maybe Route
+addValveToRoute
+  (Route p (MinutesRemaining r) (OpenedValves ovs))
+  (valve, TravelMinutes m)
+    | remainingMinutes > 0 && not (S.member valve ovs) =
+        Just $
+          Route
+            { path = (valve, MinutesRemaining remainingMinutes) : p
+            , remaining = MinutesRemaining remainingMinutes
+            , opened = OpenedValves $ S.insert valve ovs
+            }
+    | otherwise = Nothing
+   where
+    remainingMinutes = r - m - 1
+
+findMaxPressure ::
+  FlowMap ->
+  TunnelMap ->
+  [Route] ->
+  Pressure ->
+  Pressure
+findMaxPressure _ _ [] maxPressure = maxPressure
+findMaxPressure flows tunnels (route : rest) maxPressure =
+  findMaxPressure flows tunnels (nextRoutes ++ rest) updatedMaxPressure
+ where
+  valve :: ValveID = fst $ head $ path route
+  OpenedValves ovs = opened route
+  travelOptions :: Map ValveID TravelMinutes =
+    M.map fromJust $
+      M.filter isJust $
+        M.withoutKeys (travelMap valve tunnels) ovs
+  nextRoutes :: [Route] =
+    mapMaybe (addValveToRoute route) $
+      M.assocs travelOptions
+  updatedMaxPressure = max (routePressure flows route) maxPressure
