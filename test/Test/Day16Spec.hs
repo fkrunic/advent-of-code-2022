@@ -261,14 +261,16 @@ spec =
 
 part1Solution :: Text -> Pressure
 part1Solution t =
-  findMaxPressure flows tunnels initialRoute (Pressure 0)
+  findMaxPressure atlas initialRoute (Pressure 0)
  where
   initialRoute = [ Route
                       [(ValveID "AA", MinutesRemaining $ Minutes 30)]
                       (MinutesRemaining $ Minutes 30)
                       (OpenedValves S.empty)
+                      (Pressure 0)
                   ]
-  solutionEnv = Env flows tunnels combinedIndex uniformIndexSelector
+  -- solutionEnv = Env flows tunnels combinedIndex uniformIndexSelector
+  atlas = makeAtlas flows tunnels
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
   flows = M.fromList $ map (\(InputLine v f _) -> (v, f)) inputLines

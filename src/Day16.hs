@@ -298,52 +298,63 @@ uniformIndexSelector gen indexMap =
 
 --------------------------------------------------------------------------------
 
+-- routePressure :: FlowMap -> Route -> Pressure
+-- routePressure flows route = foldr addPressure (Pressure 0) (path route)
+--  where
+--   addPressure (valve, MinutesRemaining (Minutes m)) total =
+--     case flows ! valve of
+--       FlowRate f -> Pressure (f * m) + total
+
+makeAtlas :: FlowMap -> TunnelMap -> Atlas
+makeAtlas flows tunnels = M.fromList atlasPairs
+ where
+  valves :: [ValveID] = M.keys flows
+  atlasPairs = map (\v -> (v, enhanceTravel $ travelMap v tunnels)) valves
+
+  addFlow :: (ValveID, Maybe TravelMinutes) -> (ValveID, (FlowRate, TravelMinutes))
+  addFlow (valve, travelTime) = (valve, (flows ! valve, fromJust travelTime))
+
+  enhanceTravel :: TravelMap -> Map ValveID (FlowRate, TravelMinutes)
+  enhanceTravel = M.fromList . map addFlow . M.assocs
+
 data Route = Route
-  { path :: [(ValveID, MinutesRemaining)]
+  { routePath :: [(ValveID, MinutesRemaining)]
   , remaining :: MinutesRemaining
   , opened :: OpenedValves
+  , routePressure :: Pressure
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq)  
 
-routePressure :: FlowMap -> Route -> Pressure
-routePressure flows route = foldr addPressure (Pressure 0) (path route)
- where
-  addPressure (valve, MinutesRemaining (Minutes m)) total =
-    case flows ! valve of
-      FlowRate f -> Pressure (f * m) + total
-
-addValveToRoute :: Route -> (ValveID, TravelMinutes) -> Maybe Route
+addValveToRoute :: Route -> (ValveID, (FlowRate, TravelMinutes)) -> Maybe Route
 addValveToRoute
-  (Route p (MinutesRemaining r) (OpenedValves ovs))
-  (valve, TravelMinutes m)
+  (Route routePath (MinutesRemaining r) (OpenedValves ovs) routePressure)
+  (valve, (FlowRate f, TravelMinutes m))
     | remainingMinutes > 0 && not (S.member valve ovs) =
         Just $
           Route
-            { path = (valve, MinutesRemaining remainingMinutes) : p
+            { routePath = (valve, MinutesRemaining remainingMinutes) : routePath
             , remaining = MinutesRemaining remainingMinutes
             , opened = OpenedValves $ S.insert valve ovs
+            , routePressure = Pressure (f * rm) + routePressure
             }
     | otherwise = Nothing
    where
-    remainingMinutes = r - m - 1
+    remainingMinutes@(Minutes rm) = r - m - 1
+
+type Atlas = Map ValveID (Map ValveID (FlowRate, TravelMinutes))
 
 findMaxPressure ::
-  FlowMap ->
-  TunnelMap ->
+  Atlas ->
   [Route] ->
   Pressure ->
   Pressure
-findMaxPressure _ _ [] maxPressure = maxPressure
-findMaxPressure flows tunnels (route : rest) maxPressure =
-  findMaxPressure flows tunnels (nextRoutes ++ rest) updatedMaxPressure
+findMaxPressure _ [] maxPressure = maxPressure
+findMaxPressure atlas (route : rest) maxPressure =
+  findMaxPressure atlas (nextRoutes ++ rest) updatedMaxPressure
  where
-  valve :: ValveID = fst $ head $ path route
-  OpenedValves ovs = opened route
-  travelOptions :: Map ValveID TravelMinutes =
-    M.map fromJust $
-      M.filter isJust $
-        M.withoutKeys (travelMap valve tunnels) ovs
+  valve :: ValveID = fst $ head $ routePath route
+  travelOptions :: Map ValveID (FlowRate, TravelMinutes) = atlas ! valve
   nextRoutes :: [Route] =
     mapMaybe (addValveToRoute route) $
       M.assocs travelOptions
-  updatedMaxPressure = max (routePressure flows route) maxPressure
+  updatedMaxPressure = max (routePressure route) maxPressure
