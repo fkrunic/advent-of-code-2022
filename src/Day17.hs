@@ -20,6 +20,23 @@ data Action = Blow WindDirection | Fall deriving (Show, Eq, Ord)
 data Cell = Empty | Surface deriving (Show, Eq)
 type Cave = Grid Cell
 
+data InternallyAnchoredShape = InternallyAnchoredShape
+  { anchor :: Coordinate
+  , remainder :: [Coordinate]
+  }
+  deriving (Show, Eq)
+
+data ExternallyAnchoredShape = ExternallyAnchoredShape
+  { exAnchor :: Coordinate
+  , exShape :: NonEmpty Coordinate
+  }
+  deriving (Show, Eq)
+
+data Shape
+  = InternalAnchor InternallyAnchoredShape
+  | ExternalAnchor ExternallyAnchoredShape
+  deriving (Show, Eq)
+
 newtype RockPosition = RockPosition (NonEmpty Coordinate) deriving (Show, Eq)
 newtype RockBottom = RockBottom (NonEmpty Coordinate) deriving (Show, Eq)
 
@@ -37,6 +54,14 @@ pWind _ = West
 
 parse :: Text -> [WindDirection]
 parse = map pWind . T.unpack
+
+--------------------------------------------------------------------------------
+
+deducePoints :: Shape -> RockPosition
+deducePoints (InternalAnchor ias) = RockPosition (anchor ias :| remainder ias)
+deducePoints (ExternalAnchor eas) =
+  RockPosition $
+    exAnchor eas :| NE.toList (exShape eas)
 
 --------------------------------------------------------------------------------
 
@@ -76,7 +101,8 @@ dropRock :: RockPosition -> RockPosition
 dropRock (RockPosition ps) = RockPosition $ NE.map moveSouth ps
 
 settleRock :: Cave -> RockPosition -> Cave
-settleRock cave (RockPosition ps) = foldr (M.adjust (const Surface)) cave ps
+settleRock cave (RockPosition ps) =
+  foldr (\coord -> M.insertWith const coord Surface) cave ps
 
 calculateHeight :: Cave -> TowerHeight
 calculateHeight cave =
@@ -93,13 +119,32 @@ startingPos cave rt = RockPosition $
            , point (startX + 2) startY
            , point (startX + 3) startY
            ]
+    {-
+
+    \|...@...|
+    \|..@@@..|
+    \|...@...|
+    \|.......|
+    \|.......|
+    \|.......|
+    \|..####.|
+    +-------+
+
+      -}
+
     Plus ->
-      point startX (startY - 1)
-        :| [ point (startX + 1) startY
-           , point (startX + 2) (startY - 1)
-           , point (startX + 1) (startY - 2)
+      point startX startY
+        :| [ point (startX - 1) (startY - 1)
+           , point startX (startY - 1)
            , point (startX + 1) (startY - 1)
+           , point startX (startY - 2)
            ]
+    -- point startX (startY - 1)
+    --   :| [ point (startX + 1) startY
+    --      , point (startX + 2) (startY - 1)
+    --      , point (startX + 1) (startY - 2)
+    --      , point (startX + 1) (startY - 1)
+    --      ]
     LShape ->
       point startX startY
         :| [ point (startX + 1) startY

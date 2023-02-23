@@ -29,7 +29,6 @@ spec = do
 
       describe "Rock Process" $ do
         it "Rock 1" $ do
-          pendingWith "Need to fix rock process"
           let rp = startingPos caveFloor HLine
               (settled, _) = rockProcess caveFloor rp winds
               actual = drawCave settled
@@ -39,14 +38,54 @@ spec = do
                 ]
           actual `shouldBe` expected
 
+        it "Rock 2" $ do
+          let rp1 = startingPos caveFloor HLine
+              (c1, futureWinds) = rockProcess caveFloor rp1 winds
+              (nextWind, _) = getSplit futureWinds
+              rp2 = startingPos c1 Plus
+              (settled, _) = rockProcess c1 rp2 futureWinds
+              actual = drawCave settled
+              expected = T.intercalate "\n"
+                [ "...#..."
+                , "..###.."
+                , "...#..."
+                , "..####."
+                , "#######"
+                ]
+          nextWind `shouldBe` West
+          actual `shouldBe` expected
+
       describe "Tower Process" $ do
         let process = towerProcess caveFloor rts winds
 
         it "Rock 1" $ do
-          pendingWith "Need to fix tower process"
-          let actual = drawCave $ process 3
+          let actual = drawCave $ process 1
               expected = T.intercalate "\n"
                 [ "..####."
                 , "#######"
                 ]
           actual `shouldBe` expected
+        
+        it "Rock 2" $ do
+          let actual = drawCave $ process 2
+              expected = T.intercalate "\n"
+                [ "...#..."
+                , "..###.."
+                , "...#..."
+                , "..####."
+                , "#######"
+                ]
+          actual `shouldBe` expected   
+
+        it "Rock 3" $ do       
+          let actual = drawCave $ process 3
+              expected = T.intercalate "\n"
+                [ "..#...."
+                , "..#...."
+                , "####..."
+                , "..###.."
+                , "...#..."
+                , "..####."
+                , "#######"
+                ]
+          actual `shouldBe` expected  
