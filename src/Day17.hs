@@ -83,6 +83,49 @@ shiftAnchorTo s@(ExternalAnchor eas) ref = shiftShape s dref
  where
   dref = exAnchor eas `diff` ref
 
+typeShape :: RockType -> Shape
+typeShape HLine =
+  InternalAnchor $
+    InternallyAnchoredShape
+      { anchor = point 0 0
+      , remainder = [point 1 0, point 2 0, point 3 0]
+      }
+typeShape Plus =
+  ExternalAnchor $
+    ExternallyAnchoredShape
+      { exAnchor = point 0 0
+      , exShape =
+          point 1 (-2)
+            :| [ point 0 (-1)
+               , point 1 (-1)
+               , point 2 (-1)
+               , point 0 1
+               ]
+      }
+typeShape LShape =
+  InternalAnchor $
+    InternallyAnchoredShape
+      { anchor = point 0 0
+      , remainder =
+          [ point 1 0
+          , point 2 0
+          , point 2 (-1)
+          , point 2 (-2)
+          ]
+      }
+typeShape VLine =
+  InternalAnchor $
+    InternallyAnchoredShape
+      { anchor = point 0 0
+      , remainder = [point 0 (-1), point 0 (-2), point 0 (-3)]
+      }
+typeShape Square =
+  InternalAnchor $
+    InternallyAnchoredShape
+      { anchor = point 0 0
+      , remainder = [point 0 (-1), point 1 (-1), point 1 0]
+      }
+
 --------------------------------------------------------------------------------
 
 unpackRockPosition :: RockPosition -> NonEmpty Coordinate
