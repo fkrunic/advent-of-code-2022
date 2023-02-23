@@ -1,9 +1,14 @@
 module Test.Day17Spec where
 
 import Test.Hspec
+import Day17
 
 spec :: SpecWith ()
 spec = do
   describe "Day 17 Tests" $ do
-    it "Simple Test" $ do
-      1 `shouldBe` (0 + 1)
+    it "Parsing wind direction" $ do
+      let actual = parse ">>><<"
+          expected = [East, East, East, West, West]
+      actual `shouldBe` expected
+
+    it 

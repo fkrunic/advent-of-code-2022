@@ -183,3 +183,8 @@ drawCell Surface = "#"
 
 drawCave :: Cave -> Text
 drawCave = drawGrid Empty drawCell
+
+--------------------------------------------------------------------------------
+
+caveFloor :: Cave
+caveFloor = M.fromList $ map (\i -> (point i 0, Surface)) [1 .. 7]
