@@ -156,8 +156,8 @@ rockProcess ::
   (Cave, Infinite WindDirection)
 rockProcess cave rp winds =
   case dropProcess cave blown of
-    FallingRock rp'' -> rockProcess cave rp'' futureWinds
-    SettledRock cave' -> (cave', futureWinds)
+    FallingRock nextPosition -> rockProcess cave nextPosition futureWinds
+    SettledRock settledCave -> (settledCave, futureWinds)
  where
   blown = blowProcess cave rp wind
   (wind, futureWinds) = getSplit winds
