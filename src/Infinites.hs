@@ -1,4 +1,4 @@
-module Infinites where
+module Infinites (makeInf, getSplit, Infinite) where
 
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
