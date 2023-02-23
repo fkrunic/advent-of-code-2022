@@ -44,6 +44,7 @@ library
       Day17
       Graphs
       Grids
+      Infinites
       Parsing
       Utilities
   other-modules:
