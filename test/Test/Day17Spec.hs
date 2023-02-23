@@ -6,6 +6,7 @@ import Data.Text qualified as T
 import Day17
 import Infinites
 import Test.Hspec
+import Test.Input
 
 import Grids
 
@@ -299,4 +300,26 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected                                                                      
+          actual `shouldBe` expected  
+
+      describe "Puzzle Solutions" $ do
+        it "Part 1 - Puzzle Input" $ do
+          pendingWith "Working"
+          let input = day17Input
+              winds = case NE.nonEmpty (parse input) of
+                Nothing -> error "Cannot parse wind input"
+                Just wds -> makeInf wds
+              rts = makeInf $ HLine :| [Plus .. Square]
+              actual = calculateHeight $ towerProcess caveFloor rts winds 2022
+              expected = 3163
+          actual `shouldBe` expected
+
+        it "Part 2 - Example Input" $ do
+          let input = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
+              winds = case NE.nonEmpty (parse input) of
+                Nothing -> error "Cannot parse wind input"
+                Just wds -> makeInf wds
+              rts = makeInf $ HLine :| [Plus .. Square]
+              actual = calculateHeight $ towerProcess caveFloor rts winds 10000
+              expected = 1
+          actual `shouldBe` expected
