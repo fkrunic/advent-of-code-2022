@@ -31,6 +31,11 @@ newtype TowerHeight = TowerHeight Int deriving (Show, Eq, Num)
 
 --------------------------------------------------------------------------------
 
+unpackRockPosition :: RockPosition -> NonEmpty Coordinate
+unpackRockPosition (RockPosition ps) = ps
+
+--------------------------------------------------------------------------------
+
 canBlow :: Cave -> WindDirection -> RockPosition -> Bool
 canBlow cave wind rp = not (outsideBounds || isBlocked)
  where
@@ -74,7 +79,11 @@ startingPos :: Cave -> RockType -> RockPosition
 startingPos = undefined
 
 getBottom :: RockPosition -> RockBottom
-getBottom = undefined
+getBottom =
+  RockBottom
+    . NE.map (NE.head . NE.reverse . NE.sortWith snd)
+    . NE.groupBy1 (\c1 c2 -> fst c1 == fst c2)
+    . unpackRockPosition
 
 --------------------------------------------------------------------------------
 
