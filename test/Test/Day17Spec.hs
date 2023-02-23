@@ -149,3 +149,154 @@ spec = do
                   , "#######"
                   ]
           actual `shouldBe` expected
+
+        it "Rock 4" $ do
+          let actual = drawCave $ process 4
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected  
+
+        it "Rock 5" $ do
+          let actual = drawCave $ process 5
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "....##."
+                  , "....##."
+                  , "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected
+
+        it "Rock 6" $ do
+          let actual = drawCave $ process 6
+              expected =
+                T.intercalate
+                  "\n"
+                  [ ".####.."
+                  , "....##."
+                  , "....##."
+                  , "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected   
+
+        it "Rock 7" $ do
+          let actual = drawCave $ process 7
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "..#...."
+                  , ".###..."
+                  , "..#...."
+                  , ".####.."
+                  , "....##."
+                  , "....##."
+                  , "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected 
+
+        it "Rock 8" $ do
+          let actual = drawCave $ process 8
+              expected =
+                T.intercalate
+                  "\n"
+                  [ ".....#."
+                  , ".....#."
+                  , "..####."
+                  , ".###..."
+                  , "..#...."
+                  , ".####.."
+                  , "....##."
+                  , "....##."
+                  , "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected 
+
+        it "Rock 9" $ do
+          let actual = drawCave $ process 9
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "....#.."
+                  , "....#.."
+                  , "....##."
+                  , "....##."
+                  , "..####."
+                  , ".###..."
+                  , "..#...."
+                  , ".####.."
+                  , "....##."
+                  , "....##."
+                  , "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected   
+
+        it "Rock 10" $ do
+          let actual = drawCave $ process 10
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "....#.."
+                  , "....#.."
+                  , "....##."
+                  , "##..##."
+                  , "######."
+                  , ".###..."
+                  , "..#...."
+                  , ".####.."
+                  , "....##."
+                  , "....##."
+                  , "....#.."
+                  , "..#.#.."
+                  , "..#.#.."
+                  , "#####.."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected                                                                      
