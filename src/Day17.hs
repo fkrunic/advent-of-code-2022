@@ -75,11 +75,11 @@ shiftShape (ExternalAnchor (ExternallyAnchoredShape exAnchor exShape)) d =
       , exShape = NE.map (`shift` d) exShape
       }
 
-shiftByAnchor :: Coordinate -> Shape -> Shape
-shiftByAnchor ref s@(InternalAnchor ias) = shiftShape s dref
+shiftAnchorTo :: Shape -> Coordinate -> Shape
+shiftAnchorTo s@(InternalAnchor ias) ref = shiftShape s dref
  where
   dref = anchor ias `diff` ref
-shiftByAnchor ref s@(ExternalAnchor eas) = shiftShape s dref
+shiftAnchorTo s@(ExternalAnchor eas) ref = shiftShape s dref
  where
   dref = exAnchor eas `diff` ref
 
