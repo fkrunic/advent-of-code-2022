@@ -167,8 +167,8 @@ towerProcess ::
   Infinite RockType ->
   Infinite WindDirection ->
   Iterations ->
-  TowerHeight
-towerProcess cave _ _ 0 = calculateHeight cave
+  Cave
+towerProcess cave _ _ 0 = cave
 towerProcess cave rts winds iters =
   towerProcess settledCave futureRTS shiftedWinds (iters - 1)
  where
