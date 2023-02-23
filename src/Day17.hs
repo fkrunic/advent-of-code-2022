@@ -1,14 +1,14 @@
 module Day17 where
 
-import Data.List
-
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
+import Data.Text (Text)
 
 import Data.Map qualified as M
 
 import Grids
 
+import Data.Text qualified as T
 import Infinites
 
 data RockType = HLine | Plus | LShape | VLine | Square
@@ -28,6 +28,15 @@ data TowerProcess = FallingRock RockPosition | SettledRock Cave
 
 newtype Iterations = Iterations Int deriving (Show, Eq, Num)
 newtype TowerHeight = TowerHeight Int deriving (Show, Eq, Num)
+
+--------------------------------------------------------------------------------
+
+pWind :: Char -> WindDirection
+pWind '>' = East
+pWind _ = West
+
+parse :: Text -> [WindDirection]
+parse = map pWind . T.unpack
 
 --------------------------------------------------------------------------------
 
@@ -76,7 +85,46 @@ calculateHeight cave =
       TowerHeight (yMax - yMin)
 
 startingPos :: Cave -> RockType -> RockPosition
-startingPos = undefined
+startingPos cave rt = RockPosition $
+  case rt of
+    HLine ->
+      point startX startY
+        :| [ point (startX + 1) startY
+           , point (startX + 2) startY
+           , point (startX + 3) startY
+           ]
+    Plus ->
+      point startX (startY - 1)
+        :| [ point (startX + 1) startY
+           , point (startX + 2) (startY - 1)
+           , point (startX + 1) (startY - 2)
+           , point (startX + 1) (startY - 1)
+           ]
+    LShape ->
+      point startX startY
+        :| [ point (startX + 1) startY
+           , point (startX + 2) startY
+           , point (startX + 2) (startY - 1)
+           , point (startX + 2) (startY - 2)
+           ]
+    VLine ->
+      point startX startY
+        :| [ point startX (startY - 1)
+           , point startX (startY - 2)
+           , point startX (startY - 3)
+           ]
+    Square ->
+      point startX startY
+        :| [ point (startX + 1) startY
+           , point startX (startY - 1)
+           , point (startX + 1) (startY - 1)
+           ]
+ where
+  Boundaries xMin _ yMin _ = getBounds $ M.keys cave
+  XCoordinate leftEdge = xMin
+  YCoordinate topEdge = yMin
+  startX = leftEdge + 3
+  startY = topEdge - 4
 
 getBottom :: RockPosition -> RockBottom
 getBottom =
@@ -126,3 +174,12 @@ towerProcess cave rts winds iters =
  where
   (rt, futureRTS) = getSplit rts
   (settledCave, shiftedWinds) = rockProcess cave (startingPos cave rt) winds
+
+--------------------------------------------------------------------------------
+
+drawCell :: Cell -> Text
+drawCell Empty = "."
+drawCell Surface = "#"
+
+drawCave :: Cave -> Text
+drawCave = drawGrid Empty drawCell
