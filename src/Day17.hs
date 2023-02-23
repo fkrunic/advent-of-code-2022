@@ -78,6 +78,7 @@ shiftShape (ExternalAnchor (ExternallyAnchoredShape exAnchor exShape)) d =
 shiftAnchorTo :: Shape -> Coordinate -> Shape
 shiftAnchorTo s@(InternalAnchor ias) desired =
   shiftShape s (desired `diff` anchor ias)
+
 shiftAnchorTo s@(ExternalAnchor eas) desired =
   shiftShape s (desired `diff` exAnchor eas)
 
@@ -97,7 +98,7 @@ typeShape Plus =
             :| [ point 0 (-1)
                , point 1 (-1)
                , point 2 (-1)
-               , point 0 1
+               , point 1 0
                ]
       }
 typeShape LShape =
@@ -175,7 +176,7 @@ startingPos :: Cave -> RockType -> RockPosition
 startingPos cave = formPosition . (`shiftAnchorTo` anchorPoint) . typeShape
  where
   Boundaries xMin _ yMin _ = getBounds $ M.keys cave
-  offset = (DeltaX 3, DeltaY (-4))
+  offset = (DeltaX 2, DeltaY (-4))
   anchorPoint = (xMin, yMin) `shift` offset
 
 getBottom :: RockPosition -> RockBottom

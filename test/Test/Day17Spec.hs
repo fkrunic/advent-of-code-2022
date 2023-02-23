@@ -43,7 +43,6 @@ spec = do
           actual `shouldBe` expected
 
         it "Rock 2" $ do
-          pendingWith "Broken"
           let rp1 = startingPos caveFloor HLine
               (c1, futureWinds) = rockProcess caveFloor rp1 winds
               (nextWind, _) = getSplit futureWinds
@@ -75,6 +74,41 @@ spec = do
                     }
           actual `shouldBe` expected
 
+      describe "Starting Positions" $ do
+        it "Starting Position - Rock 1" $ do
+          let rp = startingPos caveFloor HLine
+              settled = settleRock caveFloor rp
+              actual = drawCave settled
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "..####."
+                  , "......."
+                  , "......."
+                  , "......."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected
+
+        it "Starting Position - Rock 2" $ do
+          let c1 = towerProcess caveFloor rts winds 1
+              rp = startingPos c1 Plus
+              settled = settleRock c1 rp
+              actual = drawCave settled
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "...#..."
+                  , "..###.."
+                  , "...#..."
+                  , "......."
+                  , "......."
+                  , "......."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected
+
       describe "Tower Process" $ do
         let process = towerProcess caveFloor rts winds
 
@@ -89,7 +123,6 @@ spec = do
           actual `shouldBe` expected
 
         it "Rock 2" $ do
-          pendingWith "Broken"
           let actual = drawCave $ process 2
               expected =
                 T.intercalate
@@ -103,7 +136,6 @@ spec = do
           actual `shouldBe` expected
 
         it "Rock 3" $ do
-          pendingWith "Broken"
           let actual = drawCave $ process 3
               expected =
                 T.intercalate
