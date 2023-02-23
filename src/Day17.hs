@@ -2,6 +2,9 @@ module Day17 where
 
 import Data.List
 
+import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
+
 import Grids
 
 data RockType = HLine | Plus | LShape | VLine | Square
@@ -14,8 +17,8 @@ newtype CaveBoundaries = CaveBoundaries Boundaries deriving (Show, Eq)
 data Cell = Empty | Surface deriving (Show, Eq)
 type Cave = Grid Cell
 
-newtype RockPosition = RockPosition [Coordinate] deriving (Show, Eq)
-newtype RockBottom = RockBottom [Coordinate] deriving (Show, Eq)
+newtype RockPosition = RockPosition (NonEmpty Coordinate) deriving (Show, Eq)
+newtype RockBottom = RockBottom (NonEmpty Coordinate) deriving (Show, Eq)
 type Rock = (RockType, RockPosition)
 
 newtype RocksDropped = RocksDropped Int deriving (Show, Eq)
@@ -26,7 +29,7 @@ data TowerProcess = TowerProcess
   , rocksDropped :: Int
   , towerHeight :: Int
   }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 
@@ -42,11 +45,11 @@ bottomSurface = undefined
 canFall :: Cave -> RockBottom -> Bool
 canFall = undefined
 
-comeToRest :: Cave -> Rock -> Cave
-comeToRest = undefined
+solidifyRock :: Cave -> Rock -> Cave
+solidifyRock = undefined
 
-dropPosition :: Cave -> RockType -> Rock
-dropPosition = undefined
+startPosition :: Cave -> RockType -> Rock
+startPosition = undefined
 
 rockTypes :: [RockType]
 rockTypes = cycle [HLine .. Square]
