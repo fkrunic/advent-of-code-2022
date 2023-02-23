@@ -57,11 +57,31 @@ parse = map pWind . T.unpack
 
 --------------------------------------------------------------------------------
 
-deducePoints :: Shape -> RockPosition
-deducePoints (InternalAnchor ias) = RockPosition (anchor ias :| remainder ias)
-deducePoints (ExternalAnchor eas) =
-  RockPosition $
-    exAnchor eas :| NE.toList (exShape eas)
+formPosition :: Shape -> RockPosition
+formPosition (InternalAnchor ias) = RockPosition (anchor ias :| remainder ias)
+formPosition (ExternalAnchor eas) = RockPosition (exShape eas)
+
+shiftShape :: Shape -> Delta -> Shape
+shiftShape (InternalAnchor (InternallyAnchoredShape anchor remainder)) d =
+  InternalAnchor $
+    InternallyAnchoredShape
+      { anchor = anchor `shift` d
+      , remainder = map (`shift` d) remainder
+      }
+shiftShape (ExternalAnchor (ExternallyAnchoredShape exAnchor exShape)) d =
+  ExternalAnchor $
+    ExternallyAnchoredShape
+      { exAnchor = exAnchor `shift` d
+      , exShape = NE.map (`shift` d) exShape
+      }
+
+shiftByAnchor :: Coordinate -> Shape -> Shape
+shiftByAnchor ref s@(InternalAnchor ias) = shiftShape s dref
+ where
+  dref = anchor ias `diff` ref
+shiftByAnchor ref s@(ExternalAnchor eas) = shiftShape s dref
+ where
+  dref = exAnchor eas `diff` ref
 
 --------------------------------------------------------------------------------
 

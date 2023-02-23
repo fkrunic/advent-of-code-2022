@@ -9,8 +9,8 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 
-newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord, Enum)
-newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord, Enum)
+newtype XCoordinate = XCoordinate Int deriving (Show, Eq, Ord, Enum, Num)
+newtype YCoordinate = YCoordinate Int deriving (Show, Eq, Ord, Enum, Num)
 
 newtype ManhattanDistance = ManhattanDistance Word deriving (Show, Eq, Ord)
 
@@ -30,6 +30,14 @@ data Boundaries = Boundaries
   deriving (Show, Eq, Ord)
 
 --------------------------------------------------------------------------------
+
+diff :: Coordinate -> Coordinate -> Delta
+diff (x1, y1) (x2, y2) =
+  (DeltaX $ unpackX $ x1 - x2, DeltaY $ unpackY $ y1 - y2)
+
+delta :: Coordinate -> Delta -> Coordinate
+delta (XCoordinate x, YCoordinate y) (DeltaX dx, DeltaY dy) =
+  (XCoordinate (x + dx), YCoordinate (y + dy))
 
 unpackX :: XCoordinate -> Int
 unpackX (XCoordinate x) = x
@@ -107,7 +115,7 @@ drawGrid' drawElement grid = T.intercalate "\n" rows
     [ T.intercalate "" row
     | yCoord <- [yMin .. yMax]
     , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
-    ]    
+    ]
 
 manhattanDistance :: Coordinate -> Coordinate -> ManhattanDistance
 manhattanDistance
@@ -118,4 +126,3 @@ manhattanDistance
 shift :: Coordinate -> Delta -> Coordinate
 shift (XCoordinate x, YCoordinate y) (DeltaX dx, DeltaY dy) =
   (XCoordinate (x + dx), YCoordinate (y + dy))
-
