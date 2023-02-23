@@ -76,12 +76,10 @@ shiftShape (ExternalAnchor (ExternallyAnchoredShape exAnchor exShape)) d =
       }
 
 shiftAnchorTo :: Shape -> Coordinate -> Shape
-shiftAnchorTo s@(InternalAnchor ias) ref = shiftShape s dref
- where
-  dref = anchor ias `diff` ref
-shiftAnchorTo s@(ExternalAnchor eas) ref = shiftShape s dref
- where
-  dref = exAnchor eas `diff` ref
+shiftAnchorTo s@(InternalAnchor ias) desired =
+  shiftShape s (desired `diff` anchor ias)
+shiftAnchorTo s@(ExternalAnchor eas) desired =
+  shiftShape s (desired `diff` exAnchor eas)
 
 typeShape :: RockType -> Shape
 typeShape HLine =
@@ -174,65 +172,11 @@ calculateHeight cave =
       TowerHeight (yMax - yMin)
 
 startingPos :: Cave -> RockType -> RockPosition
-startingPos cave rt = RockPosition $
-  case rt of
-    HLine ->
-      point startX startY
-        :| [ point (startX + 1) startY
-           , point (startX + 2) startY
-           , point (startX + 3) startY
-           ]
-    {-
-
-    \|...@...|
-    \|..@@@..|
-    \|...@...|
-    \|.......|
-    \|.......|
-    \|.......|
-    \|..####.|
-    +-------+
-
-      -}
-
-    Plus ->
-      point startX startY
-        :| [ point (startX - 1) (startY - 1)
-           , point startX (startY - 1)
-           , point (startX + 1) (startY - 1)
-           , point startX (startY - 2)
-           ]
-    -- point startX (startY - 1)
-    --   :| [ point (startX + 1) startY
-    --      , point (startX + 2) (startY - 1)
-    --      , point (startX + 1) (startY - 2)
-    --      , point (startX + 1) (startY - 1)
-    --      ]
-    LShape ->
-      point startX startY
-        :| [ point (startX + 1) startY
-           , point (startX + 2) startY
-           , point (startX + 2) (startY - 1)
-           , point (startX + 2) (startY - 2)
-           ]
-    VLine ->
-      point startX startY
-        :| [ point startX (startY - 1)
-           , point startX (startY - 2)
-           , point startX (startY - 3)
-           ]
-    Square ->
-      point startX startY
-        :| [ point (startX + 1) startY
-           , point startX (startY - 1)
-           , point (startX + 1) (startY - 1)
-           ]
+startingPos cave = formPosition . (`shiftAnchorTo` anchorPoint) . typeShape
  where
   Boundaries xMin _ yMin _ = getBounds $ M.keys cave
-  XCoordinate leftEdge = xMin
-  YCoordinate topEdge = yMin
-  startX = leftEdge + 3
-  startY = topEdge - 4
+  offset = (DeltaX 3, DeltaY (-4))
+  anchorPoint = (xMin, yMin) `shift` offset
 
 getBottom :: RockPosition -> RockBottom
 getBottom =

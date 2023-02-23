@@ -31,6 +31,9 @@ data Boundaries = Boundaries
 
 --------------------------------------------------------------------------------
 
+invert :: Delta -> Delta
+invert (DeltaX dx, DeltaY dy) = (DeltaX (negate dx), DeltaY (negate dy))
+
 diff :: Coordinate -> Coordinate -> Delta
 diff (x1, y1) (x2, y2) =
   (DeltaX $ unpackX $ x1 - x2, DeltaY $ unpackY $ y1 - y2)
