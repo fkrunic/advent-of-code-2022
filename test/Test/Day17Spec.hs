@@ -1,11 +1,13 @@
 module Test.Day17Spec where
 
-import Data.List.NonEmpty (NonEmpty((:|)))
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty as NE
 import Data.Text qualified as T
 import Day17
 import Infinites
 import Test.Hspec
+
+import Grids
 
 spec :: SpecWith ()
 spec = do
@@ -32,10 +34,12 @@ spec = do
           let rp = startingPos caveFloor HLine
               (settled, _) = rockProcess caveFloor rp winds
               actual = drawCave settled
-              expected = T.intercalate "\n"
-                [ "..####."
-                , "#######"
-                ]
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "..####."
+                  , "#######"
+                  ]
           actual `shouldBe` expected
 
         it "Rock 2" $ do
@@ -45,14 +49,29 @@ spec = do
               rp2 = startingPos c1 Plus
               (settled, _) = rockProcess c1 rp2 futureWinds
               actual = drawCave settled
-              expected = T.intercalate "\n"
-                [ "...#..."
-                , "..###.."
-                , "...#..."
-                , "..####."
-                , "#######"
-                ]
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "...#..."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
           nextWind `shouldBe` West
+          actual `shouldBe` expected
+
+      describe "Shapes" $ do
+        it "Shifting anchor of square" $ do
+          let square = typeShape Square
+              desiredAnchor = point 5 5
+              actual = square `shiftAnchorTo` desiredAnchor
+              expected =
+                InternalAnchor $
+                  InternallyAnchoredShape
+                    { anchor = point 5 5
+                    , remainder = [point 5 4, point 6 4, point 6 5]
+                    }
           actual `shouldBe` expected
 
       describe "Tower Process" $ do
@@ -60,32 +79,38 @@ spec = do
 
         it "Rock 1" $ do
           let actual = drawCave $ process 1
-              expected = T.intercalate "\n"
-                [ "..####."
-                , "#######"
-                ]
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "..####."
+                  , "#######"
+                  ]
           actual `shouldBe` expected
-        
+
         it "Rock 2" $ do
           let actual = drawCave $ process 2
-              expected = T.intercalate "\n"
-                [ "...#..."
-                , "..###.."
-                , "...#..."
-                , "..####."
-                , "#######"
-                ]
-          actual `shouldBe` expected   
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "...#..."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected
 
-        it "Rock 3" $ do       
+        it "Rock 3" $ do
           let actual = drawCave $ process 3
-              expected = T.intercalate "\n"
-                [ "..#...."
-                , "..#...."
-                , "####..."
-                , "..###.."
-                , "...#..."
-                , "..####."
-                , "#######"
-                ]
-          actual `shouldBe` expected  
+              expected =
+                T.intercalate
+                  "\n"
+                  [ "..#...."
+                  , "..#...."
+                  , "####..."
+                  , "..###.."
+                  , "...#..."
+                  , "..####."
+                  , "#######"
+                  ]
+          actual `shouldBe` expected
