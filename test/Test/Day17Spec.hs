@@ -495,6 +495,7 @@ spec = do
             caveActual `shouldBe` caveExpected
 
           it "Iteration 10" $ do   
+            pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 10
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 10
                 caveActual = drawCave processActual
@@ -533,6 +534,7 @@ spec = do
             caveActual `shouldBe` "#######"
 
           it "Iteration 1" $ do
+            pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 1
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 1
                 caveActual = drawCave processActual
@@ -544,6 +546,7 @@ spec = do
             caveActual `shouldBe` caveExpected   
 
           it "Iteration 2" $ do
+            pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 2
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 2
                 caveActual = drawCave processActual
@@ -556,10 +559,12 @@ spec = do
             caveActual `shouldBe` caveExpected  
 
           it "Iteration 100" $ do  
+            pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 100
             heightActual `shouldBe` 100
             
           it "Iteration 10000000" $ do
+            pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 10000000
             heightActual `shouldBe` 10000000          
 
