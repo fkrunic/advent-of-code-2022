@@ -25,12 +25,14 @@ type Cave = SmartGrid Cell
 data InternallyAnchoredShape = InternallyAnchoredShape
   { anchor :: Coordinate
   , remainder :: [Coordinate]
+  , bottom :: NonEmpty Coordinate
   }
   deriving (Show, Eq)
 
 data ExternallyAnchoredShape = ExternallyAnchoredShape
   { exAnchor :: Coordinate
   , exShape :: NonEmpty Coordinate
+  , exBottom :: NonEmpty Coordinate
   }
   deriving (Show, Eq)
 
@@ -42,7 +44,7 @@ data Shape
 newtype RockPosition = RockPosition (NonEmpty Coordinate) deriving (Show, Eq)
 newtype RockBottom = RockBottom (NonEmpty Coordinate) deriving (Show, Eq)
 
-data TowerProcess = FallingRock RockPosition | SettledRock Cave
+data TowerProcess = FallingRock Shape | SettledRock Cave
   deriving (Show, Eq)
 
 newtype Iterations = Iterations Int deriving (Show, Eq, Num)
@@ -64,23 +66,24 @@ formPosition (InternalAnchor ias) = RockPosition (anchor ias :| remainder ias)
 formPosition (ExternalAnchor eas) = RockPosition (exShape eas)
 
 shiftShape :: Shape -> Delta -> Shape
-shiftShape (InternalAnchor (InternallyAnchoredShape anchor remainder)) d =
+shiftShape (InternalAnchor (InternallyAnchoredShape anchor remainder bottom)) d =
   InternalAnchor $
     InternallyAnchoredShape
       { anchor = anchor `shift` d
       , remainder = map (`shift` d) remainder
+      , bottom = NE.map (`shift` d) bottom
       }
-shiftShape (ExternalAnchor (ExternallyAnchoredShape exAnchor exShape)) d =
+shiftShape (ExternalAnchor (ExternallyAnchoredShape exAnchor exShape exBottom)) d =
   ExternalAnchor $
     ExternallyAnchoredShape
       { exAnchor = exAnchor `shift` d
       , exShape = NE.map (`shift` d) exShape
+      , exBottom = NE.map (`shift` d) exBottom
       }
 
 shiftAnchorTo :: Shape -> Coordinate -> Shape
 shiftAnchorTo s@(InternalAnchor ias) desired =
   shiftShape s (desired `diff` anchor ias)
-
 shiftAnchorTo s@(ExternalAnchor eas) desired =
   shiftShape s (desired `diff` exAnchor eas)
 
@@ -90,6 +93,7 @@ typeShape HLine =
     InternallyAnchoredShape
       { anchor = point 0 0
       , remainder = [point 1 0, point 2 0, point 3 0]
+      , bottom = point 0 0 :| [point 1 0, point 2 0, point 3 0]
       }
 typeShape Plus =
   ExternalAnchor $
@@ -102,6 +106,8 @@ typeShape Plus =
                , point 2 (-1)
                , point 1 0
                ]
+      , exBottom = 
+          point 0 (-1) :| [point 1 0, point 2 (-1) ]
       }
 typeShape LShape =
   InternalAnchor $
@@ -113,18 +119,21 @@ typeShape LShape =
           , point 2 (-1)
           , point 2 (-2)
           ]
+      , bottom = point 0 0 :| [point 1 0, point 2 0]
       }
 typeShape VLine =
   InternalAnchor $
     InternallyAnchoredShape
       { anchor = point 0 0
       , remainder = [point 0 (-1), point 0 (-2), point 0 (-3)]
+      , bottom = point 0 0 :| []
       }
 typeShape Square =
   InternalAnchor $
     InternallyAnchoredShape
       { anchor = point 0 0
       , remainder = [point 0 (-1), point 1 (-1), point 1 0]
+      , bottom = point 0 0 :| [point 1 0]
       }
 
 --------------------------------------------------------------------------------
@@ -134,11 +143,11 @@ unpackRockPosition (RockPosition ps) = ps
 
 --------------------------------------------------------------------------------
 
-canBlow :: Cave -> WindDirection -> RockPosition -> Bool
-canBlow cave wind rp = not (outsideBounds || isBlocked)
+canBlow :: Cave -> WindDirection -> Shape -> Bool
+canBlow cave wind shape = not (outsideBounds || isBlocked)
  where
   Boundaries xMin xMax _ _ = gridBounds cave
-  RockPosition blown = blowRock wind rp
+  RockPosition blown = formPosition $ blowRock wind shape
   outsideBounds =
     any (\xCoord -> xCoord < xMin || xCoord > xMax) $
       NE.map fst blown
@@ -152,21 +161,24 @@ isPositionBlocked cave (RockPosition ps) = any blocked ps
       Nothing -> False
       Just cell -> cell == Surface
 
-canDrop :: Cave -> RockBottom -> Bool
-canDrop cave (RockBottom bs) = not $ isPositionBlocked cave shifted
+canDrop :: Cave -> Shape -> Bool
+canDrop cave shape = not $ isPositionBlocked cave (RockPosition shiftedBottom)
  where
-  shifted = dropRock (RockPosition bs)
+  shifted = dropRock shape
+  RockBottom shiftedBottom = getBottom shifted
 
-blowRock :: WindDirection -> RockPosition -> RockPosition
-blowRock East (RockPosition ps) = RockPosition $ NE.map moveEast ps
-blowRock West (RockPosition ps) = RockPosition $ NE.map moveWest ps
+blowRock :: WindDirection -> Shape -> Shape
+blowRock East shape = shiftShape shape (DeltaX 1, DeltaY 0)
+blowRock West shape = shiftShape shape (DeltaX (-1), DeltaY 0)
 
-dropRock :: RockPosition -> RockPosition
-dropRock (RockPosition ps) = RockPosition $ NE.map moveSouth ps
+dropRock :: Shape -> Shape
+dropRock shape = shiftShape shape (DeltaX 0, DeltaY 1)
 
-settleRock :: Cave -> RockPosition -> Cave
-settleRock cave (RockPosition ps) =
+settleRock :: Cave -> Shape -> Cave
+settleRock cave shape =
   foldr (\coord -> insertWith const coord Surface) cave ps
+  where
+    RockPosition ps = formPosition shape
 
 calculateHeight :: Cave -> TowerHeight
 calculateHeight cave =
@@ -174,39 +186,34 @@ calculateHeight cave =
     Boundaries _ _ (YCoordinate yMin) (YCoordinate yMax) ->
       TowerHeight (yMax - yMin)
 
-startingPos :: Cave -> RockType -> RockPosition
-startingPos cave = formPosition . (`shiftAnchorTo` anchorPoint) . typeShape
+startingPos :: Cave -> RockType -> Shape
+startingPos cave = (`shiftAnchorTo` anchorPoint) . typeShape
  where
   Boundaries xMin _ yMin _ = gridBounds cave
   offset = (DeltaX 2, DeltaY (-4))
   anchorPoint = (xMin, yMin) `shift` offset
 
-getBottom :: RockPosition -> RockBottom
-getBottom =
-  RockBottom
-    . NE.map (NE.head . NE.reverse . NE.sortWith snd)
-    . NE.groupBy1 (\c1 c2 -> fst c1 == fst c2)
-    . unpackRockPosition
+getBottom :: Shape -> RockBottom
+getBottom (InternalAnchor ias) = RockBottom $ bottom ias
+getBottom (ExternalAnchor eas) = RockBottom $ exBottom eas
 
 --------------------------------------------------------------------------------
 
-dropProcess :: Cave -> RockPosition -> TowerProcess
-dropProcess cave rp =
-  if canDrop cave bottom
-    then FallingRock (dropRock rp)
-    else SettledRock (settleRock cave rp)
- where
-  bottom = getBottom rp
+dropProcess :: Cave -> Shape -> TowerProcess
+dropProcess cave shape =
+  if canDrop cave shape
+    then FallingRock (dropRock shape)
+    else SettledRock (settleRock cave shape)
 
-blowProcess :: Cave -> RockPosition -> WindDirection -> RockPosition
-blowProcess cave rp direction =
-  if canBlow cave direction rp
-    then blowRock direction rp
-    else rp
+blowProcess :: Cave -> Shape -> WindDirection -> Shape
+blowProcess cave shape direction =
+  if canBlow cave direction shape
+    then blowRock direction shape
+    else shape
 
 rockProcess ::
   Cave ->
-  RockPosition ->
+  Shape ->
   Infinite WindDirection ->
   (Cave, Infinite WindDirection)
 rockProcess cave rp winds =

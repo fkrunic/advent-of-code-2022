@@ -72,6 +72,7 @@ spec = do
                   InternallyAnchoredShape
                     { anchor = point 5 5
                     , remainder = [point 5 4, point 6 4, point 6 5]
+                    , bottom = point 5 5 :| [point 6 5]
                     }
           actual `shouldBe` expected
 
