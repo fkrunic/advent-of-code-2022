@@ -263,7 +263,7 @@ efficientHeight cave rtsSet windSet (Iterations largeIter) =
   TowerHeight $ lastHeight * quotient + residueHeight
  where
   uniqueStacks :: Int = lcm (length rtsSet) (length windSet)
-  heights :: [TowerHeight] = map runner [0 .. uniqueStacks - 1]
+  heights :: [TowerHeight] = map runner [0 .. uniqueStacks]
   (TowerHeight lastHeight) = last heights
   remainder = largeIter `mod` uniqueStacks
   quotient = largeIter `div` uniqueStacks

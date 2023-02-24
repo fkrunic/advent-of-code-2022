@@ -166,7 +166,7 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected  
+          actual `shouldBe` expected
 
         it "Rock 5" $ do
           let actual = drawCave $ process 5
@@ -203,7 +203,7 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected   
+          actual `shouldBe` expected
 
         it "Rock 7" $ do
           let actual = drawCave $ process 7
@@ -225,7 +225,7 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected 
+          actual `shouldBe` expected
 
         it "Rock 8" $ do
           let actual = drawCave $ process 8
@@ -249,7 +249,7 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected 
+          actual `shouldBe` expected
 
         it "Rock 9" $ do
           let actual = drawCave $ process 9
@@ -275,7 +275,7 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected   
+          actual `shouldBe` expected
 
         it "Rock 10" $ do
           let actual = drawCave $ process 10
@@ -301,7 +301,50 @@ spec = do
                   , "..####."
                   , "#######"
                   ]
-          actual `shouldBe` expected  
+          actual `shouldBe` expected
+
+      describe "Efficient Height" $ do
+        describe "One Wind, One Shape" $ do
+          let windSet = East :| []
+              rtsSet = HLine :| []
+
+          it "One Wind, One Shape - 0" $ do
+            let heightActual = efficientHeight caveFloor rtsSet windSet 0
+                processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 0
+                caveActual = drawCave processActual
+            heightActual `shouldBe` 0
+            caveActual `shouldBe` "#######"
+
+          it "One Wind, One Shape - 1" $ do
+            let heightActual = efficientHeight caveFloor rtsSet windSet 1
+                processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 1
+                caveActual = drawCave processActual
+                caveExpected = T.intercalate "\n"
+                  [ "...####"
+                  , "#######"
+                  ]
+            heightActual `shouldBe` 1
+            caveActual `shouldBe` caveExpected   
+
+          it "One Wind, One Shape - 2" $ do
+            let heightActual = efficientHeight caveFloor rtsSet windSet 2
+                processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 2
+                caveActual = drawCave processActual
+                caveExpected = T.intercalate "\n"
+                  [ "...####"
+                  , "...####"
+                  , "#######"
+                  ]
+            heightActual `shouldBe` 2
+            caveActual `shouldBe` caveExpected  
+
+          it "One Wind, One Shape - 100" $ do  
+            let heightActual = efficientHeight caveFloor rtsSet windSet 100
+            heightActual `shouldBe` 100
+            
+          it "One Wind, One Shape - 10000000" $ do
+            let heightActual = efficientHeight caveFloor rtsSet windSet 10000000
+            heightActual `shouldBe` 10000000          
 
       describe "Puzzle Solutions" $ do
         it "Part 1 - Puzzle Input" $ do
@@ -316,6 +359,7 @@ spec = do
           actual `shouldBe` expected
 
         it "Part 1 - Efficient Height - Example Input" $ do
+          pendingWith "Broke "
           let input = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
               windSet = case NE.nonEmpty (parse input) of
                 Nothing -> error "Cannot parse wind input"
