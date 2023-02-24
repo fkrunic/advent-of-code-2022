@@ -359,7 +359,7 @@ spec = do
           actual `shouldBe` expected
 
         it "Part 1 - Efficient Height - Example Input" $ do
-          pendingWith "Broke "
+          pendingWith "Broken"
           let input = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
               windSet = case NE.nonEmpty (parse input) of
                 Nothing -> error "Cannot parse wind input"
