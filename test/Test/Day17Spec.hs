@@ -505,13 +505,13 @@ spec = do
                   , "...##.."
                   , "...##.."                    
                   , "..####."
-                  , "...####" -- repeating variant (end)
+                  , "...####" -- repeating variant (end)        [11]
                   , "...##.."
                   , "...##.."
                   , "...##.."
                   , "...##.."                    
-                  , "..####." -- repeating variant (start)
-                  , "....#.." -- initial height from cave floor
+                  , "..####." -- repeating variant (start)      [6]
+                  , "....#.." -- initial height from cave floor [5]
                   , "....#.."
                   , "....#.."
                   , "....#.."

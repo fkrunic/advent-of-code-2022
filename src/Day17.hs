@@ -259,25 +259,40 @@ efficientHeight ::
   NonEmpty WindDirection ->
   Iterations ->
   TowerHeight
-efficientHeight cave rtsSet windSet (Iterations largeIter) =
-  qHeight + rHeight
+efficientHeight cave rtsSet windSet (Iterations iter)
+  | iter < patternMultiple = heightCalc iter
+  | otherwise =
+      let initialHeight = heightCalc (patternMultiple - 1)
+          patternHeight = heightCalc (2 * patternMultiple - 1) - heightCalc patternMultiple
+          offset = iter - patternMultiple
+          offsetQ = offset `div` patternMultiple
+          offsetR = offset `mod` patternMultiple
+       in initialHeight + TowerHeight offsetQ * patternHeight + heightCalc offsetR
  where
-  uniqueIter = lcm (length rtsSet) (length windSet)
-  heightCalc = calculateHeight
+  patternMultiple = lcm (length rtsSet) (length windSet)
+  heightCalc =
+    calculateHeight
       . towerProcess caveFloor (makeInf rtsSet) (makeInf windSet)
-      . Iterations    
-  quotient = largeIter `div` uniqueIter
-  remainder = largeIter `mod` uniqueIter
-  qHeight = heightCalc uniqueIter * TowerHeight quotient
-  rHeight = heightCalc remainder
+      . Iterations
 
-  -- heights :: [TowerHeight] = map runner [0 .. uniqueStacks]
-  -- (TowerHeight lastHeight) = last heights
-  -- remainder = largeIter `mod` uniqueStacks
-  -- quotient = largeIter `div` uniqueStacks
-  -- (TowerHeight residueHeight) = heights !! remainder
-  -- runner :: Int -> TowerHeight
-  -- runner =
-  --   calculateHeight
-  --     . towerProcess caveFloor (makeInf rtsSet) (makeInf windSet)
-  --     . Iterations
+--   qHeight + rHeight
+--  where
+--   uniqueIter = lcm (length rtsSet) (length windSet)
+--   heightCalc = calculateHeight
+--       . towerProcess caveFloor (makeInf rtsSet) (makeInf windSet)
+--       . Iterations
+--   quotient = largeIter `div` uniqueIter
+--   remainder = largeIter `mod` uniqueIter
+--   qHeight = heightCalc uniqueIter * TowerHeight quotient
+--   rHeight = heightCalc remainder
+
+-- heights :: [TowerHeight] = map runner [0 .. uniqueStacks]
+-- (TowerHeight lastHeight) = last heights
+-- remainder = largeIter `mod` uniqueStacks
+-- quotient = largeIter `div` uniqueStacks
+-- (TowerHeight residueHeight) = heights !! remainder
+-- runner :: Int -> TowerHeight
+-- runner =
+--   calculateHeight
+--     . towerProcess caveFloor (makeInf rtsSet) (makeInf windSet)
+--     . Iterations
