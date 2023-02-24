@@ -4,7 +4,7 @@ import Data.IntSet qualified as IS
 import Data.List (group, groupBy, sort)
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
-import Math.NumberTheory.ArithmeticFunctions
+import Math.NumberTheory.ArithmeticFunctions (divisorsSmall)
 
 newtype Divisor = Divisor Int deriving (Show, Eq, Ord)
 newtype Offset = Offset Int deriving (Show, Eq)
