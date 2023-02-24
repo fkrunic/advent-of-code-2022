@@ -52,6 +52,7 @@ library
     Utilities.Grids
     Utilities.Infinites
     Utilities.Parsing
+    Utilities.Patterns
 
 executable aoc2022-test
   main-is:            Spec.hs
