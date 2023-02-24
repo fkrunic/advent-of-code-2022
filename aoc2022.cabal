@@ -88,3 +88,15 @@ executable aoc2022-test
     Test.Day16Spec
     Test.Day17Spec
     Test.Input
+
+executable day17-bench
+  main-is:        Bench.hs
+  hs-source-dirs: benchmarks
+  default-extensions:
+    ImportQualifiedPost
+    OverloadedStrings
+  ghc-options: -O2
+  build-depends:
+    , aoc2022
+    , base
+    , criterion
