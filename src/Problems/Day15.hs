@@ -1,4 +1,4 @@
-module Day15 where
+module Problems.Day15 where
 
 import Data.Map (Map, (!))
 import Data.Map.Strict qualified as M

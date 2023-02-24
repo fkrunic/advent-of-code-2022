@@ -6,7 +6,7 @@ import Data.Maybe (fromJust, fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 
-import Day14 (
+import Problems.Day14 (
   DrawPath,
   Element,
   chainPath,

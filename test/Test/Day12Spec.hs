@@ -6,7 +6,7 @@ import Data.Either (fromRight)
 import Data.Map.Strict qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day12 (
+import Problems.Day12 (
   Cell,
   CellType (EndCell, GenericCell, StartCell),
   Grid,

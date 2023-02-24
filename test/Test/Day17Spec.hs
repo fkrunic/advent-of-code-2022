@@ -3,7 +3,7 @@ module Test.Day17Spec where
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty as NE
 import Data.Text qualified as T
-import Day17
+import Problems.Day17
 import Test.Hspec
 import Test.Input
 import Utilities.Grids

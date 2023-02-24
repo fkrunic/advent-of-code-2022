@@ -1,7 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TupleSections #-}
-
-module Day11 where
+module Problems.Day11 where
 
 import Control.Monad (forM_, replicateM_)
 import Control.Monad.Trans.State.Strict (State, execState, get, modify)

@@ -2,7 +2,7 @@ module Test.Day10Spec (spec) where
 
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day10 (part1Solution, part2Solution)
+import Problems.Day10 (part1Solution, part2Solution)
 import Test.Hspec (SpecWith, describe, it, shouldBe)
 
 spec :: SpecWith ()

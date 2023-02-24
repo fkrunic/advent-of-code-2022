@@ -1,4 +1,4 @@
-module Day13 (
+module Problems.Day13 (
   Comparison (..),
   organize,
   pInt,

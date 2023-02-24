@@ -3,7 +3,7 @@ module Main where
 import Criterion.Main 
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.List.NonEmpty qualified as NE
-import Day17
+import Problems.Day17
 import Utilities.Infinites
 
 target :: Iterations -> Cave

@@ -1,4 +1,4 @@
-module Day17 where
+module Problems.Day17 where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE

@@ -1,6 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
-module Day03 (
+module Problems.Day03 (
   part1Solution,
   part2Solution,
 ) where

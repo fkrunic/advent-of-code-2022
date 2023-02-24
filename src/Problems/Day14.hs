@@ -1,4 +1,4 @@
-module Day14 (
+module Problems.Day14 (
   DrawPath,
   Element,
   chainPath,

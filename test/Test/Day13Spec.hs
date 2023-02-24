@@ -6,7 +6,7 @@ import Data.List (elemIndex, sortBy)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day13 (
+import Problems.Day13 (
   Comparison (..),
   organize,
   pInt,

@@ -7,7 +7,7 @@ import Data.List (sort)
 import Data.Map (Map, elems, fromList)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day11
+import Problems.Day11
 import Text.Megaparsec (runParser, some)
 import Prelude hiding (round)
 

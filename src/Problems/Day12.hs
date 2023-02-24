@@ -1,4 +1,4 @@
-module Day12 where
+module Problems.Day12 where
 
 import Data.Char (ord)
 import Data.Functor (($>))

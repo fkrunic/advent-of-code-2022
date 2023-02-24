@@ -1,4 +1,4 @@
-module Day01 (
+module Problems.Day01 (
   part1Solution,
   part2Solution,
 ) where

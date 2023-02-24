@@ -1,7 +1,7 @@
 module Test.Day07Spec (spec) where
 
 import Data.Text (Text, intercalate)
-import Day07 (part1Solution, part2Solution)
+import Problems.Day07 (part1Solution, part2Solution)
 import Test.Hspec (SpecWith, describe, it, shouldBe)
 
 spec :: SpecWith ()

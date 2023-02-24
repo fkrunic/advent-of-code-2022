@@ -1,4 +1,4 @@
-module Day16 where
+module Problems.Day16 where
 
 import Control.Monad.Trans.RWS.CPS hiding (state)
 import Data.List (sortBy)

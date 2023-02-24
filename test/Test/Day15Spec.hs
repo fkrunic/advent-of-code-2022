@@ -9,7 +9,7 @@ import Data.Map qualified as M
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day15
+import Problems.Day15
 
 import Utilities.Grids
 

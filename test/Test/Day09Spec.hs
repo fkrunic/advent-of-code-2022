@@ -1,7 +1,7 @@
 module Test.Day09Spec (spec) where
 
 import Data.Text (Text, intercalate)
-import Day09 (
+import Problems.Day09 (
   part1Solution,
   part2Solution,
  )

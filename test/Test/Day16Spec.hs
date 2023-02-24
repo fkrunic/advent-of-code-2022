@@ -9,7 +9,7 @@ import Data.Maybe (fromJust)
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
-import Day16
+import Problems.Day16
 import System.Random
 import Test.Hspec
 import Text.Megaparsec hiding (State, choice)
