@@ -61,5 +61,28 @@ test-suite aoc2022-test
     build-depends:
         aoc2022,
         base,
+        containers,
         hspec,
-        text
+        megaparsec,
+        text,
+        random,
+        transformers
+    other-modules:
+        Test.Input,
+        Test.Day01Spec,
+        Test.Day02Spec,
+        Test.Day03Spec,
+        Test.Day04Spec,
+        Test.Day05Spec,
+        Test.Day06Spec,
+        Test.Day07Spec,
+        Test.Day08Spec,
+        Test.Day09Spec,
+        Test.Day10Spec,
+        Test.Day11Spec,
+        Test.Day12Spec,
+        Test.Day13Spec,
+        Test.Day14Spec,
+        Test.Day15Spec,
+        Test.Day16Spec,
+        Test.Day17Spec
