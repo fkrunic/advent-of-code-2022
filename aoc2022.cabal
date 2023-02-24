@@ -1,0 +1,52 @@
+cabal-version:      2.4
+name:               aoc2022
+version:            0.1.0.0
+synopsis:           Advent of Code 2022 Solutions
+author:             filipkrunic
+maintainer:         fkrunic9@gmail.com
+
+extra-source-files:
+    CHANGELOG.md
+    README.md
+
+library
+    build-depends:
+        base,
+        containers,
+        ghc,
+        megaparsec,
+        monad-loops,
+        random,
+        text,
+        transformers
+    hs-source-dirs: src
+    default-extensions:
+        ImportQualifiedPost,
+        GeneralizedNewtypeDeriving,
+        RankNTypes,
+        ScopedTypeVariables,
+        TupleSections,
+        OverloadedStrings,
+        RecordWildCards
+    exposed-modules:
+        Graphs,
+        Grids,
+        Infinites,
+        Parsing,
+        Day01,
+        Day02,
+        Day03,
+        Day04,
+        Day05,
+        Day06,
+        Day07,
+        Day08,
+        Day09,
+        Day10,
+        Day11,
+        Day12,
+        Day13,
+        Day14,
+        Day15,
+        Day16,
+        Day17
