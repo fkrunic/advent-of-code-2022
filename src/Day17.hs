@@ -11,6 +11,8 @@ import Grids
 import Data.Text qualified as T
 import Infinites
 
+import Prelude hiding (lookup)
+
 data RockType = HLine | Plus | LShape | VLine | Square
   deriving (Show, Eq, Ord, Enum)
 
@@ -18,7 +20,7 @@ data WindDirection = East | West deriving (Show, Eq, Ord)
 data Action = Blow WindDirection | Fall deriving (Show, Eq, Ord)
 
 data Cell = Empty | Surface deriving (Show, Eq)
-type Cave = Grid Cell
+type Cave = SmartGrid Cell
 
 data InternallyAnchoredShape = InternallyAnchoredShape
   { anchor :: Coordinate
@@ -135,7 +137,7 @@ unpackRockPosition (RockPosition ps) = ps
 canBlow :: Cave -> WindDirection -> RockPosition -> Bool
 canBlow cave wind rp = not (outsideBounds || isBlocked)
  where
-  Boundaries xMin xMax _ _ = getBounds $ M.keys cave
+  Boundaries xMin xMax _ _ = gridBounds cave
   RockPosition blown = blowRock wind rp
   outsideBounds =
     any (\xCoord -> xCoord < xMin || xCoord > xMax) $
@@ -146,7 +148,7 @@ isPositionBlocked :: Cave -> RockPosition -> Bool
 isPositionBlocked cave (RockPosition ps) = any blocked ps
  where
   blocked b =
-    case M.lookup b cave of
+    case lookup b cave of
       Nothing -> False
       Just cell -> cell == Surface
 
@@ -164,18 +166,18 @@ dropRock (RockPosition ps) = RockPosition $ NE.map moveSouth ps
 
 settleRock :: Cave -> RockPosition -> Cave
 settleRock cave (RockPosition ps) =
-  foldr (\coord -> M.insertWith const coord Surface) cave ps
+  foldr (\coord -> insertWith const coord Surface) cave ps
 
 calculateHeight :: Cave -> TowerHeight
 calculateHeight cave =
-  case getBounds (M.keys cave) of
+  case gridBounds cave of
     Boundaries _ _ (YCoordinate yMin) (YCoordinate yMax) ->
       TowerHeight (yMax - yMin)
 
 startingPos :: Cave -> RockType -> RockPosition
 startingPos cave = formPosition . (`shiftAnchorTo` anchorPoint) . typeShape
  where
-  Boundaries xMin _ yMin _ = getBounds $ M.keys cave
+  Boundaries xMin _ yMin _ = gridBounds cave
   offset = (DeltaX 2, DeltaY (-4))
   anchorPoint = (xMin, yMin) `shift` offset
 
@@ -235,9 +237,9 @@ drawCell Empty = "."
 drawCell Surface = "#"
 
 drawCave :: Cave -> Text
-drawCave = drawGrid Empty drawCell
+drawCave = drawGrid Empty drawCell . toGrid
 
 --------------------------------------------------------------------------------
 
 caveFloor :: Cave
-caveFloor = M.fromList $ map (\i -> (point i 0, Surface)) [1 .. 7]
+caveFloor = makeGrid $ M.fromList $ map (\i -> (point i 0, Surface)) [1 .. 7]

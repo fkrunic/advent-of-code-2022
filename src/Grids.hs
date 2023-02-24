@@ -21,6 +21,9 @@ type Delta = (DeltaX, DeltaY)
 type Coordinate = (XCoordinate, YCoordinate)
 type Grid = Map Coordinate
 
+data SmartGrid a = SmartGrid (Map Coordinate a) Boundaries
+  deriving (Show, Eq)
+
 data Boundaries = Boundaries
   { xMin :: XCoordinate
   , xMax :: XCoordinate
@@ -28,6 +31,37 @@ data Boundaries = Boundaries
   , yMax :: YCoordinate
   }
   deriving (Show, Eq, Ord)
+
+--------------------------------------------------------------------------------
+
+makeGrid :: Map Coordinate a -> SmartGrid a 
+makeGrid m = SmartGrid m (getBounds $ M.keys m)
+
+updateBounds :: Coordinate -> Boundaries -> Boundaries
+updateBounds (xCoord, yCoord) (Boundaries xMin xMax yMin yMax) =
+  Boundaries 
+    { xMin = min xCoord xMin
+    , xMax = max xCoord xMax
+    , yMin = min yCoord yMin
+    , yMax = max yCoord yMax
+    }
+
+insert :: Coordinate -> a -> SmartGrid a -> SmartGrid a
+insert coord v (SmartGrid m bounds) = 
+  SmartGrid (M.insert coord v m) (updateBounds coord bounds)
+
+insertWith :: (a -> a -> a) -> Coordinate -> a -> SmartGrid a -> SmartGrid a
+insertWith combiner coord v (SmartGrid m bounds) = 
+  SmartGrid (M.insertWith combiner coord v m) (updateBounds coord bounds)
+
+gridBounds :: SmartGrid a -> Boundaries
+gridBounds (SmartGrid _ bounds) = bounds
+
+lookup :: Coordinate -> SmartGrid a -> Maybe a
+lookup coord (SmartGrid m _) = M.lookup coord m
+
+toGrid :: SmartGrid a -> Grid a 
+toGrid (SmartGrid m _) = m
 
 --------------------------------------------------------------------------------
 
