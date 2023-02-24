@@ -30,23 +30,23 @@ library
     TupleSections
 
   exposed-modules:
-    Day01
-    Day02
-    Day03
-    Day04
-    Day05
-    Day06
-    Day07
-    Day08
-    Day09
-    Day10
-    Day11
-    Day12
-    Day13
-    Day14
-    Day15
-    Day16
-    Day17
+    Problems.Day01
+    Problems.Day02
+    Problems.Day03
+    Problems.Day04
+    Problems.Day05
+    Problems.Day06
+    Problems.Day07
+    Problems.Day08
+    Problems.Day09
+    Problems.Day10
+    Problems.Day11
+    Problems.Day12
+    Problems.Day13
+    Problems.Day14
+    Problems.Day15
+    Problems.Day16
+    Problems.Day17
     Utilities.Graphs
     Utilities.Grids
     Utilities.Infinites
