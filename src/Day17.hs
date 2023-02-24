@@ -106,8 +106,8 @@ typeShape Plus =
                , point 2 (-1)
                , point 1 0
                ]
-      , exBottom = 
-          point 0 (-1) :| [point 1 0, point 2 (-1) ]
+      , exBottom =
+          point 0 (-1) :| [point 1 0, point 2 (-1)]
       }
 typeShape LShape =
   InternalAnchor $
@@ -177,8 +177,8 @@ dropRock shape = shiftShape shape (DeltaX 0, DeltaY 1)
 settleRock :: Cave -> Shape -> Cave
 settleRock cave shape =
   foldr (\coord -> insertWith const coord Surface) cave ps
-  where
-    RockPosition ps = formPosition shape
+ where
+  RockPosition ps = formPosition shape
 
 calculateHeight :: Cave -> TowerHeight
 calculateHeight cave =
@@ -250,3 +250,26 @@ drawCave = drawGrid Empty drawCell . toGrid
 
 caveFloor :: Cave
 caveFloor = makeGrid $ M.fromList $ map (\i -> (point i 0, Surface)) [1 .. 7]
+
+--------------------------------------------------------------------------------
+
+efficientHeight ::
+  Cave ->
+  NonEmpty RockType ->
+  NonEmpty WindDirection ->
+  Iterations ->
+  TowerHeight
+efficientHeight cave rtsSet windSet (Iterations largeIter) =
+  TowerHeight $ lastHeight * quotient + residueHeight
+ where
+  uniqueStacks :: Int = lcm (length rtsSet) (length windSet)
+  heights :: [TowerHeight] = map runner [0 .. uniqueStacks - 1]
+  (TowerHeight lastHeight) = last heights
+  remainder = largeIter `mod` uniqueStacks
+  quotient = largeIter `div` uniqueStacks
+  (TowerHeight residueHeight) = heights !! remainder
+  runner :: Int -> TowerHeight
+  runner =
+    calculateHeight
+      . towerProcess caveFloor (makeInf rtsSet) (makeInf windSet)
+      . Iterations

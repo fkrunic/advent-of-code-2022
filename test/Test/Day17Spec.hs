@@ -315,6 +315,16 @@ spec = do
               expected = 3163
           actual `shouldBe` expected
 
+        it "Part 1 - Efficient Height - Example Input" $ do
+          let input = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
+              windSet = case NE.nonEmpty (parse input) of
+                Nothing -> error "Cannot parse wind input"
+                Just wds -> wds
+              rtsSet = HLine :| [Plus .. Square]
+              actual = efficientHeight caveFloor rtsSet windSet 2022
+              expected = 3068
+          actual `shouldBe` expected
+
         it "Part 2 - Example Input" $ do
           pendingWith "Too long"
           let input = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
