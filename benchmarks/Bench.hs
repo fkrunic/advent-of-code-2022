@@ -21,5 +21,6 @@ main = defaultMain [
                   , bench "10" $ whnf target 10
                   , bench "100" $ whnf target 100
                   , bench "1000" $ whnf target 1000
+                  , bench "10000" $ whnf target 10000
                   ]
   ]
