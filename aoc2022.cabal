@@ -20,7 +20,6 @@ library
         text,
         transformers
     hs-source-dirs: src
-    ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
     default-extensions:
         ImportQualifiedPost,
         GeneralizedNewtypeDeriving,
@@ -55,7 +54,6 @@ library
 executable aoc2022-test
     main-is: Spec.hs
     hs-source-dirs: test
-    ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
     default-extensions:
         ImportQualifiedPost,
         OverloadedStrings 
