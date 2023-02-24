@@ -50,3 +50,16 @@ library
         Day15,
         Day16,
         Day17
+
+test-suite aoc2022-test
+    type: exitcode-stdio-1.0
+    main-is: Spec.hs
+    hs-source-dirs: test
+    default-extensions:
+        ImportQualifiedPost,
+        OverloadedStrings 
+    build-depends:
+        aoc2022,
+        base,
+        hspec,
+        text
