@@ -4,84 +4,87 @@ version:            0.1.0.0
 synopsis:           Advent of Code 2022 Solutions
 author:             filipkrunic
 maintainer:         fkrunic9@gmail.com
-
 extra-source-files:
-    CHANGELOG.md
-    README.md
+  CHANGELOG.md
+  README.md
 
 library
-    build-depends:
-        base,
-        containers,
-        ghc,
-        megaparsec,
-        monad-loops,
-        random,
-        text,
-        transformers
-    hs-source-dirs: src
-    default-extensions:
-        ImportQualifiedPost,
-        GeneralizedNewtypeDeriving,
-        RankNTypes,
-        ScopedTypeVariables,
-        TupleSections,
-        OverloadedStrings,
-        RecordWildCards
-    exposed-modules:
-        Graphs,
-        Grids,
-        Infinites,
-        Parsing,
-        Day01,
-        Day02,
-        Day03,
-        Day04,
-        Day05,
-        Day06,
-        Day07,
-        Day08,
-        Day09,
-        Day10,
-        Day11,
-        Day12,
-        Day13,
-        Day14,
-        Day15,
-        Day16,
-        Day17
+  build-depends:
+    , base
+    , containers
+    , ghc
+    , megaparsec
+    , monad-loops
+    , random
+    , text
+    , transformers
+
+  hs-source-dirs:     src
+  default-extensions:
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    OverloadedStrings
+    RankNTypes
+    RecordWildCards
+    ScopedTypeVariables
+    TupleSections
+
+  exposed-modules:
+    Day01
+    Day02
+    Day03
+    Day04
+    Day05
+    Day06
+    Day07
+    Day08
+    Day09
+    Day10
+    Day11
+    Day12
+    Day13
+    Day14
+    Day15
+    Day16
+    Day17
+    Graphs
+    Grids
+    Infinites
+    Parsing
 
 executable aoc2022-test
-    main-is: Spec.hs
-    hs-source-dirs: test
-    default-extensions:
-        ImportQualifiedPost,
-        OverloadedStrings 
-    build-depends:
-        aoc2022,
-        base,
-        containers,
-        hspec,
-        megaparsec,
-        text,
-        random,
-        transformers
-    other-modules:
-        Test.Input,
-        Test.Day01Spec,
-        Test.Day02Spec,
-        Test.Day03Spec,
-        Test.Day04Spec,
-        Test.Day05Spec,
-        Test.Day06Spec,
-        Test.Day07Spec,
-        Test.Day08Spec,
-        Test.Day09Spec,
-        Test.Day10Spec,
-        Test.Day11Spec,
-        Test.Day12Spec,
-        Test.Day13Spec,
-        Test.Day14Spec,
-        Test.Day15Spec,
-        Test.Day16Spec,
-        Test.Day17Spec
+  main-is:            Spec.hs
+  hs-source-dirs:     test
+  default-extensions:
+    ImportQualifiedPost
+    OverloadedStrings
+
+  build-depends:
+    , aoc2022
+    , base
+    , containers
+    , hspec
+    , megaparsec
+    , random
+    , text
+    , transformers
+
+  other-modules:
+    Test.Day01Spec
+    Test.Day02Spec
+    Test.Day03Spec
+    Test.Day04Spec
+    Test.Day05Spec
+    Test.Day06Spec
+    Test.Day07Spec
+    Test.Day08Spec
+    Test.Day09Spec
+    Test.Day10Spec
+    Test.Day11Spec
+    Test.Day12Spec
+    Test.Day13Spec
+    Test.Day14Spec
+    Test.Day15Spec
+    Test.Day16Spec
+    Test.Day17Spec
+    Test.Input
