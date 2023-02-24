@@ -47,10 +47,10 @@ library
     Day15
     Day16
     Day17
-    Graphs
-    Grids
-    Infinites
-    Parsing
+    Utilities.Graphs
+    Utilities.Grids
+    Utilities.Infinites
+    Utilities.Parsing
 
 executable aoc2022-test
   main-is:            Spec.hs

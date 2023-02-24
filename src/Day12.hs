@@ -11,7 +11,7 @@ import Text.Megaparsec (Parsec, choice, empty, some)
 import Text.Megaparsec.Char (char, letterChar, space1)
 import Text.Megaparsec.Char.Lexer qualified as L
 
-import Graphs (Distance (Finite), Vertex (..))
+import Utilities.Graphs (Distance (Finite), Vertex (..))
 
 type Parser = Parsec Void Text
 

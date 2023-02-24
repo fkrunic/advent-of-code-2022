@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Graphs where
+module Utilities.Graphs where
 
 import Control.Monad (forM_, when)
 import Control.Monad.Loops (whileM_)

@@ -4,7 +4,7 @@ import Criterion.Main
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.List.NonEmpty qualified as NE
 import Day17
-import Infinites
+import Utilities.Infinites
 
 target :: Iterations -> Cave
 target = towerProcess caveFloor rts winds

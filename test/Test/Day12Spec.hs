@@ -19,7 +19,7 @@ import Day12 (
   toPoints,
   vertices,
  )
-import Graphs (
+import Utilities.Graphs (
   Vertex (Vertex),
   dijkstra,
   dijkstraMultipleSources,

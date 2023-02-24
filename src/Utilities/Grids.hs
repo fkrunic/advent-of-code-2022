@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Grids where
+module Utilities.Grids where
 
 import Data.List (unfoldr)
 import Data.Map (Map)

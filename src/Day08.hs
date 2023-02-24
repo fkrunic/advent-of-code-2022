@@ -6,7 +6,7 @@ module Day08 (
 import Data.Char (digitToInt)
 import Data.Map.Strict qualified as M
 
-import Grids hiding (toGrid)
+import Utilities.Grids hiding (toGrid)
 
 data TreeView = TreeView
   { treeHeight :: Height

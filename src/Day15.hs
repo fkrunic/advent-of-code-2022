@@ -4,8 +4,8 @@ import Data.Map (Map, (!))
 import Data.Map.Strict qualified as M
 import Data.Maybe (isJust)
 import Data.Text (Text)
-import Grids
-import Parsing
+import Utilities.Grids
+import Utilities.Parsing
 import Text.Megaparsec
 import Text.Megaparsec.Char (space)
 

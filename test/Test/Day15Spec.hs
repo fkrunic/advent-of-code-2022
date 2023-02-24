@@ -11,7 +11,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Day15
 
-import Grids
+import Utilities.Grids
 
 import Text.Megaparsec
 

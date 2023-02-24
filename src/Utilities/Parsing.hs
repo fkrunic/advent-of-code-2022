@@ -1,4 +1,4 @@
-module Parsing where
+module Utilities.Parsing where
 
 import Data.Text (Text)
 import Data.Void (Void)

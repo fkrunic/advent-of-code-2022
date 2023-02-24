@@ -3,13 +3,10 @@ module Day17 where
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
 import Data.Text (Text)
-
-import Data.Map qualified as M
-
-import Grids
-
 import Data.Text qualified as T
-import Infinites
+import Data.Map qualified as M
+import Utilities.Grids
+import Utilities.Infinites
 
 import Prelude hiding (lookup)
 

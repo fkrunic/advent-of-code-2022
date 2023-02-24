@@ -4,11 +4,10 @@ import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty as NE
 import Data.Text qualified as T
 import Day17
-import Infinites
 import Test.Hspec
 import Test.Input
-
-import Grids
+import Utilities.Grids
+import Utilities.Infinites
 
 spec :: SpecWith ()
 spec = do
@@ -313,16 +312,18 @@ spec = do
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 0
                 caveActual = drawCave processActual
             heightActual `shouldBe` 0
-            caveActual `shouldBe` "#######"            
-        
+            caveActual `shouldBe` "#######"
+
           it "Iteration 1" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 1
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 1
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 1
             caveActual `shouldBe` caveExpected
 
@@ -330,197 +331,215 @@ spec = do
             let heightActual = efficientHeight caveFloor rtsSet windSet 2
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 2
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 5
-            caveActual `shouldBe` caveExpected  
+            caveActual `shouldBe` caveExpected
 
           it "Iteration 3" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 3
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 3
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 6
-            caveActual `shouldBe` caveExpected 
+            caveActual `shouldBe` caveExpected
 
-          it "Iteration 4" $ do   
+          it "Iteration 4" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 4
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 4
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."                    
-                  , "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 10
             caveActual `shouldBe` caveExpected
 
-          it "Iteration 5" $ do   
+          it "Iteration 5" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 5
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 5
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."                    
-                  , "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 11
-            caveActual `shouldBe` caveExpected 
+            caveActual `shouldBe` caveExpected
 
-          it "Iteration 6" $ do   
+          it "Iteration 6" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 6
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 6
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."                    
-                  , "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 11
             caveActual `shouldBe` caveExpected
 
-          it "Iteration 7" $ do   
+          it "Iteration 7" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 7
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 7
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "..####."
-                  , "...####"
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."                    
-                  , "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "..####."
+                    , "...####"
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 12
-            caveActual `shouldBe` caveExpected   
+            caveActual `shouldBe` caveExpected
 
-          it "Iteration 8" $ do   
+          it "Iteration 8" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 8
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 8
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."                    
-                  , "..####."
-                  , "...####"
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."                    
-                  , "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "..####."
+                    , "...####"
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 16
-            caveActual `shouldBe` caveExpected                                                                                   
+            caveActual `shouldBe` caveExpected
 
-          it "Iteration 9" $ do   
+          it "Iteration 9" $ do
             let heightActual = efficientHeight caveFloor rtsSet windSet 9
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 9
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."                    
-                  , "..####."
-                  , "...####"
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."                    
-                  , "..####."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "..####."
+                    , "...####"
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "..####."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 17
             caveActual `shouldBe` caveExpected
 
-          it "Iteration 10" $ do   
+          it "Iteration 10" $ do
             pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 10
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 10
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."                    
-                  , "..####."
-                  , "...####" -- repeating variant (end)        [11]
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."
-                  , "...##.."                    
-                  , "..####." -- repeating variant (start)      [6]
-                  , "....#.." -- initial height from cave floor [5]
-                  , "....#.."
-                  , "....#.."
-                  , "....#.."
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "..####."
+                    , "...####" -- repeating variant (end)        [11]
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "...##.."
+                    , "..####." -- repeating variant (start)      [6]
+                    , "....#.." -- initial height from cave floor [5]
+                    , "....#.."
+                    , "....#.."
+                    , "....#.."
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 17
-            caveActual `shouldBe` caveExpected            
+            caveActual `shouldBe` caveExpected
 
         describe "One Wind, One Shape" $ do
           let windSet = East :| []
@@ -538,35 +557,39 @@ spec = do
             let heightActual = efficientHeight caveFloor rtsSet windSet 1
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 1
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 1
-            caveActual `shouldBe` caveExpected   
+            caveActual `shouldBe` caveExpected
 
           it "Iteration 2" $ do
             pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 2
                 processActual = towerProcess caveFloor (makeInf rtsSet) (makeInf windSet) 2
                 caveActual = drawCave processActual
-                caveExpected = T.intercalate "\n"
-                  [ "...####"
-                  , "...####"
-                  , "#######"
-                  ]
+                caveExpected =
+                  T.intercalate
+                    "\n"
+                    [ "...####"
+                    , "...####"
+                    , "#######"
+                    ]
             heightActual `shouldBe` 2
-            caveActual `shouldBe` caveExpected  
+            caveActual `shouldBe` caveExpected
 
-          it "Iteration 100" $ do  
+          it "Iteration 100" $ do
             pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 100
             heightActual `shouldBe` 100
-            
+
           it "Iteration 10000000" $ do
             pendingWith "Patterns need to be identified dynamically"
             let heightActual = efficientHeight caveFloor rtsSet windSet 10000000
-            heightActual `shouldBe` 10000000          
+            heightActual `shouldBe` 10000000
 
       describe "Puzzle Solutions" $ do
         it "Part 1 - Puzzle Input" $ do

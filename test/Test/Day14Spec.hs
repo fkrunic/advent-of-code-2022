@@ -20,7 +20,7 @@ import Day14 (
   pointsAlong,
  )
 
-import Grids (Grid, point)
+import Utilities.Grids (Grid, point)
 import Test.Hspec (SpecWith, describe, it, shouldBe)
 import Text.Megaparsec (optional, runParser, some)
 import Text.Megaparsec.Char (newline)

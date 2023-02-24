@@ -18,9 +18,9 @@ import Data.Map (Map, (!))
 import Data.Map qualified as M
 import Data.Text (Text)
 
-import Parsing (Parser, symbol)
+import Utilities.Parsing (Parser, symbol)
 
-import Grids (
+import Utilities.Grids (
   Boundaries (Boundaries),
   Coordinate,
   Grid,
@@ -151,20 +151,6 @@ elementSymbol Source = "+"
 
 renderGrid :: Grid Element -> Text
 renderGrid = drawGrid Air elementSymbol
-
--- drawGrid :: Grid Element -> Text
--- drawGrid grid = T.intercalate "\n" rows
---  where
---   Boundaries xMin xMax yMin yMax = getBounds $ M.keys grid
-
---   drawElement :: Coordinate -> Grid Element -> Text
---   drawElement (xc, yc) = elementSymbol . fromMaybe Air . M.lookup (xc, yc)
-
---   rows =
---     [ T.intercalate "" row
---     | yCoord <- [yMin .. yMax]
---     , let row = map (\xc -> drawElement (xc, yCoord) grid) [xMin .. xMax]
---     ]
 
 --------------------------------------------------------------------------------
 

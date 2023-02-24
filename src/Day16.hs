@@ -10,8 +10,8 @@ import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Graphs hiding (path)
-import Parsing
+import Utilities.Graphs hiding (path)
+import Utilities.Parsing
 import System.Random
 import Text.Megaparsec hiding (State)
 import Text.Megaparsec.Char
