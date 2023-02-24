@@ -1,3 +1,5 @@
+module Main where
+
 import Test.Day17Spec (spec)
 import Test.Hspec (hspec)
 
