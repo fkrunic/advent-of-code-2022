@@ -26,13 +26,7 @@ hasPattern (Offset offset) (PatternLength pattern) xs =
   chopped = chop pattern xs
 
 getDivisors :: Int -> [Divisor]
-getDivisors =
-  sort
-    . NE.toList
-    . NE.map Divisor
-    . NE.fromList
-    . IS.toList
-    . divisorsSmall
+getDivisors = sort . map Divisor . IS.toList . divisorsSmall
 
 chop :: Int -> [a] -> [[a]]
 chop k =
