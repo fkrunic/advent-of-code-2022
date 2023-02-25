@@ -1,6 +1,6 @@
 module Main where
 
-import Test.Day17Spec (spec)
+import Test.PatternsSpec (spec)
 import Test.Hspec (hspec)
 
 main :: IO ()

@@ -89,6 +89,7 @@ executable aoc2022-test
     Test.Day15Spec
     Test.Day16Spec
     Test.Day17Spec
+    Test.PatternsSpec
     Test.Input
 
 executable day17-bench

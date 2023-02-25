@@ -14,14 +14,15 @@ getPatterns xs =
   | offset <- [0 .. length xs - 1]
   , Divisor pl <- getDivisors (length xs - offset)
   , hasPattern (Offset offset) (PatternLength pl) xs
+  , 0 < pl && pl < length xs - offset
   ]
 
 hasPattern :: Eq a => Offset -> PatternLength -> [a] -> Bool
 hasPattern (Offset offset) (PatternLength pattern) xs =
   length (group chopped) == 1
  where
-  (front, back) = splitAt offset xs
-  chopped = chop pattern xs
+  (_, back) = splitAt offset xs
+  chopped = chop pattern back
 
 getDivisors :: Int -> [Divisor]
 getDivisors = sort . map Divisor . IS.toList . divisorsSmall
