@@ -7,6 +7,9 @@ import Math.NumberTheory.ArithmeticFunctions (divisorsSmall)
 newtype Divisor = Divisor Int deriving (Show, Eq, Ord)
 newtype Offset = Offset Int deriving (Show, Eq)
 newtype PatternLength = PatternLength Int deriving (Show, Eq)
+type Diff a = ([a], [a])
+
+--------------------------------------------------------------------------------
 
 getPatterns :: Eq a => [a] -> [(Offset, PatternLength)]
 getPatterns xs =
@@ -32,3 +35,13 @@ chop k =
   map (map snd)
     . groupBy (\t1 t2 -> fst t1 == fst t2)
     . zipWith (\i x -> (i `div` k, x)) [0 :: Int ..]
+
+--------------------------------------------------------------------------------
+
+diff :: Eq a => [a] -> [a] -> Diff a
+diff [] xs = ([], xs)
+diff xs [] = (xs, [])
+diff xs@(x : xRest) ys@(y : yRest) =
+  if x == y
+    then diff xRest yRest
+    else (xs, ys)
