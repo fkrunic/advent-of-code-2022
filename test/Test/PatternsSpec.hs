@@ -2,6 +2,7 @@ module Test.PatternsSpec (spec) where
 
 import Data.List
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Test.Hspec
 import Utilities.Patterns
@@ -73,6 +74,33 @@ spec = do
             expected = [(Offset 6, PatternLength 6)]
         actual `shouldBe` expected
 
+      it "Finite offset, non-monotonically changing sequence" $ do
+        let p =
+              [ "cat"
+              , "ca"
+              , "c"
+              , "a"
+              , "aa"
+              , "aaa"
+              , "ac"
+              , "ab"
+              , "aba"
+              , "abaa"
+              , "abaaa"
+              , "abac"
+              , "abab"
+              , "ababa"
+              , "ababaa"
+              , "ababaaa"
+              , "ababac"
+              , "ababab"
+              ]
+            actual =
+              makeDfb p
+                >>= Just . head . getPatterns . NE.toList . diffSequence
+            expected = Just (Offset 7, PatternLength 5)
+        actual `shouldBe` expected
+
     describe "diff" $ do
       it "Two empty strings" $ do
         diff "" "" `shouldBe` ("", "")
@@ -137,7 +165,7 @@ spec = do
             expected = Just $ ("", "cat") :| [("cat", "sheep")]
         actual `shouldBe` expected
 
-      it "Non-monotonically changing sequence" $ do
+      it "No offset, non-monotonically changing sequence" $ do
         let p =
               [ ""
               , "a"
@@ -159,6 +187,50 @@ spec = do
             diffs =
               ("", "a")
                 :| [ ("", "a")
+                   , ("", "a")
+                   , ("aa", "c")
+                   , ("c", "b")
+                   , ("", "a")
+                   , ("", "a")
+                   , ("", "a")
+                   , ("aa", "c")
+                   , ("c", "b")
+                   , ("", "a")
+                   , ("", "a")
+                   , ("", "a")
+                   , ("aa", "c")
+                   , ("c", "b")
+                   ]
+            actual = makeDfb p >>= Just . diffSequence
+            expected = Just diffs
+        actual `shouldBe` expected
+
+      it "Finite offset, non-monotonically changing sequence" $ do
+        let p =
+              [ "cat"
+              , "ca"
+              , "c"
+              , "a"
+              , "aa"
+              , "aaa"
+              , "ac"
+              , "ab"
+              , "aba"
+              , "abaa"
+              , "abaaa"
+              , "abac"
+              , "abab"
+              , "ababa"
+              , "ababaa"
+              , "ababaaa"
+              , "ababac"
+              , "ababab"
+              ]
+            diffs =
+              ("t", "")
+                :| [ ("a", "")
+                   , ("c", "a")
+                   , ("", "a")
                    , ("", "a")
                    , ("aa", "c")
                    , ("c", "b")
