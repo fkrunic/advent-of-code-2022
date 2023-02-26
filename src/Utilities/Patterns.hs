@@ -2,6 +2,8 @@ module Utilities.Patterns where
 
 import Data.IntSet qualified as IS
 import Data.List (group, groupBy, sort)
+import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Math.NumberTheory.ArithmeticFunctions (divisorsSmall)
 
 newtype Divisor = Divisor Int deriving (Show, Eq, Ord)
@@ -45,3 +47,13 @@ diff xs@(x : xRest) ys@(y : yRest) =
   if x == y
     then diff xRest yRest
     else (xs, ys)
+
+data Diffable a = Diffable
+  { first :: [a]
+  , second :: [a]
+  , rest :: [[a]]
+  }
+  deriving (Show, Eq, Ord)
+
+diffSequence :: Eq a => Diffable a -> NonEmpty (Diff a)
+diffSequence = undefined

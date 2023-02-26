@@ -8,7 +8,7 @@ import Utilities.Patterns
 spec :: SpecWith ()
 spec = do
   describe "Pattern Tests" $ do
-    describe "Getting Patterns" $ do
+    describe "getPatterns" $ do
       it "''" $ do
         getPatterns "" `shouldBe` []
 
@@ -70,7 +70,7 @@ spec = do
             expected = [ (Offset 6, PatternLength 6) ]
         actual `shouldBe` expected
                
-    describe "Diffing" $ do
+    describe "diff" $ do
       it "Two empty strings" $ do
         diff "" "" `shouldBe` ("", "")
         
@@ -80,8 +80,11 @@ spec = do
       it "Right empty string" $ do
         diff "" "dog" `shouldBe` ("", "dog")
 
-      it "Both different" $ do
+      it "Both different and non-empty" $ do
         diff "dog" "cat" `shouldBe` ("dog", "cat")
+
+      it "Both same and non-empty" $ do
+        diff "dog" "dog" `shouldBe` ("", "")
 
       it "One adds onto the other at the front" $ do
         diff "dog" "catdog" `shouldBe` ("dog", "catdog")
