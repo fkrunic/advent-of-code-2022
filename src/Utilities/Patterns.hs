@@ -2,7 +2,7 @@ module Utilities.Patterns where
 
 import Data.IntSet qualified as IS
 import Data.List (group, groupBy, sort)
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
 import Math.NumberTheory.ArithmeticFunctions (divisorsSmall)
 
@@ -56,4 +56,12 @@ data Diffable a = Diffable
   deriving (Show, Eq, Ord)
 
 diffSequence :: Eq a => Diffable a -> NonEmpty (Diff a)
-diffSequence = undefined
+diffSequence (Diffable first second rest) = diff first second :| diffRest
+ where
+  diffRest = case rest of
+    [] -> []
+    (x : xs) -> NE.toList $ diffSequence (Diffable second x xs)
+
+makeDfb :: [[a]] -> Maybe (Diffable a)
+makeDfb (x : y : ys) = Just (Diffable x y ys)
+makeDfb _ = Nothing
