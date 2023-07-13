@@ -14,74 +14,80 @@ import Problems.Day13 (
   pPair,
   valid,
  )
-import Test.Hspec (SpecWith, describe, it, shouldBe)
 import Text.Megaparsec (runParser, some)
 import Text.Megaparsec.Char (space)
 
-spec :: SpecWith ()
+import Test.Tasty
+import Test.Tasty.HUnit
+
+spec :: TestTree
 spec =
-  describe "Day 13 Tests" $ do
-    describe "Parsing Tests" $ do
-      it "Single 5" $ do
-        runParser pInt "" "5" `shouldBe` Right (CInt 5)
+  testGroup "Day 13 Tests" $
+    [ testGroup "Parsing Tests" $
+      [ testCase "Single 5" $
+          runParser pInt "" "5" @?= Right (CInt 5)
 
-      it "Single [1,1,3,1,1]" $ do
-        runParser pList "" "[1,1,3,1,1]" `shouldBe` Right (fst e1)
+      , testCase "Single [1,1,3,1,1]" $
+          runParser pList "" "[1,1,3,1,1]" @?= Right (fst e1)
 
-      it "Pair [1,1,3,1,1], [1,1,5,1,1]" $ do
-        runParser pPair "" "[1,1,3,1,1]\n[1,1,5,1,1]" `shouldBe` Right e1
+      , testCase "Pair [1,1,3,1,1], [1,1,5,1,1]" $
+          runParser pPair "" "[1,1,3,1,1]\n[1,1,5,1,1]" @?= Right e1
 
-      it "Pair [1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9]" $ do
-        runParser pPair "" "[1,[2,[3,[4,[5,6,7]]]],8,9]\n[1,[2,[3,[4,[5,6,0]]]],8,9]" `shouldBe` Right e8
+      , testCase "Pair [1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9]" $
+          runParser pPair "" "[1,[2,[3,[4,[5,6,7]]]],8,9]\n[1,[2,[3,[4,[5,6,0]]]],8,9]" @?= Right e8
 
-      it "All Pairs Input" $ do
-        parser exampleInput `shouldBe` [e1, e2, e3, e4, e5, e6, e7, e8]
+      , testCase "All Pairs Input" $
+          parser exampleInput @?= [e1, e2, e3, e4, e5, e6, e7, e8]
+      ]
 
-    describe "Validity Tests" $ do
-      it "Valid Example - [1,1,3,1,1], [1,1,5,1,1]" $ do
-        let (left, right) = e1
-        valid left right `shouldBe` True
+    , testGroup "Validity Tests" $
+        [ testCase "Valid Example - [1,1,3,1,1], [1,1,5,1,1]" $
+            let (left, right) = e1
+            in valid left right @?= True
 
-      it "Valid Example - [[1],[2,3,4]], [[1],4]" $ do
-        let (left, right) = e2
-        valid left right `shouldBe` True
+        , testCase "Valid Example - [[1],[2,3,4]], [[1],4]" $
+            let (left, right) = e2
+            in valid left right @?= True
 
-      it "Invalid Example - [9], [[8, 7, 6]]" $ do
-        let (left, right) = e3
-        valid left right `shouldBe` False
+        , testCase "Invalid Example - [9], [[8, 7, 6]]" $
+            let (left, right) = e3
+            in valid left right @?= False
 
-      it "Valid Example - [[4,4],4,4], [[4,4],4,4,4]" $ do
-        let (left, right) = e4
-        valid left right `shouldBe` True
+        , testCase "Valid Example - [[4,4],4,4], [[4,4],4,4,4]" $
+            let (left, right) = e4
+            in valid left right @?= True
 
-      it "Invalid Example - [7,7,7,7], [7,7,7]" $ do
-        let (left, right) = e5
-        valid left right `shouldBe` False
+        , testCase "Invalid Example - [7,7,7,7], [7,7,7]" $
+            let (left, right) = e5
+            in valid left right @?= False
 
-      it "Valid Example - [], [3]" $ do
-        let (left, right) = e6
-        valid left right `shouldBe` True
+        , testCase "Valid Example - [], [3]" $
+            let (left, right) = e6
+            in valid left right @?= True
 
-      it "Invalid Example - [[[]]], [[]]" $ do
-        let (left, right) = e7
-        valid left right `shouldBe` False
+        , testCase "Invalid Example - [[[]]], [[]]" $
+            let (left, right) = e7
+            in valid left right @?= False
 
-      it "Invalid Example - [1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9]" $ do
-        let (left, right) = e8
-        valid left right `shouldBe` False
+        , testCase "Invalid Example - [1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9]" $
+            let (left, right) = e8
+            in valid left right @?= False
+        ]
 
-    describe "Puzzle Solutions" $ do
-      it "Example Input - Part 1" $ do
-        part1Solution exampleInput `shouldBe` 13
+    , testGroup "Puzzle Solutions" $
+        [ testCase "Example Input - Part 1" $
+            part1Solution exampleInput @?= 13
 
-      it "Part 1 Solution" $ do
-        part1Solution puzzleInput `shouldBe` 6235
+        , testCase "Part 1 Solution" $
+            part1Solution puzzleInput @?= 6235
 
-      it "Example Input - Part 2" $ do
-        part2Solution exampleInput `shouldBe` 140
+        , testCase "Example Input - Part 2" $
+            part2Solution exampleInput @?= 140
 
-      it "Part 2 Solution" $ do
-        part2Solution puzzleInput `shouldBe` 22866
+        , testCase "Part 2 Solution" $
+            part2Solution puzzleInput @?= 22866
+        ]
+    ]
 
 d1, d2 :: Comparison
 d1 = CList [CList [CInt 2]]
