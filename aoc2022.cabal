@@ -127,6 +127,8 @@ test-suite aoc2022-test
     , megaparsec
     , monad-loops
     , random
+    , tasty
+    , tasty-hunit
     , text
     , transformers
   default-language: Haskell2010

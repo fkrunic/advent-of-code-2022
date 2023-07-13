@@ -4,247 +4,267 @@ import Data.List
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
-import Test.Hspec
+import Test.Tasty
+import Test.Tasty.HUnit
 import Utilities.Patterns
 
-spec :: SpecWith ()
-spec = do
-  describe "Pattern Tests" $ do
-    describe "getPatterns" $ do
-      it "''" $ do
-        getPatterns "" `shouldBe` []
+spec :: TestTree
+spec = 
+  testGroup "Pattern Tests" $ 
+    [ testGroup "getPatterns" $
+        [ testCase "''" $ 
+            getPatterns "" @?= []
 
-      it "'a'" $ do
-        getPatterns "a" `shouldBe` []
+        , testCase "'a'" $ 
+            getPatterns "a" @?= []
 
-      it "'ab'" $ do
-        getPatterns "ab" `shouldBe` []
+        , testCase "'ab'" $ 
+            getPatterns "ab" @?= []
 
-      it "'aa'" $ do
-        getPatterns "aa" `shouldBe` [(Offset 0, PatternLength 1)]
+        , testCase "'aa'" $ 
+            getPatterns "aa" @?= [(Offset 0, PatternLength 1)]
 
-      it "'aaa'" $ do
-        getPatterns "aaa"
-          `shouldBe` [ (Offset 0, PatternLength 1)
-                     , (Offset 1, PatternLength 1)
-                     ]
+        , testCase "'aaa'" $ 
+            let actual = getPatterns "aaa" 
+                expected = 
+                  [ (Offset 0, PatternLength 1)
+                  , (Offset 1, PatternLength 1)
+                  ]
+            in actual @?= expected
 
-      it "'9smxundu39[abc][abc]'" $ do
-        chop 5 "[abc][abc]" `shouldBe` ["[abc]", "[abc]"]
-        group (chop 5 "[abc][abc]") `shouldBe` [["[abc]", "[abc]"]]
-        splitAt 10 "9smxundu39[abc][abc]" `shouldBe` ("9smxundu39", "[abc][abc]")
-        hasPattern (Offset 10) (PatternLength 5) "9smxundu39[abc][abc]" `shouldBe` True
-        getPatterns "9smxundu39[abc][abc]"
-          `shouldBe` [(Offset 10, PatternLength 5)]
+        , testGroup "'9smxundu39[abc][abc]'" $ 
+            [ testCase "chop" $ 
+                chop 5 "[abc][abc]" @?= ["[abc]", "[abc]"]
 
-      it "'asfi3[12][12][12][12]'" $ do
-        getPatterns "asfi3[12][12][12][12]"
-          `shouldBe` [ (Offset 5, PatternLength 4)
-                     , (Offset 5, PatternLength 8)
-                     , (Offset 9, PatternLength 4)
-                     , (Offset 13, PatternLength 4)
-                     ]
+            , testCase "group-chop" $ 
+                group (chop 5 "[abc][abc]") @?= [["[abc]", "[abc]"]]
 
-      it "Cave Rendering" $ do
-        let render =
-              reverse $
-                T.lines $
-                  T.intercalate
-                    "\n"
-                    [ "...####"
-                    , "...##.."
-                    , "...##.."
-                    , "...##.."
-                    , "...##.."
-                    , "..####."
-                    , "...####" -- repeating variant (end)        [11]
-                    , "...##.."
-                    , "...##.."
-                    , "...##.."
-                    , "...##.."
-                    , "..####." -- repeating variant (start)      [6]
-                    , "....#.." -- initial height from cave floor [5]
-                    , "....#.."
-                    , "....#.."
-                    , "....#.."
-                    , "...####"
-                    , "#######"
-                    ]
-            actual = getPatterns render
-            expected = [(Offset 6, PatternLength 6)]
-        actual `shouldBe` expected
+            , testCase "splitting" $ 
+                splitAt 10 "9smxundu39[abc][abc]" @?= ("9smxundu39", "[abc][abc]")
 
-      it "Finite offset, non-monotonically changing sequence" $ do
-        let p =
-              [ "cat"
-              , "ca"
-              , "c"
-              , "a"
-              , "aa"
-              , "aaa"
-              , "ac"
-              , "ab"
-              , "aba"
-              , "abaa"
-              , "abaaa"
-              , "abac"
-              , "abab"
-              , "ababa"
-              , "ababaa"
-              , "ababaaa"
-              , "ababac"
-              , "ababab"
-              ]
-            actual =
-              makeDfb p
-                >>= Just . head . getPatterns . NE.toList . diffSequence
-            expected = Just (Offset 7, PatternLength 5)
-        actual `shouldBe` expected
+            , testCase "hasPattern" $ 
+                hasPattern (Offset 10) (PatternLength 5) "9smxundu39[abc][abc]" @?= True
 
-    describe "diff" $ do
-      it "Two empty strings" $ do
-        diff "" "" `shouldBe` ("", "")
+            , testCase "getPatterns" $
+                getPatterns "9smxundu39[abc][abc]" @?= [(Offset 10, PatternLength 5)]
 
-      it "Left empty string" $ do
-        diff "dog" "" `shouldBe` ("dog", "")
+            ]
 
-      it "Right empty string" $ do
-        diff "" "dog" `shouldBe` ("", "dog")
+        , testCase "'asfi3[12][12][12][12]'" $ 
+            let actual = getPatterns "asfi3[12][12][12][12]"
+                expected =  
+                  [ (Offset 5, PatternLength 4)
+                  , (Offset 5, PatternLength 8)
+                  , (Offset 9, PatternLength 4)
+                  , (Offset 13, PatternLength 4)
+                  ]
+            in actual @?= expected
 
-      it "Both different and non-empty" $ do
-        diff "dog" "cat" `shouldBe` ("dog", "cat")
+        , testCase "Cave Rendering" $
+            let render =
+                  reverse $
+                    T.lines $
+                      T.intercalate
+                        "\n"
+                        [ "...####"
+                        , "...##.."
+                        , "...##.."
+                        , "...##.."
+                        , "...##.."
+                        , "..####."
+                        , "...####" -- repeating variant (end)        [11]
+                        , "...##.."
+                        , "...##.."
+                        , "...##.."
+                        , "...##.."
+                        , "..####." -- repeating variant (start)      [6]
+                        , "....#.." -- initial height from cave floor [5]
+                        , "....#.."
+                        , "....#.."
+                        , "....#.."
+                        , "...####"
+                        , "#######"
+                        ]
+                actual = getPatterns render
+                expected = [(Offset 6, PatternLength 6)]
+            in actual @?= expected
 
-      it "Both same and non-empty" $ do
-        diff "dog" "dog" `shouldBe` ("", "")
+        , testCase "Finite offset, non-monotonically changing sequence" $ 
+            let p =
+                  [ "cat"
+                  , "ca"
+                  , "c"
+                  , "a"
+                  , "aa"
+                  , "aaa"
+                  , "ac"
+                  , "ab"
+                  , "aba"
+                  , "abaa"
+                  , "abaaa"
+                  , "abac"
+                  , "abab"
+                  , "ababa"
+                  , "ababaa"
+                  , "ababaaa"
+                  , "ababac"
+                  , "ababab"
+                  ]
+                actual =
+                  makeDfb p
+                    >>= Just . head . getPatterns . NE.toList . diffSequence
+                expected = Just (Offset 7, PatternLength 5)
+            in actual @?= expected
+        ]
 
-      it "One adds onto the other at the front" $ do
-        diff "dog" "catdog" `shouldBe` ("dog", "catdog")
+    , testGroup "diff" $ 
+        [ testCase "Two empty strings" $ 
+            diff "" "" @?= ("", "")
 
-      it "One adds onto the other at the end" $ do
-        diff "catdog" "cat" `shouldBe` ("dog", "")
+        , testCase "Left empty string" $ 
+            diff "dog" "" @?= ("dog", "")
 
-      it "Same front portion, ends are different" $ do
-        diff "catdog" "catsheep" `shouldBe` ("dog", "sheep")
+        , testCase "Right empty string" $
+            diff "" "dog" @?= ("", "dog")
 
-    describe "diffSequence" $ do
-      it "No elements" $ do
-        let actual = makeDfb [[]] >>= Just . diffSequence
-            expected = Nothing :: Maybe (NonEmpty (Diff String))
-        actual `shouldBe` expected
+        , testCase "Both different and non-empty" $
+            diff "dog" "cat" @?= ("dog", "cat")
 
-      it "Single element" $ do
-        let actual = makeDfb ["dog"] >>= Just . diffSequence
-            expected = Nothing
-        actual `shouldBe` expected
+        , testCase "Both same and non-empty" $
+            diff "dog" "dog" @?= ("", "")
 
-      it "Two elements, no change" $ do
-        let actual = makeDfb ["dog", "dog"] >>= Just . diffSequence
-            expected = Just $ ("", "") :| []
-        actual `shouldBe` expected
+        , testCase "One adds onto the other at the front" $
+            diff "dog" "catdog" @?= ("dog", "catdog")
 
-      it "Three elements, no change" $ do
-        let actual = makeDfb ["dog", "dog", "dog"] >>= Just . diffSequence
-            expected = Just $ ("", "") :| [("", "")]
-        actual `shouldBe` expected
+        , testCase "One adds onto the other at the end" $
+            diff "catdog" "cat" @?= ("dog", "")
 
-      it "Four elements, no change" $ do
-        let p = ["dog", "dog", "dog", "dog"]
-            actual = makeDfb p >>= Just . diffSequence
-            expected = Just $ ("", "") :| [("", ""), ("", "")]
-        actual `shouldBe` expected
+        , testCase "Same front portion, ends are different" $
+            diff "catdog" "catsheep" @?= ("dog", "sheep")
+        ]
 
-      it "Two elements, suffix change" $ do
-        let p = ["dog", "dogcat"]
-            actual = makeDfb p >>= Just . diffSequence
-            expected = Just $ ("", "cat") :| []
-        actual `shouldBe` expected
+    , testGroup "diffSequence" $
+        [ testCase "No elements" $
+            let actual = makeDfb [[]] >>= Just . diffSequence
+                expected = Nothing :: Maybe (NonEmpty (Diff String))
+            in actual @?= expected
 
-      it "Three elements, suffix changes" $ do
-        let p = ["dog", "dogcat", "dogsheep"]
-            actual = makeDfb p >>= Just . diffSequence
-            expected = Just $ ("", "cat") :| [("cat", "sheep")]
-        actual `shouldBe` expected
+        , testCase "Single element" $
+            let actual = makeDfb ["dog"] >>= Just . diffSequence
+                expected = Nothing
+            in actual @?= expected
 
-      it "No offset, non-monotonically changing sequence" $ do
-        let p =
-              [ ""
-              , "a"
-              , "aa"
-              , "aaa"
-              , "ac"
-              , "ab"
-              , "aba"
-              , "abaa"
-              , "abaaa"
-              , "abac"
-              , "abab"
-              , "ababa"
-              , "ababaa"
-              , "ababaaa"
-              , "ababac"
-              , "ababab"
-              ]
-            diffs =
-              ("", "a")
-                :| [ ("", "a")
-                   , ("", "a")
-                   , ("aa", "c")
-                   , ("c", "b")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("aa", "c")
-                   , ("c", "b")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("aa", "c")
-                   , ("c", "b")
-                   ]
-            actual = makeDfb p >>= Just . diffSequence
-            expected = Just diffs
-        actual `shouldBe` expected
+        , testCase "Two elements, no change" $
+            let actual = makeDfb ["dog", "dog"] >>= Just . diffSequence
+                expected = Just $ ("", "") :| []
+            in actual @?= expected
 
-      it "Finite offset, non-monotonically changing sequence" $ do
-        let p =
-              [ "cat"
-              , "ca"
-              , "c"
-              , "a"
-              , "aa"
-              , "aaa"
-              , "ac"
-              , "ab"
-              , "aba"
-              , "abaa"
-              , "abaaa"
-              , "abac"
-              , "abab"
-              , "ababa"
-              , "ababaa"
-              , "ababaaa"
-              , "ababac"
-              , "ababab"
-              ]
-            diffs =
-              ("t", "")
-                :| [ ("a", "")
-                   , ("c", "a")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("aa", "c")
-                   , ("c", "b")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("aa", "c")
-                   , ("c", "b")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("", "a")
-                   , ("aa", "c")
-                   , ("c", "b")
-                   ]
-            actual = makeDfb p >>= Just . diffSequence
-            expected = Just diffs
-        actual `shouldBe` expected
+        , testCase "Three elements, no change" $
+            let actual = makeDfb ["dog", "dog", "dog"] >>= Just . diffSequence
+                expected = Just $ ("", "") :| [("", "")]
+            in actual @?= expected
+
+        , testCase "Four elements, no change" $
+            let p = ["dog", "dog", "dog", "dog"]
+                actual = makeDfb p >>= Just . diffSequence
+                expected = Just $ ("", "") :| [("", ""), ("", "")]
+            in actual @?= expected
+
+        , testCase "Two elements, suffix change" $
+            let p = ["dog", "dogcat"]
+                actual = makeDfb p >>= Just . diffSequence
+                expected = Just $ ("", "cat") :| []
+            in actual @?= expected
+
+        , testCase "Three elements, suffix changes" $
+            let p = ["dog", "dogcat", "dogsheep"]
+                actual = makeDfb p >>= Just . diffSequence
+                expected = Just $ ("", "cat") :| [("cat", "sheep")]
+            in actual @?= expected
+
+        , testCase "No offset, non-monotonically changing sequence" $
+            let p =
+                  [ ""
+                  , "a"
+                  , "aa"
+                  , "aaa"
+                  , "ac"
+                  , "ab"
+                  , "aba"
+                  , "abaa"
+                  , "abaaa"
+                  , "abac"
+                  , "abab"
+                  , "ababa"
+                  , "ababaa"
+                  , "ababaaa"
+                  , "ababac"
+                  , "ababab"
+                  ]
+                diffs =
+                  ("", "a")
+                    :| [ ("", "a")
+                      , ("", "a")
+                      , ("aa", "c")
+                      , ("c", "b")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("aa", "c")
+                      , ("c", "b")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("aa", "c")
+                      , ("c", "b")
+                      ]
+                actual = makeDfb p >>= Just . diffSequence
+                expected = Just diffs
+            in actual @?= expected
+
+        , testCase "Finite offset, non-monotonically changing sequence" $
+            let p =
+                  [ "cat"
+                  , "ca"
+                  , "c"
+                  , "a"
+                  , "aa"
+                  , "aaa"
+                  , "ac"
+                  , "ab"
+                  , "aba"
+                  , "abaa"
+                  , "abaaa"
+                  , "abac"
+                  , "abab"
+                  , "ababa"
+                  , "ababaa"
+                  , "ababaaa"
+                  , "ababac"
+                  , "ababab"
+                  ]
+                diffs =
+                  ("t", "")
+                    :| [ ("a", "")
+                      , ("c", "a")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("aa", "c")
+                      , ("c", "b")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("aa", "c")
+                      , ("c", "b")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("", "a")
+                      , ("aa", "c")
+                      , ("c", "b")
+                      ]
+                actual = makeDfb p >>= Just . diffSequence
+                expected = Just diffs
+            in actual @?= expected
+        ]
+    ]
+

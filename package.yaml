@@ -68,3 +68,5 @@ tests:
     dependencies:
     - aoc2022
     - hspec
+    - tasty
+    - tasty-hunit
