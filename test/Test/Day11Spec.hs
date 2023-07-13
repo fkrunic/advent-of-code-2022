@@ -1,7 +1,5 @@
 module Test.Day11Spec (spec) where
 
-import Test.Hspec (SpecWith, describe, it, shouldBe)
-
 import Data.Either (fromRight)
 import Data.List (sort)
 import Data.Map (Map, elems, fromList)
@@ -11,123 +9,127 @@ import Problems.Day11
 import Text.Megaparsec (runParser, some)
 import Prelude hiding (round)
 
-spec :: SpecWith ()
+import Test.Tasty
+import Test.Tasty.HUnit
+
+spec :: TestTree
 spec =
-  describe "Day 11" $ do
-    it "Parsing Puzzle Input" $ do
-      parser puzzleInput `shouldBe` [m0, m1, m2, m3]
+  testGroup "Day 11" $
+    [ testCase "Parsing Puzzle Input" $
+        parser puzzleInput @?= [m0, m1, m2, m3]
 
-    it "First Round" $ do
-      let expectedItems =
-            [ [Item 20, Item 23, Item 27, Item 26]
-            , [Item 2080, Item 25, Item 167, Item 207, Item 401, Item 1046]
-            , []
-            , []
-            ]
-          actual = runRounds 
-            (Reducer 3)
-            (Times 1)
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (getItems exMonkeys)
-
-      map holding (elems actual) `shouldBe` expectedItems
-
-    it "Twenty Rounds" $ do
-      let expectedItems =
-            [ [Item 10, Item 12, Item 14, Item 26, Item 34]
-            , [Item 245, Item 93, Item 53, Item 199, Item 115]
-            , []
-            , []
-            ]
-          expectedCounters = [101, 95, 7, 105]
-          actual = runRounds 
-            (Reducer 3)
-            (Times 20)
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (getItems exMonkeys)
-
-          actualHolding = map holding (elems actual)
-          actualCounters = map counter (elems actual)
-
-      actualHolding `shouldBe` expectedItems
-      actualCounters `shouldBe` expectedCounters
-      monkeyBusiness actualCounters `shouldBe` 10605
-
-    it "1 Round - No Reducer" $ do
-      let expectedCounters = [2, 4, 3, 6]
-          actual = runRounds 
-            (Reducer 1) 
-            (Times 1) 
-            (labels exMonkeys) 
-            (props exMonkeys) (
-              getItems exMonkeys)
-          actualCounters = map counter (elems actual)
-      actualCounters `shouldBe` expectedCounters
-
-    it "20 Rounds - No Reducer" $ do
-      let expectedCounters = [99, 97, 8, 103]
-          actual = runRounds 
-            (Reducer 1) 
-            (Times 20) 
-            (labels exMonkeys) 
-            (props exMonkeys) 
-            (getItems exMonkeys)
-          actualCounters = map counter (elems actual)
-      actualCounters `shouldBe` expectedCounters          
-
-    describe "Counting Game Tests" $ do
-      it "Generate Indexed Items" $ do
-        generateIndexedItems exMonkeys `shouldBe`
-          [ (Label 0, Index 0, Worry 79)
-          , (Label 0, Index 1, Worry 98)
-          , (Label 1, Index 2, Worry 54)
-          , (Label 1, Index 3, Worry 65)
-          , (Label 1, Index 4, Worry 75)
-          , (Label 1, Index 5, Worry 74)
-          , (Label 2, Index 6, Worry 79)
-          , (Label 2, Index 7, Worry 60)
-          , (Label 2, Index 8, Worry 97)
-          , (Label 3, Index 9, Worry 74)
-          ]
-
-      it "1000 Rounds - Residue Implementation" $ do
-        let expectedCounters = map Counter [5204, 4792, 199, 5192]
-            indexedItems = generateIndexedItems exMonkeys
-            factors = getFactors exMonkeys
-            residuals = buildResiduals indexedItems factors
-            state = initialIndexedState exMonkeys
-            actual = runResidues 
-              (Times 1000) 
+    , testCase "First Round" $
+        let expectedItems =
+              [ [Item 20, Item 23, Item 27, Item 26]
+              , [Item 2080, Item 25, Item 167, Item 207, Item 401, Item 1046]
+              , []
+              , []
+              ]
+            actual = runRounds 
+              (Reducer 3)
+              (Times 1)
               (labels exMonkeys) 
               (props exMonkeys) 
-              (state, residuals)
-            actualCounters = map residueCounter $ elems actual
-        actualCounters `shouldBe` expectedCounters  
+              (getItems exMonkeys)
 
-      it "10,000 Rounds - Residue Implementation" $ do
-        let expectedCounters = map Counter [52166, 47830, 1938, 52013]
-            indexedItems = generateIndexedItems exMonkeys
-            factors = getFactors exMonkeys
-            residuals = buildResiduals indexedItems factors
-            state = initialIndexedState exMonkeys
-            actual = runResidues 
-              (Times 10000) 
+        in map holding (elems actual) @?= expectedItems
+
+    , testCase "Twenty Rounds" $
+        let expectedItems =
+              [ [Item 10, Item 12, Item 14, Item 26, Item 34]
+              , [Item 245, Item 93, Item 53, Item 199, Item 115]
+              , []
+              , []
+              ]
+            expectedCounters = [101, 95, 7, 105]
+            actual = runRounds 
+              (Reducer 3)
+              (Times 20)
               (labels exMonkeys) 
               (props exMonkeys) 
-              (state, residuals)
-            actualCounters = map residueCounter $ elems actual
-        actualCounters `shouldBe` expectedCounters              
+              (getItems exMonkeys)
 
-      describe "Puzzle Solutions" $ do
-        it "Part 1 Solution" $
-          part1Solution part1Input `shouldBe` 58322       
+            actualHolding = map holding (elems actual)
+            actualCounters = map counter (elems actual)
 
-        it "Part 2 Solution" $ do
-          part2Solution part1Input `shouldBe` 13937702909
+        in (actualHolding, actualCounters, monkeyBusiness actualCounters)
+              @?= (expectedItems, expectedCounters, 10605)
 
+    , testCase "1 Round - No Reducer" $
+        let expectedCounters = [2, 4, 3, 6]
+            actual = runRounds 
+              (Reducer 1) 
+              (Times 1) 
+              (labels exMonkeys) 
+              (props exMonkeys) (
+                getItems exMonkeys)
+            actualCounters = map counter (elems actual)
+        in actualCounters @?= expectedCounters
 
+    , testCase "20 Rounds - No Reducer" $
+        let expectedCounters = [99, 97, 8, 103]
+            actual = runRounds 
+              (Reducer 1) 
+              (Times 20) 
+              (labels exMonkeys) 
+              (props exMonkeys) 
+              (getItems exMonkeys)
+            actualCounters = map counter (elems actual)
+        in actualCounters @?= expectedCounters          
+
+    , testGroup "Counting Game Tests" $
+        [ testCase "Generate Indexed Items" $
+            generateIndexedItems exMonkeys @?=
+              [ (Label 0, Index 0, Worry 79)
+              , (Label 0, Index 1, Worry 98)
+              , (Label 1, Index 2, Worry 54)
+              , (Label 1, Index 3, Worry 65)
+              , (Label 1, Index 4, Worry 75)
+              , (Label 1, Index 5, Worry 74)
+              , (Label 2, Index 6, Worry 79)
+              , (Label 2, Index 7, Worry 60)
+              , (Label 2, Index 8, Worry 97)
+              , (Label 3, Index 9, Worry 74)
+              ]
+
+        , testCase "1000 Rounds - Residue Implementation" $
+            let expectedCounters = map Counter [5204, 4792, 199, 5192]
+                indexedItems = generateIndexedItems exMonkeys
+                factors = getFactors exMonkeys
+                residuals = buildResiduals indexedItems factors
+                state = initialIndexedState exMonkeys
+                actual = runResidues 
+                  (Times 1000) 
+                  (labels exMonkeys) 
+                  (props exMonkeys) 
+                  (state, residuals)
+                actualCounters = map residueCounter $ elems actual
+            in actualCounters @?= expectedCounters  
+
+        , testCase "10,000 Rounds - Residue Implementation" $
+            let expectedCounters = map Counter [52166, 47830, 1938, 52013]
+                indexedItems = generateIndexedItems exMonkeys
+                factors = getFactors exMonkeys
+                residuals = buildResiduals indexedItems factors
+                state = initialIndexedState exMonkeys
+                actual = runResidues 
+                  (Times 10000) 
+                  (labels exMonkeys) 
+                  (props exMonkeys) 
+                  (state, residuals)
+                actualCounters = map residueCounter $ elems actual
+            in actualCounters @?= expectedCounters              
+        ]
+
+    , testGroup "Puzzle Solutions" $
+        [ testCase "Part 1 Solution" $
+             part1Solution part1Input @?= 58322       
+
+        , testCase "Part 2 Solution" $ do
+            part2Solution part1Input @?= 13937702909
+        ]
+    ]
+    
 part1Solution :: Text -> Int
 part1Solution =
   monkeyBusiness . map counter . elems . runner . parser
