@@ -11,80 +11,93 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Problems.Day16
 import System.Random
-import Test.Hspec
 import Text.Megaparsec hiding (State, choice)
 import Text.Megaparsec.Char
 
-spec :: SpecWith ()
+import Test.Tasty
+import Test.Tasty.HUnit
+
+spec :: TestTree
 spec =
-  describe "Day 16 Tests" $ do
-    it "Parses Example Input" $ do
-      let expected =
-            [ InputLine (ValveID "AA") (FlowRate 0) (makeTVS ["DD", "II", "BB"])
-            , InputLine (ValveID "BB") (FlowRate 13) (makeTVS ["CC", "AA"])
-            , InputLine (ValveID "CC") (FlowRate 2) (makeTVS ["DD", "BB"])
-            , InputLine (ValveID "DD") (FlowRate 20) (makeTVS ["CC", "AA", "EE"])
-            , InputLine (ValveID "EE") (FlowRate 3) (makeTVS ["FF", "DD"])
-            , InputLine (ValveID "FF") (FlowRate 0) (makeTVS ["EE", "GG"])
-            , InputLine (ValveID "GG") (FlowRate 0) (makeTVS ["FF", "HH"])
-            , InputLine (ValveID "HH") (FlowRate 22) (makeTVS ["GG"])
-            , InputLine (ValveID "II") (FlowRate 0) (makeTVS ["AA", "JJ"])
-            , InputLine (ValveID "JJ") (FlowRate 21) (makeTVS ["II"])
-            ]
-          actual =
-            fromRight [] $
-              runParser (some (pLine <* optional newline)) "" exampleInput
-      actual `shouldBe` expected
+  testGroup "Day 16 Tests" $
+    [ parsingTests
+    , miscTests
+    , choosingValveTests
+    , solutionTests
+    ]
 
-    it "Cumulative Sums" $ do
-      let ps =
-            map
-              Pressure
-              [ 0
-              , 364
-              , 54
-              , 560
-              , 81
-              , 0
-              , 0
-              , 528
-              , 0
-              , 567
+parsingTests :: TestTree
+parsingTests = 
+  testGroup "Parsing Tests"
+    [ testCase "Parses Example Input" $
+        let expected =
+              [ InputLine (ValveID "AA") (FlowRate 0) (makeTVS ["DD", "II", "BB"])
+              , InputLine (ValveID "BB") (FlowRate 13) (makeTVS ["CC", "AA"])
+              , InputLine (ValveID "CC") (FlowRate 2) (makeTVS ["DD", "BB"])
+              , InputLine (ValveID "DD") (FlowRate 20) (makeTVS ["CC", "AA", "EE"])
+              , InputLine (ValveID "EE") (FlowRate 3) (makeTVS ["FF", "DD"])
+              , InputLine (ValveID "FF") (FlowRate 0) (makeTVS ["EE", "GG"])
+              , InputLine (ValveID "GG") (FlowRate 0) (makeTVS ["FF", "HH"])
+              , InputLine (ValveID "HH") (FlowRate 22) (makeTVS ["GG"])
+              , InputLine (ValveID "II") (FlowRate 0) (makeTVS ["AA", "JJ"])
+              , InputLine (ValveID "JJ") (FlowRate 21) (makeTVS ["II"])
               ]
-          expected =
-            map
-              Pressure
-              [ 0
-              , 364
-              , 418
-              , 978
-              , 1059
-              , 1059
-              , 1059
-              , 1587
-              , 1587
-              , 2154
-              ]
-      cumsum (Pressure 0) ps `shouldBe` expected
-
-    it "Minute Maps" $ do
-      let expected =
-            M.fromList
-              [ (ValveID "AA", Just $ TravelMinutes $ Minutes 0)
-              , (ValveID "BB", Just $ TravelMinutes $ Minutes 1)
-              , (ValveID "CC", Just $ TravelMinutes $ Minutes 2)
-              , (ValveID "DD", Just $ TravelMinutes $ Minutes 1)
-              , (ValveID "EE", Just $ TravelMinutes $ Minutes 2)
-              , (ValveID "FF", Just $ TravelMinutes $ Minutes 3)
-              , (ValveID "GG", Just $ TravelMinutes $ Minutes 4)
-              , (ValveID "HH", Just $ TravelMinutes $ Minutes 5)
-              , (ValveID "II", Just $ TravelMinutes $ Minutes 1)
-              , (ValveID "JJ", Just $ TravelMinutes $ Minutes 2)
-              ]
-          actual = travelMap (ValveID "AA") (tunnelMap env)
-      actual `shouldBe` expected
-
-    it "Pressure Maps" $ do
+            actual =
+              fromRight [] $
+                runParser (some (pLine <* optional newline)) "" exampleInput
+        in actual @?= expected
+    ]
+    
+miscTests :: TestTree
+miscTests = 
+  testGroup "Miscellaneous Tests" $
+    [ testCase "Cumulative Sums" $
+        let ps =
+              map
+                Pressure
+                [ 0
+                , 364
+                , 54
+                , 560
+                , 81
+                , 0
+                , 0
+                , 528
+                , 0
+                , 567
+                ]
+            expected =
+              map
+                Pressure
+                [ 0
+                , 364
+                , 418
+                , 978
+                , 1059
+                , 1059
+                , 1059
+                , 1587
+                , 1587
+                , 2154
+                ]
+        in cumsum (Pressure 0) ps @?= expected
+    , testCase "Minute Maps" $
+        let expected =
+              M.fromList
+                [ (ValveID "AA", Just $ TravelMinutes $ Minutes 0)
+                , (ValveID "BB", Just $ TravelMinutes $ Minutes 1)
+                , (ValveID "CC", Just $ TravelMinutes $ Minutes 2)
+                , (ValveID "DD", Just $ TravelMinutes $ Minutes 1)
+                , (ValveID "EE", Just $ TravelMinutes $ Minutes 2)
+                , (ValveID "FF", Just $ TravelMinutes $ Minutes 3)
+                , (ValveID "GG", Just $ TravelMinutes $ Minutes 4)
+                , (ValveID "HH", Just $ TravelMinutes $ Minutes 5)
+                , (ValveID "II", Just $ TravelMinutes $ Minutes 1)
+                , (ValveID "JJ", Just $ TravelMinutes $ Minutes 2)
+                ]
+            actual = travelMap (ValveID "AA") (tunnelMap env)
+        in actual @?= expected
+  , testCase "Pressure Maps" $
       let minutesRemaining = MinutesRemaining $ Minutes 30
           travelM = travelMap (ValveID "AA") (tunnelMap env)
           actual = pressureMap minutesRemaining (flowMap env) travelM
@@ -101,28 +114,31 @@ spec =
               , (ValveID "II", Just (Pressure 0, MinutesRemaining $ Minutes 28))
               , (ValveID "JJ", Just (Pressure 567, MinutesRemaining $ Minutes 27))
               ]
-      actual `shouldBe` expected
+      in actual @?= expected
 
-    it "Pressure Tests" $ do
+  , testCase "Pressure Tests" $
       let released =
             pressure
               (TravelMinutes (Minutes 1))
               (MinutesRemaining (Minutes 30))
               (FlowRate 13)
-      released `shouldBe` (Pressure 364, MinutesRemaining (Minutes 28))
+      in released @?= (Pressure 364, MinutesRemaining (Minutes 28))
+    ]
 
-    describe "Choosing Valves" $ do
-      it "One positive valve" $ do
-        let rand = mkStdGen 42
-            opened = OpenedValves S.empty
-            pressures =
-              M.singleton
-                (ValveID "A")
-                (Just (Pressure 1, MinutesRemaining $ Minutes 1))
-            choice = chooseNextValve rand simpleIndex uniformIndexSelector opened pressures
-        fst <$> choice `shouldBe` Just (ValveID "A")
+choosingValveTests :: TestTree
+choosingValveTests = 
+    testGroup "Choosing Valves" $
+      [ testCase "One positive valve" $
+          let rand = mkStdGen 42
+              opened = OpenedValves S.empty
+              pressures =
+                M.singleton
+                  (ValveID "A")
+                  (Just (Pressure 1, MinutesRemaining $ Minutes 1))
+              choice = chooseNextValve rand simpleIndex uniformIndexSelector opened pressures
+          in fst <$> choice @?= Just (ValveID "A")
 
-      it "No positive valves" $ do
+  , testCase "No positive valves" $
         let rand = mkStdGen 42
             opened = OpenedValves S.empty
             pressures =
@@ -130,9 +146,9 @@ spec =
                 (ValveID "A")
                 (Just (Pressure 0, MinutesRemaining $ Minutes 1))
             choice = chooseNextValve rand simpleIndex uniformIndexSelector opened pressures
-        choice `shouldBe` Nothing
+        in choice @?= Nothing
 
-      it "Only one positive valve and the rest zero" $ do
+  ,  testCase "Only one positive valve and the rest zero" $
         let rand = mkStdGen 42
             opened = OpenedValves S.empty
             pressures =
@@ -145,9 +161,9 @@ spec =
                 , (ValveID "F", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 ]
             choice = chooseNextValve rand simpleIndex uniformIndexSelector opened pressures
-        fst <$> choice `shouldBe` Just (ValveID "C")
+        in fst <$> choice @?= Just (ValveID "C")
 
-      it "Only choosing positive valves" $ do
+  , testCase "Only choosing positive valves" $
         let opened = OpenedValves S.empty
             pressures =
               M.fromList
@@ -159,7 +175,7 @@ spec =
                 , (ValveID "F", Just (Pressure 3, MinutesRemaining $ Minutes 1))
                 ]
 
-            choices = sequence $ flip evalState (mkStdGen 42) $ do
+            choices = sequence $ flip evalState (mkStdGen 42) $
               forM [1 :: Int .. 100] $ \_ -> do
                 g <- get
                 case chooseNextValve g simpleIndex uniformIndexSelector opened pressures of
@@ -169,9 +185,9 @@ spec =
                     return (Just valve)
             expectedValves = S.fromList $ map ValveID ["C", "E", "F"]
             actual = S.fromList <$> choices
-        actual `shouldBe` Just expectedValves
+        in actual @?= Just expectedValves
 
-      it "Only choosing positive valves in proportional ratios" $ do
+  , testCase "Only choosing positive valves in proportional ratios" $
         let opened = OpenedValves S.empty
             pressures =
               M.fromList
@@ -182,7 +198,7 @@ spec =
                 , (ValveID "E", Just (Pressure 0, MinutesRemaining $ Minutes 1))
                 , (ValveID "F", Just (Pressure 1, MinutesRemaining $ Minutes 1))
                 ]
-            choices = sequence $ flip evalState (mkStdGen 42) $ do
+            choices = sequence $ flip evalState (mkStdGen 42) $
               forM [1 :: Int .. 10000] $ \_ -> do
                 g <- get
                 case chooseNextValve g simpleIndex uniformIndexSelector opened pressures of
@@ -192,10 +208,11 @@ spec =
                     return (Just valve)
             numChoiceC = length . filter (== ValveID "C") $ fromJust choices
             numChoiceF = length . filter (== ValveID "F") $ fromJust choices
-        numChoiceF `shouldBe` 94
-        numChoiceC `shouldBe` 9906
+        in do 
+          numChoiceF @?= 94
+          numChoiceC @?= 9906
 
-      it "Can choose a route" $ do
+  ,  testCase "Can choose a route" $
         let actualV1 = fst $ evalRWS (simulate (mkStdGen 42)) env initialState
             expectedV1 =
               [ (ValveID "DD", Pressure 560, MinutesRemaining (Minutes 28))
@@ -214,21 +231,22 @@ spec =
               , (ValveID "EE", Pressure 21, MinutesRemaining (Minutes 7))
               , (ValveID "CC", Pressure 8, MinutesRemaining (Minutes 4))
               ]
-        actualV1 `shouldBe` expectedV1
-        actualV2 `shouldBe` expectedV2
+        in do 
+          actualV1 @?= expectedV1
+          actualV2 @?= expectedV2
 
-      it "Can find the best route" $ do
+  ,  testCase "Can find the best route" $
         let actual = bestRoute env initialState (NumberOfTrials 1000)
             expected = Pressure 1651
-        actual `shouldBe` expected
+        in actual @?= expected
 
-      it "It can find the best route without simulation" $ do
+  ,  testCase "It can find the best route without simulation" $
         let travel = travelMap (ValveID "AA") (tunnelMap env)
             actual = optimalRoute (flowMap env) travel
             expected = map ValveID ["DD", "BB", "JJ", "HH", "EE", "CC"]
-        actual `shouldBe` expected
+        in actual @?= expected
 
-      it "Can calculate the correct trip" $ do
+  ,  testCase "Can calculate the correct trip" $
         let actual = trip (ValveID "AA") (flowMap env) (tunnelMap env)
             expected =
               [ (ValveID "DD", Pressure 560, MinutesRemaining (Minutes 28))
@@ -238,27 +256,27 @@ spec =
               , (ValveID "EE", Pressure 27, MinutesRemaining (Minutes 9))
               , (ValveID "CC", Pressure 12, MinutesRemaining (Minutes 6))
               ]
-        actual `shouldBe` expected
-        tripReleased actual `shouldBe` 1651
+        in do 
+          actual @?= expected
+          tripReleased actual @?= 1651
+      ]
 
-      describe "Puzzle Solutions" $ do
-        it "Part 1 Solution - Example Input" $ do
-          -- pendingWith "no longer needed"
+solutionTests :: TestTree
+solutionTests = 
+  testGroup "Puzzle Solutions" $
+    [ testCase "Part 1 Solution - Example Input" $
           let actual = part1Solution exampleInput
               expected = Pressure 1651
-          actual `shouldBe` expected
+          in actual @?= expected
 
-        it "Part 1 Solution - Puzzle Input" $ do
-          -- pendingWith "Still broken"
+    , testCase "Part 1 Solution - Puzzle Input" $
           let actual = part1Solution puzzleInput
               expected = Pressure 1
-          actual `shouldBe` expected
-
-        -- it "Direct Solution - Example Input" $ do
-        --   let actual = part1Solution exampleInput
-        --       expected = Pressure 1651
-        --   actual `shouldBe` expected
-
+          in do 
+            "Never terminates" @?= "Finishes"
+            actual @?= expected
+    ]
+    
 part1Solution :: Text -> Pressure
 part1Solution t =
   findMaxPressure atlas initialRoute (Pressure 0)
@@ -269,7 +287,6 @@ part1Solution t =
                       (OpenedValves S.empty)
                       (Pressure 0)
                   ]
-  -- solutionEnv = Env flows tunnels combinedIndex uniformIndexSelector
   atlas = makeAtlas flows tunnels
   parser = fromRight [] . runParser (some (pLine <* optional newline)) ""
   inputLines = parser t
