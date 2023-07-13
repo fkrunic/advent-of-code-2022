@@ -1,7 +1,5 @@
 module Test.Day12Spec (spec) where
 
-import Test.Hspec (SpecWith, describe, it, shouldBe)
-
 import Data.Either (fromRight)
 import Data.Map.Strict qualified as M
 import Data.Text (Text)
@@ -28,66 +26,72 @@ import Utilities.Graphs (
 import Text.Megaparsec (optional, runParser, some)
 import Text.Megaparsec.Char (newline)
 
-spec :: SpecWith ()
+import Test.Tasty
+import Test.Tasty.HUnit
+
+spec :: TestTree
 spec =
-  describe "Day 12 Tests" $ do
-    it "Parsing Puzzle Input" $ do
-      parser exampleInput `shouldBe` parsedCells
+  testGroup "Day 12 Tests" $
+    [ testCase "Parsing Puzzle Input" $
+        parser exampleInput @?= parsedCells
 
-    it "Converting Cells to Gridpoints" $ do
-      toPoints parsedCells `shouldBe` parsedGrid
+    , testCase "Converting Cells to Gridpoints" $
+        toPoints parsedCells @?= parsedGrid
 
-    describe "Finding Next Moves" $ do
-      it "From Start Position" $ do
-        let start = ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0))
-            actual = nextMoves start parsedGrid
-            expected =
-              [ ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a
-              , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a
-              ]
-        actual `shouldBe` expected
+    , testGroup "Finding Next Moves" $
+        [ testCase "From Start Position" $
+            let start = ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0))
+                actual = nextMoves start parsedGrid
+                expected =
+                  [ ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a
+                  , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a
+                  ]
+            in actual @?= expected
 
-      it "From Close to End" $ do
-        let start = ((XCoordinate 5, YCoordinate 1), (GenericCell, Height 23)) -- x
-            actual = nextMoves start parsedGrid
-            expected =
-              [ ((XCoordinate 5, YCoordinate 0), (GenericCell, Height 14)) -- o
-              , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 24)) -- y
-              , ((XCoordinate 6, YCoordinate 1), (GenericCell, Height 23)) -- x
-              ]
-        actual `shouldBe` expected
+        , testCase "From Close to End" $
+            let start = ((XCoordinate 5, YCoordinate 1), (GenericCell, Height 23)) -- x
+                actual = nextMoves start parsedGrid
+                expected =
+                  [ ((XCoordinate 5, YCoordinate 0), (GenericCell, Height 14)) -- o
+                  , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 24)) -- y
+                  , ((XCoordinate 6, YCoordinate 1), (GenericCell, Height 23)) -- x
+                  ]
+            in actual @?= expected
 
-      it "From Top-Right Corner" $ do
-        let start = ((XCoordinate 7, YCoordinate 0), (GenericCell, Height 12)) -- m
-            actual = nextMoves start parsedGrid
-            expected =
-              [ ((XCoordinate 7, YCoordinate 1), (GenericCell, Height 11)) -- l
-              , ((XCoordinate 6, YCoordinate 0), (GenericCell, Height 13)) -- n
-              ]
-        actual `shouldBe` expected
+        , testCase "From Top-Right Corner" $
+            let start = ((XCoordinate 7, YCoordinate 0), (GenericCell, Height 12)) -- m
+                actual = nextMoves start parsedGrid
+                expected =
+                  [ ((XCoordinate 7, YCoordinate 1), (GenericCell, Height 11)) -- l
+                  , ((XCoordinate 6, YCoordinate 0), (GenericCell, Height 13)) -- n
+                  ]
+            in actual @?= expected
 
-      it "From Spiral" $ do
-        let start = ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 18)) -- s
-            actual = nextMoves start parsedGrid
-            expected =
-              [ ((XCoordinate 3, YCoordinate 1), (GenericCell, Height 17)) -- r
-              , ((XCoordinate 3, YCoordinate 3), (GenericCell, Height 19)) -- t
-              , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 2)) -- c
-              ]
-        actual `shouldBe` expected
+        , testCase "From Spiral" $
+            let start = ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 18)) -- s
+                actual = nextMoves start parsedGrid
+                expected =
+                  [ ((XCoordinate 3, YCoordinate 1), (GenericCell, Height 17)) -- r
+                  , ((XCoordinate 3, YCoordinate 3), (GenericCell, Height 19)) -- t
+                  , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 2)) -- c
+                  ]
+            in actual @?= expected
+        ]
 
-    describe "Puzzle Solutions" $ do
-      it "Example Input - Dijkstra" $ do
-        part1Dijkstra exampleInput `shouldBe` 31
+    , testGroup "Puzzle Solutions" $
+        [ testCase "Example Input - Dijkstra" $
+            part1Dijkstra exampleInput @?= 31
 
-      it "Example Input - Dijkstra (Multiple Sources)" $ do
-        part2Dijkstra exampleInput `shouldBe` 29
+        , testCase "Example Input - Dijkstra (Multiple Sources)" $
+            part2Dijkstra exampleInput @?= 29
 
-      it "Part 1 Solution - Dijkstra" $ do
-        part1Dijkstra puzzleInput `shouldBe` 339
+        , testCase "Part 1 Solution - Dijkstra" $
+            part1Dijkstra puzzleInput @?= 339
 
-      it "Part 2 Solution - Dijkstra" $ do
-        part2Dijkstra puzzleInput `shouldBe` 332
+        , testCase "Part 2 Solution - Dijkstra" $
+            part2Dijkstra puzzleInput @?= 332
+        ]
+    ]
 
 part1Dijkstra :: Text -> Int
 part1Dijkstra t = targetDistance
@@ -225,32 +229,6 @@ exampleInput =
     , "accszExk"
     , "acctuvwj"
     , "abdefghi"
-    ]
-
-{-
-  Saaaa
-  azaza
-  aaaaE
--}
-
-simplerGrid :: Grid
-simplerGrid =
-  M.fromList
-    [ ((XCoordinate 0, YCoordinate 0), (StartCell, Height 0)) -- S
-    , ((XCoordinate 1, YCoordinate 0), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 2, YCoordinate 0), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 3, YCoordinate 0), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 4, YCoordinate 0), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 0, YCoordinate 1), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 1, YCoordinate 1), (GenericCell, Height 25)) -- z
-    , ((XCoordinate 2, YCoordinate 1), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 3, YCoordinate 1), (GenericCell, Height 25)) -- z
-    , ((XCoordinate 4, YCoordinate 1), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 0, YCoordinate 2), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 1, YCoordinate 2), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 2, YCoordinate 2), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 3, YCoordinate 2), (GenericCell, Height 0)) -- a
-    , ((XCoordinate 4, YCoordinate 2), (EndCell, Height 1)) -- E
     ]
 
 puzzleInput :: Text
