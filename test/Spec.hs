@@ -1,2 +1,7 @@
+module Main where
+
+import Test.PatternsSpec (spec)
+import Test.Hspec (hspec)
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = hspec spec

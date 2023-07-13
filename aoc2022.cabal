@@ -92,6 +92,25 @@ test-suite aoc2022-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test.Day01Spec
+      Test.Day02Spec
+      Test.Day03Spec
+      Test.Day04Spec
+      Test.Day05Spec
+      Test.Day06Spec
+      Test.Day07Spec
+      Test.Day08Spec
+      Test.Day09Spec
+      Test.Day10Spec
+      Test.Day11Spec
+      Test.Day12Spec
+      Test.Day13Spec
+      Test.Day14Spec
+      Test.Day15Spec
+      Test.Day16Spec
+      Test.Day17Spec
+      Test.Input
+      Test.PatternsSpec
       Paths_aoc2022
   hs-source-dirs:
       test
@@ -104,6 +123,7 @@ test-suite aoc2022-test
     , base >=4.7 && <5
     , containers
     , ghc
+    , hspec
     , megaparsec
     , monad-loops
     , random
