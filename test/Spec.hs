@@ -1,6 +1,6 @@
 module Main where
 
-import Test.Day13Spec (spec)
+import Test.Day14Spec (spec)
 import Test.Tasty
 
 main :: IO ()

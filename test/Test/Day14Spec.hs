@@ -21,220 +21,227 @@ import Problems.Day14 (
  )
 
 import Utilities.Grids (Grid, point)
-import Test.Hspec (SpecWith, describe, it, shouldBe)
 import Text.Megaparsec (optional, runParser, some)
 import Text.Megaparsec.Char (newline)
 
-spec :: SpecWith ()
+import Test.Tasty
+import Test.Tasty.HUnit
+
+spec :: TestTree
 spec =
-  describe "Day 14 Tests" $ do
-    describe "Parsing Tests" $ do
-      it "Parsing Single Lines" $ do
-        let expected =
-              [ point 498 4
-              , point 498 6
-              , point 496 6
+  testGroup "Day 14 Tests" $
+    [ testGroup "Parsing Tests" $
+        [ testCase "Parsing Single Lines" $
+            let expected =
+                  [ point 498 4
+                  , point 498 6
+                  , point 496 6
+                  ]
+                actual = runParser pDrawPath "" "498,4 -> 498,6 -> 496,6"
+            in actual @?= Right expected
+
+        , testCase "Parsing Full Example" $
+            let expected =
+                  [ [point 498 4, point 498 6, point 496 6]
+                  , [point 503 4, point 502 4, point 502 9, point 494 9]
+                  ]
+                actual =
+                  parser
+                    "498,4 -> 498,6 -> 496,6\n503,4 -> 502,4 -> 502,9 -> 494,9"
+            in actual @?= expected
+        ]
+  , testGroup "Points Along Tests" $
+      [ testCase "Points along (1,1) and (1,3)" $
+          let start = point 1 1
+              middle = point 1 2
+              end = point 1 3
+          in do 
+            pointsAlong start end @?= Just [start, middle, end]
+            pointsAlong end start @?= Just [end, middle, start]
+
+      , testCase "Points along (4,1) and (1,1)" $
+          let start = point 4 1
+              m1 = point 3 1
+              m2 = point 2 1
+              end = point 1 1
+          in do 
+            pointsAlong start end @?= Just [start, m1, m2, end]
+            pointsAlong end start @?= Just [end, m2, m1, start]
+
+      , testCase "No points along (1,1) and (3,3)" $
+          let start = point 1 1
+              end = point 3 3
+          in do
+            pointsAlong start end @?= Nothing
+            pointsAlong end start @?= Nothing
+
+      , testCase "Chaining points (1,1) -> (3,1) -> (3,3)" $
+          chainPath [point 1 1, point 3 1, point 3 3]
+            @?= Just
+              [ point 1 1
+              , point 2 1
+              , point 3 1
+              , point 3 2
+              , point 3 3
               ]
-            actual = runParser pDrawPath "" "498,4 -> 498,6 -> 496,6"
-        actual `shouldBe` Right expected
 
-      it "Parsing Full Example" $ do
-        let expected =
-              [ [point 498 4, point 498 6, point 496 6]
-              , [point 503 4, point 502 4, point 502 9, point 494 9]
+      , testCase "Chaining points (5,1) -> (1,1) -> (1,5)" $
+          chainPath [point 5 1, point 1 1, point 1 5]
+            @?= Just
+              [ point 5 1
+              , point 4 1
+              , point 3 1
+              , point 2 1
+              , point 1 1
+              , point 1 2
+              , point 1 3
+              , point 1 4
+              , point 1 5
               ]
-            actual =
-              parser
-                "498,4 -> 498,6 -> 496,6\n503,4 -> 502,4 -> 502,9 -> 494,9"
-        actual `shouldBe` expected
 
-    describe "Points Along Tests" $ do
-      it "Points along (1,1) and (1,3)" $ do
-        let start = point 1 1
-            middle = point 1 2
-            end = point 1 3
-        pointsAlong start end `shouldBe` Just [start, middle, end]
-        pointsAlong end start `shouldBe` Just [end, middle, start]
+      , testCase "No points along (1,1) -> (4,1) -> (5,3)" $
+          chainPath [point 1 1, point 4 1, point 5 3] @?= Nothing
+      ]
+    , testGroup "Rendering Grid" $
+        [ testCase "Drawing a grid with no sand" $
+            let actual = renderGrid exampleGrid
+                expected =
+                  T.intercalate
+                    "\n"
+                    [ "............"
+                    , ".......+...."
+                    , "............"
+                    , "............"
+                    , "............"
+                    , ".....#...##."
+                    , ".....#...#.."
+                    , "...###...#.."
+                    , ".........#.."
+                    , ".........#.."
+                    , ".#########.."
+                    , "************"
+                    ]
+            in actual @?= expected
 
-      it "Points along (4,1) and (1,1)" $ do
-        let start = point 4 1
-            m1 = point 3 1
-            m2 = point 2 1
-            end = point 1 1
-        pointsAlong start end `shouldBe` Just [start, m1, m2, end]
-        pointsAlong end start `shouldBe` Just [end, m2, m1, start]
+        , testCase "First sand pebble dropped" $
+            let actual = renderGrid $ fromJust $ fillStep exampleGrid
+                expected =
+                  T.intercalate
+                    "\n"
+                    [ "............"
+                    , ".......+...."
+                    , "............"
+                    , "............"
+                    , "............"
+                    , ".....#...##."
+                    , ".....#...#.."
+                    , "...###...#.."
+                    , ".........#.."
+                    , ".......o.#.."
+                    , ".#########.."
+                    , "************"
+                    ]
+            in actual @?= expected
 
-      it "No points along (1,1) and (3,3)" $ do
-        let start = point 1 1
-            end = point 3 3
-        pointsAlong start end `shouldBe` Nothing
-        pointsAlong end start `shouldBe` Nothing
+        , testCase "Second sand pebble dropped" $
+            let actual = renderGrid $ fromJust $ fillNStep 2 exampleGrid
+                expected =
+                  T.intercalate
+                    "\n"
+                    [ "............"
+                    , ".......+...."
+                    , "............"
+                    , "............"
+                    , "............"
+                    , ".....#...##."
+                    , ".....#...#.."
+                    , "...###...#.."
+                    , ".........#.."
+                    , "......oo.#.."
+                    , ".#########.."
+                    , "************"
+                    ]
+            in actual @?= expected
 
-      it "Chaining points (1,1) -> (3,1) -> (3,3)" $ do
-        chainPath [point 1 1, point 3 1, point 3 3]
-          `shouldBe` Just
-            [ point 1 1
-            , point 2 1
-            , point 3 1
-            , point 3 2
-            , point 3 3
-            ]
+        , testCase "Five pebbles dropped" $
+            let actual = renderGrid $ fromJust $ fillNStep 5 exampleGrid
+                expected =
+                  T.intercalate
+                    "\n"
+                    [ "............"
+                    , ".......+...."
+                    , "............"
+                    , "............"
+                    , "............"
+                    , ".....#...##."
+                    , ".....#...#.."
+                    , "...###...#.."
+                    , ".......o.#.."
+                    , ".....oooo#.."
+                    , ".#########.."
+                    , "************"
+                    ]
+            in actual @?= expected
 
-      it "Chaining points (5,1) -> (1,1) -> (1,5)" $ do
-        chainPath [point 5 1, point 1 1, point 1 5]
-          `shouldBe` Just
-            [ point 5 1
-            , point 4 1
-            , point 3 1
-            , point 2 1
-            , point 1 1
-            , point 1 2
-            , point 1 3
-            , point 1 4
-            , point 1 5
-            ]
+        , testCase "22 pebbles dropped" $
+            let actual = renderGrid $ fromJust $ fillNStep 22 exampleGrid
+                expected =
+                  T.intercalate
+                    "\n"
+                    [ "............"
+                    , ".......+...."
+                    , "............"
+                    , ".......o...."
+                    , "......ooo..."
+                    , ".....#ooo##."
+                    , ".....#ooo#.."
+                    , "...###ooo#.."
+                    , ".....oooo#.."
+                    , "....ooooo#.."
+                    , ".#########.."
+                    , "************"
+                    ]
+            in actual @?= expected
 
-      it "No points along (1,1) -> (4,1) -> (5,3)" $ do
-        chainPath [point 1 1, point 4 1, point 5 3] `shouldBe` Nothing
+        , testCase "24 pebbles dropped" $
+            let actual = renderGrid $ fromJust $ fillNStep 24 exampleGrid
+                expected =
+                  T.intercalate
+                    "\n"
+                    [ "............"
+                    , ".......+...."
+                    , "............"
+                    , ".......o...."
+                    , "......ooo..."
+                    , ".....#ooo##."
+                    , "....o#ooo#.."
+                    , "...###ooo#.."
+                    , ".....oooo#.."
+                    , "..o.ooooo#.."
+                    , ".#########.."
+                    , "************"
+                    ]
+            in actual @?= expected
 
-    describe "Rendering Grid" $ do
-      it "Drawing a grid with no sand" $ do
-        let actual = renderGrid exampleGrid
-            expected =
-              T.intercalate
-                "\n"
-                [ "............"
-                , ".......+...."
-                , "............"
-                , "............"
-                , "............"
-                , ".....#...##."
-                , ".....#...#.."
-                , "...###...#.."
-                , ".........#.."
-                , ".........#.."
-                , ".#########.."
-                , "************"
-                ]
-        actual `shouldBe` expected
+        , testCase "25+ pebbles dropped" $ do
+            fillNStep 25 exampleGrid @?= Nothing
+            fillNStep 30 exampleGrid @?= Nothing
+            fillNStep 100 exampleGrid @?= Nothing
+        ]
+  , testGroup "Puzzle Solutions" $
+      [ testCase "Example Input - Part 1" $
+          part1Solution exampleInput @?= 24
 
-      it "First sand pebble dropped" $ do
-        let actual = renderGrid $ fromJust $ fillStep exampleGrid
-        let expected =
-              T.intercalate
-                "\n"
-                [ "............"
-                , ".......+...."
-                , "............"
-                , "............"
-                , "............"
-                , ".....#...##."
-                , ".....#...#.."
-                , "...###...#.."
-                , ".........#.."
-                , ".......o.#.."
-                , ".#########.."
-                , "************"
-                ]
-        actual `shouldBe` expected
+      , testCase "Part 1 Solution" $
+          part1Solution puzzleInput @?= 843
 
-      it "Second sand pebble dropped" $ do
-        let actual = renderGrid $ fromJust $ fillNStep 2 exampleGrid
-        let expected =
-              T.intercalate
-                "\n"
-                [ "............"
-                , ".......+...."
-                , "............"
-                , "............"
-                , "............"
-                , ".....#...##."
-                , ".....#...#.."
-                , "...###...#.."
-                , ".........#.."
-                , "......oo.#.."
-                , ".#########.."
-                , "************"
-                ]
-        actual `shouldBe` expected
+      , testCase "Example Input - Part 2" $
+          part2Solution exampleInput @?= 93
 
-      it "Five pebbles dropped" $ do
-        let actual = renderGrid $ fromJust $ fillNStep 5 exampleGrid
-        let expected =
-              T.intercalate
-                "\n"
-                [ "............"
-                , ".......+...."
-                , "............"
-                , "............"
-                , "............"
-                , ".....#...##."
-                , ".....#...#.."
-                , "...###...#.."
-                , ".......o.#.."
-                , ".....oooo#.."
-                , ".#########.."
-                , "************"
-                ]
-        actual `shouldBe` expected
-
-      it "22 pebbles dropped" $ do
-        let actual = renderGrid $ fromJust $ fillNStep 22 exampleGrid
-        let expected =
-              T.intercalate
-                "\n"
-                [ "............"
-                , ".......+...."
-                , "............"
-                , ".......o...."
-                , "......ooo..."
-                , ".....#ooo##."
-                , ".....#ooo#.."
-                , "...###ooo#.."
-                , ".....oooo#.."
-                , "....ooooo#.."
-                , ".#########.."
-                , "************"
-                ]
-        actual `shouldBe` expected
-
-      it "24 pebbles dropped" $ do
-        let actual = renderGrid $ fromJust $ fillNStep 24 exampleGrid
-        let expected =
-              T.intercalate
-                "\n"
-                [ "............"
-                , ".......+...."
-                , "............"
-                , ".......o...."
-                , "......ooo..."
-                , ".....#ooo##."
-                , "....o#ooo#.."
-                , "...###ooo#.."
-                , ".....oooo#.."
-                , "..o.ooooo#.."
-                , ".#########.."
-                , "************"
-                ]
-        actual `shouldBe` expected
-
-      it "25+ pebbles dropped" $ do
-        fillNStep 25 exampleGrid `shouldBe` Nothing
-        fillNStep 30 exampleGrid `shouldBe` Nothing
-        fillNStep 100 exampleGrid `shouldBe` Nothing
-
-    describe "Puzzle Solutions" $ do
-      it "Example Input - Part 1" $ do
-        part1Solution exampleInput `shouldBe` 24
-
-      it "Part 1 Solution" $ do
-        part1Solution puzzleInput `shouldBe` 843
-
-      it "Example Input - Part 2" $ do
-        part2Solution exampleInput `shouldBe` 93
-
-      it "Part 2 Solution" $ do
-        part2Solution puzzleInput `shouldBe` 27625
+      , testCase "Part 2 Solution" $
+          part2Solution puzzleInput @?= 27625
+      ]
+    ]
 
 exampleGrid :: Grid Element
 exampleGrid = fromMaybe M.empty $ defineGrid paths
