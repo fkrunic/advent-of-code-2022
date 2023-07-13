@@ -1,33 +1,43 @@
 module Test.Day15Spec (spec) where
 
-import Test.Hspec
-
 import Data.Either (fromRight)
 import Data.Map qualified as M
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Problems.Day15
-
 import Utilities.Grids
-
 import Text.Megaparsec
 
-spec :: SpecWith ()
+import Test.Tasty
+import Test.Tasty.HUnit
+
+spec :: TestTree
 spec =
-  describe "Day 15 Tests" $ do
-    describe "Parsing Tests" $ do
-      it "Single Beacon Line" $ do
+  testGroup "Day 15 Tests" $
+    [ parsingTests
+    , renderingTests
+    , teleportationTests
+    , solutionTests
+    ]
+
+parsingTests :: TestTree
+parsingTests = 
+  testGroup "Parsing Tests" $
+    [ testCase "Single Beacon Line" $
         let line = "Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
             actual = runParser pLine "" line
             expected = sensorPair $ head exampleSpread
-        actual `shouldBe` Right expected
+        in actual @?= Right expected
 
-      it "Example Input" $ do
-        parser exampleInput `shouldBe` exampleSpread
+    , testCase "Example Input" $
+        parser exampleInput @?= exampleSpread
+    ]
 
-    describe "Rendering Sensors and Beacons" $ do
-      it "Can render a single beacon" $ do
+renderingTests :: TestTree
+renderingTests = 
+  testGroup "Rendering Sensors and Beacons" $
+    [ testCase "Can render a single beacon" $
         let sp =
               SensorPair
                 { sensorID = SensorID 1
@@ -45,9 +55,9 @@ spec =
                 , ".###."
                 , "..#.."
                 ]
-        actual `shouldBe` expected
+        in actual @?= expected
 
-      it "Can render two separated beacons" $ do
+    , testCase "Can render two separated beacons" $
         let sp1 =
               SensorPair
                 { sensorID = SensorID 1
@@ -71,9 +81,9 @@ spec =
                 , ".###.....#."
                 , "..#........"
                 ]
-        actual `shouldBe` expected
+        in actual @?= expected
 
-      it "Can render two overlapping sensors" $ do
+  , testCase "Can render two overlapping sensors" $
         let sp1 =
               SensorPair
                 { sensorID = SensorID 1
@@ -101,9 +111,9 @@ spec =
                 , "....###...."
                 , ".....#....."
                 ]
-        actual `shouldBe` expected
+        in actual @?= expected
 
-      it "Can render the example grid" $ do
+  , testCase "Can render the example grid" $
         let layout = LocationLayout exampleSpread Nothing
             actual = renderField layout
             expected =
@@ -147,9 +157,9 @@ spec =
                 , "..........#.............###.........."
                 , ".........................#..........."
                 ]
-        actual `shouldBe` expected
+        in actual @?= expected
 
-      it "Can render an adjusted grid" $ do
+    , testCase "Can render an adjusted grid" $
         let actual = renderField (LocationLayout adjustedSpread Nothing)
             expected =
               T.intercalate
@@ -192,34 +202,38 @@ spec =
                 , "..........#.............###.........."
                 , ".........................#..........."
                 ]
-        actual `shouldBe` expected
+        in actual @?= expected
+    ]
+    
+teleportationTests :: TestTree
+teleportationTests = 
+    testGroup "Boundary Teleportations" $
+      [ testCase "A marker outside sensor range is not teleported" $
+          let sLoc = point 0 0
+              bLoc = point 2 2
+              mkLoc = point (-5) 0
+              pair = (SensorLocation sLoc, BeaconLocation bLoc)
+              scanner = makeScanner pair
+              sPair = SensorPair (SensorID 1) pair
+              layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
+              expectedRender =
+                T.intercalate
+                  "\n"
+                  [ ".....#...."
+                  , "....###..."
+                  , "...#####.."
+                  , "..#######."
+                  , "X####S####"
+                  , "..#######."
+                  , "...####B.."
+                  , "....###..."
+                  , ".....#...."
+                  ]
+          in do 
+            renderField layout @?= expectedRender
+            teleportAcrossSensor mkLoc (fst pair) scanner @?= Nothing
 
-    describe "Boundary Teleportations" $ do
-      it "A marker outside sensor range is not teleported" $ do
-        let sLoc = point 0 0
-            bLoc = point 2 2
-            mkLoc = point (-5) 0
-            pair = (SensorLocation sLoc, BeaconLocation bLoc)
-            scanner = makeScanner pair
-            sPair = SensorPair (SensorID 1) pair
-            layout = LocationLayout [sPair] (Just $ MarkerLocation mkLoc)
-            expectedRender =
-              T.intercalate
-                "\n"
-                [ ".....#...."
-                , "....###..."
-                , "...#####.."
-                , "..#######."
-                , "X####S####"
-                , "..#######."
-                , "...####B.."
-                , "....###..."
-                , ".....#...."
-                ]
-        renderField layout `shouldBe` expectedRender
-        teleportAcrossSensor mkLoc (fst pair) scanner `shouldBe` Nothing
-
-      it "A marker strictly contained in quadrant is teleported correctly" $ do
+    , testCase "A marker strictly contained in quadrant is teleported correctly" $
         let sLoc = point 0 0
             bLoc = point 2 2
             mkLoc = point (-1) (-1)
@@ -257,11 +271,12 @@ spec =
                 , "....#...."
                 ]
 
-        deduceCurrentQuadrant mkLoc (SensorLocation sLoc) scanner `shouldBe` Just Q3
-        renderField layout `shouldBe` expectedRender
-        renderField teleportedLayout `shouldBe` expectedTeleport
+        in do 
+          deduceCurrentQuadrant mkLoc (SensorLocation sLoc) scanner @?= Just Q3
+          renderField layout @?= expectedRender
+          renderField teleportedLayout @?= expectedTeleport
 
-      it "A marker on the north boundary stays the same after teleportation" $ do
+  , testCase "A marker on the north boundary stays the same after teleportation" $
         let sLoc = point 0 0
             bLoc = point 2 2
             mkLoc = point 0 (-4)
@@ -285,10 +300,10 @@ spec =
             teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
             teleportedLayout =
               LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
-        renderField layout `shouldBe` expectedRender
-        renderField teleportedLayout `shouldBe` expectedRender
-
-      it "A marker on the south boundary stays the same after teleportation" $ do
+        in do 
+          renderField layout @?= expectedRender
+          renderField teleportedLayout @?= expectedRender
+  , testCase "A marker on the south boundary stays the same after teleportation" $
         let sLoc = point 0 0
             bLoc = point 2 2
             mkLoc = point 0 4
@@ -312,10 +327,11 @@ spec =
             teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
             teleportedLayout =
               LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
-        renderField layout `shouldBe` expectedRender
-        renderField teleportedLayout `shouldBe` expectedRender  
+        in do 
+          renderField layout @?= expectedRender
+          renderField teleportedLayout @?= expectedRender  
 
-      it "A marker on the east boundary stays the same after teleportation" $ do 
+  , testCase "A marker on the east boundary stays the same after teleportation" $ 
         let sLoc = point 0 0
             bLoc = point 2 2
             mkLoc = point 4 0
@@ -339,10 +355,11 @@ spec =
             teleportedMarker = teleportAcrossSensor mkLoc (fst pair) scanner
             teleportedLayout =
               LocationLayout [sPair] (MarkerLocation <$> teleportedMarker)
-        renderField layout `shouldBe` expectedRender
-        renderField teleportedLayout `shouldBe` expectedRender  
+        in do 
+          renderField layout @?= expectedRender
+          renderField teleportedLayout @?= expectedRender  
 
-      it "A marker on the west boundary is teleported to east boundary" $ do
+  , testCase "A marker on the west boundary is teleported to east boundary" $
         let sLoc = point 0 0
             bLoc = point 2 2
             mkLoc = point (-4) 0
@@ -380,10 +397,11 @@ spec =
                 , "....#...."
                 ]
 
-        renderField layout `shouldBe` expectedRender
-        renderField teleportedLayout `shouldBe` expectedTeleport    
+        in do 
+          renderField layout @?= expectedRender
+          renderField teleportedLayout @?= expectedTeleport    
 
-      it "A marker in a cross-quadrant is just pushed to the boundary" $ do
+  , testCase "A marker in a cross-quadrant is just pushed to the boundary" $
         let sLoc = point 0 0
             bLoc = point 2 2
             mkLoc = point 2 1
@@ -420,38 +438,39 @@ spec =
                 , "...###..."
                 , "....#...."
                 ]
-        renderField layout `shouldBe` expectedRender
-        renderField teleportedLayout `shouldBe` expectedTeleport                         
+        in do 
+          renderField layout @?= expectedRender
+          renderField teleportedLayout @?= expectedTeleport                         
+      ]
 
-    describe "Puzzle Solutions" $ do
-      it "Part 1 - Example Input" $ do
-        part1Solution (YCoordinate 10) exampleInput `shouldBe` 26
+solutionTests :: TestTree
+solutionTests = 
+    testGroup "Puzzle Solutions" $
+      [ testCase "Part 1 - Example Input" $
+          part1Solution (YCoordinate 10) exampleInput @?= 26
 
-      it "Part 1 - Puzzle Input" $ do
-        pendingWith "solving part 2"
+      , testCase "Part 2 - Example Solution" $
+          let bounds = 
+                Boundaries 
+                  (XCoordinate 0) 
+                  (XCoordinate 20) 
+                  (YCoordinate 0) 
+                  (YCoordinate 20)
+          in distress exampleSpread bounds @?= Right (point 14 11)
 
-      it "Part 2 - Example Solution" $ do
-        let bounds = 
-              Boundaries 
-                (XCoordinate 0) 
-                (XCoordinate 20) 
-                (YCoordinate 0) 
-                (YCoordinate 20)
-        distress exampleSpread bounds `shouldBe` Right (point 14 11)
-
-      it "Part 2 - Puzzle Input" $ do
-        let bounds = 
-              Boundaries 
-                (XCoordinate 0) 
-                (XCoordinate 4000000) 
-                (YCoordinate 0) 
-                (YCoordinate 4000000)
-            distressCoord = distress (parser puzzleInput) bounds
-            freq = tuningFrequency <$> distressCoord
-        distressCoord `shouldBe` Right (point 3129625 2636475)
-        freq `shouldBe` Right 12518502636475
-
--- part1Solution (YCoordinate 2000000) puzzleInput `shouldBe` 0
+      , testCase "Part 2 - Puzzle Input" $
+          let bounds = 
+                Boundaries 
+                  (XCoordinate 0) 
+                  (XCoordinate 4000000) 
+                  (YCoordinate 0) 
+                  (YCoordinate 4000000)
+              distressCoord = distress (parser puzzleInput) bounds
+              freq = tuningFrequency <$> distressCoord
+          in do 
+            distressCoord @?= Right (point 3129625 2636475)
+            freq @?= Right 12518502636475
+      ]
 
 part1Solution :: YCoordinate -> Text -> Int
 part1Solution rowY t = length $ filter (== Empty) tiles
@@ -510,19 +529,11 @@ exampleSpread =
 adjustedSpread :: [SensorPair]
 adjustedSpread =
   [ SensorPair (SensorID 1) (SensorLocation $ point 2 18, BeaconLocation $ point (-2) 15)
-  , -- , SensorPair (SensorID 2) (SensorLocation $ point 9 16, BeaconLocation $ point 10 16)
-    -- , SensorPair (SensorID 3) (SensorLocation $ point 13 2, BeaconLocation $ point 15 3)
-    -- , SensorPair (SensorID 4) (SensorLocation $ point 12 14, BeaconLocation $ point 10 16)
-    -- , SensorPair (SensorID 5) (SensorLocation $ point 10 20, BeaconLocation $ point 10 16)
-    SensorPair (SensorID 6) (SensorLocation $ point 14 17, BeaconLocation $ point 10 16)
-  , -- , SensorPair (SensorID 7) (SensorLocation $ point 8 7, BeaconLocation $ point 2 10)
-    SensorPair (SensorID 8) (SensorLocation $ point 2 0, BeaconLocation $ point 2 10)
-  , -- , SensorPair (SensorID 9) (SensorLocation $ point 0 11, BeaconLocation $ point 2 10)
-    SensorPair (SensorID 10) (SensorLocation $ point 20 14, BeaconLocation $ point 25 17)
+  , SensorPair (SensorID 6) (SensorLocation $ point 14 17, BeaconLocation $ point 10 16)
+  , SensorPair (SensorID 8) (SensorLocation $ point 2 0, BeaconLocation $ point 2 10)
+  , SensorPair (SensorID 10) (SensorLocation $ point 20 14, BeaconLocation $ point 25 17)
   , SensorPair (SensorID 11) (SensorLocation $ point 17 20, BeaconLocation $ point 21 22)
-  , -- , SensorPair (SensorID 12) (SensorLocation $ point 16 7, BeaconLocation $ point 15 3)
-    -- , SensorPair (SensorID 13) (SensorLocation $ point 14 3, BeaconLocation $ point 15 3)
-    SensorPair (SensorID 14) (SensorLocation $ point 20 1, BeaconLocation $ point 15 3)
+  , SensorPair (SensorID 14) (SensorLocation $ point 20 1, BeaconLocation $ point 15 3)
   ]
 
 puzzleInput :: Text
