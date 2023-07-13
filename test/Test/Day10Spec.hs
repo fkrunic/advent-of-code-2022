@@ -3,16 +3,18 @@ module Test.Day10Spec (spec) where
 import Data.Text (Text)
 import Data.Text qualified as T
 import Problems.Day10 (part1Solution, part2Solution)
-import Test.Hspec (SpecWith, describe, it, shouldBe)
+import Test.Tasty
+import Test.Tasty.HUnit
 
-spec :: SpecWith ()
+spec :: TestTree
 spec =
-  describe "Day 10" $ do
-    it "Part 1" $ do
-      part1Solution puzzleInput `shouldBe` 13140
+  testGroup "Day 10" $
+    [ testCase "Part 1" $
+        part1Solution puzzleInput @?= 13140
 
-    it "Part 2" $ do
-      part2Solution puzzleInput `shouldBe` crtTestImage
+    , testCase "Part 2" $ do
+        part2Solution puzzleInput @?= crtTestImage
+    ]
 
 crtTestImage :: Text
 crtTestImage =
