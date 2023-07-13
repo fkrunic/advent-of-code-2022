@@ -1,6 +1,5 @@
 module Test.Day17Spec where
 
-import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.List.NonEmpty as NE
 import Data.Text qualified as T
 import Problems.Day17

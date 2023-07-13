@@ -2,9 +2,7 @@ module Test.Day15Spec (spec) where
 
 import Test.Hspec
 
-import Data.Bifunctor (bimap)
 import Data.Either (fromRight)
-import Data.Map ((!))
 import Data.Map qualified as M
 import Data.Maybe (isJust)
 import Data.Text (Text)

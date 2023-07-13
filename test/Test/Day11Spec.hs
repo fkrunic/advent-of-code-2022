@@ -1,6 +1,6 @@
 module Test.Day11Spec (spec) where
 
-import Test.Hspec (SpecWith, describe, it, shouldBe, pendingWith)
+import Test.Hspec (SpecWith, describe, it, shouldBe)
 
 import Data.Either (fromRight)
 import Data.List (sort)
