@@ -2,16 +2,18 @@ module Test.Day01Spec (spec) where
 
 import Data.List (intercalate)
 import Problems.Day01 (part1Solution, part2Solution)
-import Test.Hspec (SpecWith, describe, it, shouldBe)
+import Test.Tasty
+import Test.Tasty.HUnit
 
-spec :: SpecWith ()
+spec :: TestTree
 spec =
-  describe "Day 1 Solution" $ do
-    it "Part 1" $ do
-      part1Solution puzzleInput `shouldBe` 24000
+  testGroup "Day 1 Solution" $
+    [ testCase "Part 1" $
+        part1Solution puzzleInput @?= 24000
 
-    it "Part 2" $ do
-      part2Solution puzzleInput `shouldBe` 45000
+    , testCase "Part 2" $
+        part2Solution puzzleInput @?= 45000
+    ]
 
 puzzleInput :: String
 puzzleInput =
