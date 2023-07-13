@@ -12,7 +12,24 @@ extra-source-files:
 description:         Solutions to Advent of Code 2022
 
 dependencies:
+- arithmoi
 - base >= 4.7 && < 5
+- containers
+- ghc
+- megaparsec
+- monad-loops
+- random
+- text
+- transformers
+
+default-extensions:
+  GeneralizedNewtypeDeriving
+  ImportQualifiedPost
+  OverloadedStrings
+  RankNTypes
+  RecordWildCards
+  ScopedTypeVariables
+  TupleSections
 
 ghc-options:
 - -Wall
@@ -20,7 +37,6 @@ ghc-options:
 - -Widentities
 - -Wincomplete-record-updates
 - -Wincomplete-uni-patterns
-- -Wmissing-export-lists
 - -Wmissing-home-modules
 - -Wpartial-fields
 - -Wredundant-constraints
