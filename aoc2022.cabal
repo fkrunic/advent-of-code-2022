@@ -24,6 +24,7 @@ source-repository head
 
 library
   exposed-modules:
+      Exploration.ValueRecursion
       Lib
       Problems.Day01
       Problems.Day02
